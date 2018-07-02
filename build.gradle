@@ -29,8 +29,9 @@ repositories {
     jcenter()
 }
 
-dependencies {
+dependencies { //TODO: Version variables.
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.50"
+    compile "org.jetbrains.kotlin:kotlin-reflect:1.2.50"
 
     testCompile "junit:junit:4.12"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.1.0"
