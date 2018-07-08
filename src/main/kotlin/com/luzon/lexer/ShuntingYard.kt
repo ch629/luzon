@@ -12,7 +12,7 @@ class ShuntingYard {
     companion object {
         fun fromString(str: String): ShuntingYard {
             val yard = ShuntingYard()
-            //TODO: Split into each token and call add
+            str.split(" ").forEach { yard.add(it) } //TODO: Better way of adding each token (So spaces aren't needed between every one)
             yard.done()
             return yard
         }
@@ -37,12 +37,12 @@ class ShuntingYard {
                 operatorStack.pop() //Pop the LPAREN
             }
             null -> output.add(inp.toInt()) //TODO: Check Int or function call or identifier etc
-            else -> {
-                var peek = operatorStack.peek()
-                while (peek.ordinal < oper.ordinal && peek != LPAREN) { //TODO: Left associative stuff (Only matters for MOD etc.)
+            else -> { //Operator
+                var peek = if (operatorStack.isEmpty()) null else operatorStack.peek()
+                while (peek != null && (peek.prec < oper.prec || (peek.prec == oper.prec && peek.leftAssociative)) && peek != LPAREN) {
                     //Higher precedence in stack
                     output.add(operatorStack.pop())
-                    peek = operatorStack.peek()
+                    peek = if (operatorStack.isEmpty()) null else operatorStack.peek()
                 }
                 operatorStack.push(oper)
             }
@@ -54,12 +54,16 @@ class ShuntingYard {
             output.add(operatorStack.pop())
     }
 
-    enum class ExprOperators {
-        LPAREN,
-        RPAREN,
-        DIVIDE,
-        MULTIPLY,
-        PLUS,
-        MINUS
+    override fun toString(): String {
+        return output.joinToString(separator = " ")
+    }
+
+    enum class ExprOperators(val prec: Int, val leftAssociative: Boolean = false) {
+        LPAREN(0),
+        RPAREN(0),
+        DIVIDE(1, true),
+        MULTIPLY(1),
+        PLUS(2),
+        MINUS(2, true)
     }
 }

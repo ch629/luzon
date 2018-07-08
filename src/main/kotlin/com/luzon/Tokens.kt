@@ -2,7 +2,7 @@ package com.luzon
 
 import com.luzon.Operators.*
 
-enum class Operators { //TODO: Order by precedence? So then the tree can be sorted to make the calculations work correctly in order of precedence?
+enum class Operators {
     PLUS,
     MINUS,
     MULTIPLY,
@@ -45,15 +45,21 @@ class STRING_LITERAL(s: String) : LiteralToken<String>(s)
 class CHAR_LITERAL(c: Char) : LiteralToken<Char>(c)
 class BOOLEAN_LITERAL(b: Boolean) : LiteralToken<Boolean>(b)
 
+//TODO: Interpreter Pattern?
 sealed class Expression<T> : Token() { //TODO: Maybe make a class to hold T for Expressions so I can easily implement things like plus i.e. a.plus(b) without worrying about types outside
     abstract fun resolve(): T
+}
+
+class ExprID<T> : Expression<T>() {
+    override fun resolve(): T {
+        TODO("Symbol Table")
+    }
 }
 
 class ExprLiteral<T>(private val literal: LiteralToken<T>) : Expression<T>() {
     override fun resolve() = literal.value
 }
 
-//TODO: This has to be ordered in precedence too
 class ExprParen<T>(private val expr: Expression<T>) : Expression<T>() {
     override fun resolve() = expr.resolve()
 
