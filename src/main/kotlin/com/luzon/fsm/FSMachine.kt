@@ -1,6 +1,6 @@
 package com.luzon.fsm
 
-data class FSMachine(var states: List<State>) {
+data class FSMachine(var states: List<State>) { //TODO: Output Alphabet
     constructor(root: State) : this(listOf(root))
 
     companion object {
@@ -9,15 +9,39 @@ data class FSMachine(var states: List<State>) {
         }
     }
 
-    fun accept(char: Char): List<State> {
-        TODO()
+    fun accept(char: Char) {
+        var newStates = emptyList<State>()
+        states.forEach { newStates += it.accept(char) }
+        states = newStates
+    }
+
+    fun merge(other: FSMachine): FSMachine { //TODO: Merge multiple Regex to the correct output letter
+        TODO("Merge two FSM together, merging the same regex to lead to an end result (Good for numerical literals, because the only difference between a double and a float is the f on the end.")
     }
 }
 
 data class State(val accept: Boolean = false) {
-    val transitions = mapOf<Regex, State>()
+    private val transitions = mapOf<(Char) -> Boolean, State>()
 
-    fun accept(char: Char) = transitions.entries.filter { it.key.matches(char.toString()) }.map { it.value }.toList()
+    fun accept(char: Char, containsEpsilons: Boolean = false): List<State> {
+        var newStates = transitions.entries.filter { it.key(char) }.map { it.value }.toList()
+        var epsilonStates = emptyList<State>()
+        if (containsEpsilons) {
+            newStates.forEach {
+                val epsilonTransitions = it.transitions.filterKeys { it == epsilon }.map { it.value }
+
+                if (epsilonTransitions.isNotEmpty())
+                    epsilonStates += epsilonTransitions
+            }
+            newStates += epsilonStates
+        }
+
+        return newStates
+    }
 
     //TODO: onEnter, onLeave etc
+}
+
+val epsilon: (Char) -> Boolean = {
+    true
 }
