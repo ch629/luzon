@@ -1,5 +1,6 @@
 package com.luzon.fsm
 
+//TODO: Helper class to deal with inputs and exiting with possible outputs at a specific location; to consume the correct input into a token.
 data class FSMachine<T>(var states: List<State<T>>) {
     constructor(root: State<T>) : this(listOf(root))
 
@@ -9,14 +10,17 @@ data class FSMachine<T>(var states: List<State<T>>) {
         }
     }
 
-    fun accept(char: Char) {
+    fun accept(char: Char): Boolean {
         var newStates = emptyList<State<T>>()
         states.forEach { newStates += it.accept(char) }
         states = newStates
+        return newStates.isNotEmpty()
     }
 
-    fun merge(other: FSMachine<T>): FSMachine<T> { //TODO: Merge multiple Regex to the correct output letter
-        TODO("Merge two FSM together, merging the same regex to lead to an end result (Good for numerical literals, because the only difference between a double and a float is the f on the end.")
+    fun getCurrentOutput(): List<T> = states.filter { it.output != null }.map { it.output!! } //TODO: Combine duplicates of the same output
+
+    fun merge(other: FSMachine<T>): FSMachine<T> {
+        return FSMachine(states + other.states) //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
     }
 }
 
@@ -47,8 +51,11 @@ class State<T>(val output: T? = null) {
     }
 
     fun isAccepting() = output != null
-
-    //TODO: onEnter, onLeave etc? -> Might not use this really.
 }
 
 val epsilon: (Char) -> Boolean = { true }
+
+fun rangePredicate(start: Char, end: Char): (Char) -> Boolean = { it in end..start }
+fun charPredicate(c: Char): (Char) -> Boolean = { it == c }
+fun andPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) && second(it) }
+fun orPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) || second(it) }
