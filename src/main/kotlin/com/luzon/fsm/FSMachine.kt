@@ -17,11 +17,47 @@ data class FSMachine<T>(var states: List<State<T>>) {
         return newStates.isNotEmpty()
     }
 
-    fun getCurrentOutput(): List<T> = states.filter { it.output != null }.map { it.output!! } //TODO: Combine duplicates of the same output
+    fun getCurrentOutput(): List<T> = states.filter { it.isAccepting() }.map { it.output!! }.distinct()
 
     fun merge(other: FSMachine<T>): FSMachine<T> {
         return FSMachine(states + other.states) //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
     }
+}
+
+class RegexStateHelper<T> {
+    fun asterix(inner: State<T>): State<T> {
+        val root = state()
+        val endState = state()
+        root.addEpsilonTransition(inner, endState)
+        inner.setLeafEpsilons(root)
+        return root
+    }
+
+    fun plus(inner: State<T>): State<T> {
+        val root = state()
+        val endState = state()
+        inner.setLeafEpsilons(endState, root)
+        root.addEpsilonTransition(inner)
+        return root
+    }
+
+    fun question(inner: State<T>): State<T> {
+        val root = state()
+        val endState = state()
+        root.addEpsilonTransition(inner, endState)
+        inner.setLeafEpsilons(endState)
+        return root
+    }
+
+    fun or(left: State<T>, right: State<T>): State<T> {
+        val root = state()
+        val endState = state()
+        root.addEpsilonTransition(left, right)
+        left.setLeafEpsilons(endState)
+        return root
+    }
+
+    private fun state() = State<T>()
 }
 
 class State<T>(val output: T? = null) {
@@ -42,6 +78,7 @@ class State<T>(val output: T? = null) {
         return newStates
     }
 
+    //TODO: DSL?
     fun addTransition(pred: (Char) -> Boolean, state: State<T>) {
         transitions += pred to state
     }
@@ -50,7 +87,23 @@ class State<T>(val output: T? = null) {
         transitions += epsilon to state
     }
 
+    fun addEpsilonTransition(vararg states: State<T>) {
+        states.forEach { transitions += epsilon to it }
+    }
+
     fun isAccepting() = output != null
+
+    fun findLeaves(): List<State<T>> {
+        TODO()
+    }
+
+    fun setLeafEpsilons(endState: State<T>) {
+        findLeaves().forEach { it.addEpsilonTransition(endState) }
+    }
+
+    fun setLeafEpsilons(vararg states: State<T>) {
+        findLeaves().forEach { it.addEpsilonTransition(*states) }
+    }
 }
 
 val epsilon: (Char) -> Boolean = { true }
