@@ -19,45 +19,46 @@ data class FSMachine<T>(var states: List<State<T>>) {
 
     fun getCurrentOutput(): List<T> = states.filter { it.isAccepting() }.map { it.output!! }.distinct()
 
-    fun merge(other: FSMachine<T>): FSMachine<T> {
-        return FSMachine(states + other.states) //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
-    }
+    //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
+    fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
 }
 
+class RegexScanner {
+    //TODO: Scan a string of regex
+    //TODO: Parenthesis
+}
+
+//TODO: This might just be included within the RegexScanner, as should be the only time it's all used.
 class RegexStateHelper<T> {
-    fun asterix(inner: State<T>): State<T> {
-        val root = state()
-        val endState = state()
-        root.addEpsilonTransition(inner, endState)
-        inner.setLeafEpsilons(root)
+    //TODO: Check all these are correct with the new metaChar stuff
+
+    fun asterix(inner: State<T>) = metaChar(inner, rootEpsilonEnd = true)
+    fun plus(inner: State<T>) = metaChar(inner, rootLeafRoot = true)
+    fun question(inner: State<T>) = metaChar(inner, rootEpsilonEnd = true)
+    fun or(left: State<T>, right: State<T>) = metaChar(left, right)
+
+    private fun metaChar(vararg rootEpsilon: State<T>) = metaChar(rootEpsilon.asList())
+
+    private fun metaChar(rootEpsilon: State<T>, rootEpsilonEnd: Boolean = false,
+                         leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false) =
+            metaChar(listOf(rootEpsilon), rootEpsilonEnd, leafEpsilon, rootLeafRoot)
+
+    private fun metaChar(rootEpsilon: List<State<T>>, rootEpsilonEnd: Boolean = false,
+                         leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false): State<T> {
+        val root = S()
+        val endState = S()
+        val leafEpsilons = leafEpsilon + endState
+
+        if (rootEpsilonEnd) root.addEpsilonTransition(*(rootEpsilon + endState).toTypedArray())
+        else root.addEpsilonTransition(*rootEpsilon.toTypedArray())
+
+        if (rootLeafRoot) root.setLeafEpsilons(*(leafEpsilon + root).toTypedArray())
+        else root.setLeafEpsilons(*leafEpsilons.toTypedArray())
+
         return root
     }
 
-    fun plus(inner: State<T>): State<T> {
-        val root = state()
-        val endState = state()
-        inner.setLeafEpsilons(endState, root)
-        root.addEpsilonTransition(inner)
-        return root
-    }
-
-    fun question(inner: State<T>): State<T> {
-        val root = state()
-        val endState = state()
-        root.addEpsilonTransition(inner, endState)
-        inner.setLeafEpsilons(endState)
-        return root
-    }
-
-    fun or(left: State<T>, right: State<T>): State<T> {
-        val root = state()
-        val endState = state()
-        root.addEpsilonTransition(left, right)
-        left.setLeafEpsilons(endState)
-        return root
-    }
-
-    private fun state() = State<T>()
+    private fun S() = State<T>()
 }
 
 class State<T>(val output: T? = null) {
@@ -93,8 +94,11 @@ class State<T>(val output: T? = null) {
 
     fun isAccepting() = output != null
 
-    fun findLeaves(): List<State<T>> {
-        TODO()
+    fun findLeaves(): List<State<T>> { //TODO: Test
+        if (transitions.isEmpty()) return listOf(this) //TODO: This is pretty inefficient as I'm creating a list for each single state but is a simple solution
+        val list = mutableListOf<State<T>>()
+        transitions.filter { it.second != this }.forEach { list.addAll(it.second.findLeaves()) }
+        return list
     }
 
     fun setLeafEpsilons(endState: State<T>) {
