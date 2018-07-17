@@ -23,9 +23,67 @@ data class FSMachine<T>(var states: List<State<T>>) {
     fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
 }
 
-class RegexScanner {
-    //TODO: Scan a string of regex
-    //TODO: Parenthesis
+class RegexScanner<T>(private val regex: String) {
+    private val endChar: Char = '\n'
+    private var current = 0
+
+    fun toFSM(): State<T> {
+        TODO("Scan Regex String into an FSM")
+    }
+
+    fun advance(): Char {
+        val char = peek()
+        if (char != endChar) current++
+        return char
+    }
+
+    fun peek() = if (regex.length >= current) regex[current] else endChar
+
+    fun atEnd() = current > regex.length
+
+    fun range(): State<T> { //[0-9A-Za-z]
+        val str = advanceUntil { it == ']' }
+
+        var pred: (Char) -> Boolean = { false }
+        if (str.length % 3 == 0) { //TODO: This is kind of wrong actually, the []'s let or's happen between every character i.e. [ABC] is A | B | C
+            val sections = str.split(".-.") //TODO: Make a method to split strings by length
+            sections.forEach { pred = orPredicate(pred, rangePredicate(it[0], it[2])) } //TODO: Check middle is a '-' or error
+        } else TODO("Error, invalid range definition")
+
+        val root = State<T>()
+        val end = State<T>()
+
+        root.addTransition(pred, end)
+        return root
+    }
+
+    fun orBlock(): State<T> { //[ABC]
+        val str = advanceUntil { it == ']' }
+
+        var pred: (Char) -> Boolean = { false }
+
+        //TODO: Deal with ranges within the or block -> Probably need to go back to a scanner a bit for each of these sections, like a orBlockScanner system
+        str.forEach { pred = orPredicate(pred, charPredicate(it)) }
+
+        val root = State<T>()
+        val end = State<T>()
+
+        root.addTransition(pred, end)
+        return root
+    }
+
+    fun parenthesis() = RegexScanner<T>(advanceUntil { it == ')' }).toFSM()
+
+    private fun advanceUntil(pred: (Char) -> Boolean): String {
+        val sb = StringBuilder()
+
+        do {
+            val char = advance()
+            sb.append(char)
+        } while (!pred(char) || char != endChar) //TODO: Error if hits endChar rather than the predicate
+
+        return sb.toString()
+    }
 }
 
 //TODO: This might just be included within the RegexScanner, as should be the only time it's all used.
@@ -45,8 +103,8 @@ class RegexStateHelper<T> {
 
     private fun metaChar(rootEpsilon: List<State<T>>, rootEpsilonEnd: Boolean = false,
                          leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false): State<T> {
-        val root = S()
-        val endState = S()
+        val root = State<T>()
+        val endState = State<T>()
         val leafEpsilons = leafEpsilon + endState
 
         if (rootEpsilonEnd) root.addEpsilonTransition(*(rootEpsilon + endState).toTypedArray())
@@ -57,12 +115,10 @@ class RegexStateHelper<T> {
 
         return root
     }
-
-    private fun S() = State<T>()
 }
 
 class State<T>(val output: T? = null) {
-    private var transitions = emptyList<Pair<(Char) -> Boolean, State<T>>>()
+    private var transitions = emptyList<Pair<(Char) -> Boolean, State<T>>>() //TODO: Merge transitions going between the same states, using or predicates for each transitional predicate (Possibly an optimization)
 
     fun accept(char: Char, containsEpsilons: Boolean = false): List<State<T>> {
         var newStates = transitions.filter { it.first(char) }.map { it.second }.toList()
@@ -77,6 +133,16 @@ class State<T>(val output: T? = null) {
         }
 
         return newStates
+    }
+
+    fun mergeTransitions() { //TODO: Test
+        val newTransitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>()
+        val groupedTransitions = transitions.groupBy { it.second }
+        groupedTransitions.entries.forEach {
+            var pred: (Char) -> Boolean = { false }
+            it.value.forEach { pred = orPredicate(pred, it.first) }
+            newTransitions.add(pred to it.key)
+        }
     }
 
     //TODO: DSL?
