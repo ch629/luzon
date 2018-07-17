@@ -37,38 +37,34 @@ class RegexScanner<T>(private val regex: String) {
         return char
     }
 
+    fun consume(amount: Int) {
+        current += amount
+    }
+
     fun peek() = if (regex.length >= current) regex[current] else endChar
 
     fun atEnd() = current > regex.length
 
-    fun range(): State<T> { //[0-9A-Za-z]
-        val str = advanceUntil { it == ']' }
-
-        var pred: (Char) -> Boolean = { false }
-        if (str.length % 3 == 0) { //TODO: This is kind of wrong actually, the []'s let or's happen between every character i.e. [ABC] is A | B | C
-            val sections = str.split(".-.") //TODO: Make a method to split strings by length
-            sections.forEach { pred = orPredicate(pred, rangePredicate(it[0], it[2])) } //TODO: Check middle is a '-' or error
-        } else TODO("Error, invalid range definition")
-
-        val root = State<T>()
-        val end = State<T>()
-
-        root.addTransition(pred, end)
-        return root
-    }
-
     fun orBlock(): State<T> { //[ABC]
         val str = advanceUntil { it == ']' }
-
         var pred: (Char) -> Boolean = { false }
 
-        //TODO: Deal with ranges within the or block -> Probably need to go back to a scanner a bit for each of these sections, like a orBlockScanner system
-        str.forEach { pred = orPredicate(pred, charPredicate(it)) }
+        var innerCount = 0
+        while (innerCount < str.length) {
+            innerCount++
+
+            //TODO: Don't use advanceUntil, just use the normal scanner functionality with peek and advance for this
+            pred = if (str.length > innerCount + 1 && str[innerCount + 1] == '-') { //TODO: Check not at end and space for 2 more after (Valid range)
+                orPredicate(pred, rangePredicate(str[innerCount], str[innerCount + 2]))
+            } else orPredicate(pred, charPredicate(str[innerCount]))
+        }
 
         val root = State<T>()
         val end = State<T>()
 
         root.addTransition(pred, end)
+
+        consume(str.length)
         return root
     }
 
@@ -81,6 +77,7 @@ class RegexScanner<T>(private val regex: String) {
             val char = advance()
             sb.append(char)
         } while (!pred(char) || char != endChar) //TODO: Error if hits endChar rather than the predicate
+        //TODO: Could check atEnd() rather than char != endChar
 
         return sb.toString()
     }
