@@ -23,7 +23,7 @@ data class FSMachine<T>(var states: List<State<T>>) {
     fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
 }
 
-class RegexScanner<T>(private val regex: String) {
+class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharacters
     private val endChar: Char = '\n'
     private var current = 0
 
@@ -45,30 +45,26 @@ class RegexScanner<T>(private val regex: String) {
 
     fun atEnd() = current > regex.length
 
-    fun orBlock(): State<T> { //[ABC]
-        val str = advanceUntil { it == ']' }
-        var pred: (Char) -> Boolean = { false }
-
-        var innerCount = 0
-        while (innerCount < str.length) {
-            innerCount++
-
-            //TODO: Don't use advanceUntil, just use the normal scanner functionality with peek and advance for this
-            pred = if (str.length > innerCount + 1 && str[innerCount + 1] == '-') { //TODO: Check not at end and space for 2 more after (Valid range)
-                orPredicate(pred, rangePredicate(str[innerCount], str[innerCount + 2]))
-            } else orPredicate(pred, charPredicate(str[innerCount]))
-        }
-
+    fun orBlock(): State<T> {
         val root = State<T>()
         val end = State<T>()
+        var pred: (Char) -> Boolean = { false }
+
+        do {
+            val char = advance()
+            pred = if (peek() == '-') { //Is Range
+                advance() //TODO: Check that there is a character after the '-'
+                orPredicate(pred, rangePredicate(char, advance()))
+            } else orPredicate(pred, charPredicate(char))
+        } while (char != ']' && char != endChar)
 
         root.addTransition(pred, end)
-
-        consume(str.length)
         return root
     }
 
-    fun parenthesis() = RegexScanner<T>(advanceUntil { it == ')' }).toFSM()
+    fun parenthesis() = RegexScanner<T>(advanceUntil(')')).toFSM()
+
+    private fun advanceUntil(char: Char) = advanceUntil { it == char }
 
     private fun advanceUntil(pred: (Char) -> Boolean): String {
         val sb = StringBuilder()
@@ -76,7 +72,7 @@ class RegexScanner<T>(private val regex: String) {
         do {
             val char = advance()
             sb.append(char)
-        } while (!pred(char) || char != endChar) //TODO: Error if hits endChar rather than the predicate
+        } while (!pred(char) && char != endChar) //TODO: Error if hits endChar rather than the predicate
         //TODO: Could check atEnd() rather than char != endChar
 
         return sb.toString()
