@@ -33,15 +33,11 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
 
     fun advance(): Char {
         val char = peek()
-        if (char != endChar) current++
+        if (!atEnd()) current++
         return char
     }
 
-    fun consume(amount: Int) {
-        current += amount
-    }
-
-    fun peek() = if (regex.length >= current) regex[current] else endChar
+    fun peek() = if (regex.length > current) regex[current] else endChar
 
     fun atEnd() = current > regex.length
 
@@ -50,13 +46,16 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         val end = State<T>()
         var pred: (Char) -> Boolean = { false }
 
+        if (peek() == '[') advance() //Make sure the '[' isn't included within the range predicates
+
         do {
             val char = advance()
             pred = if (peek() == '-') { //Is Range
-                advance() //TODO: Check that there is a character after the '-'
+                advance() //Consume '-'
                 orPredicate(pred, rangePredicate(char, advance()))
             } else orPredicate(pred, charPredicate(char))
         } while (char != ']' && char != endChar)
+        advance() //Consume ']'
 
         root.addTransition(pred, end)
         return root
@@ -171,7 +170,7 @@ class State<T>(val output: T? = null) {
 
 val epsilon: (Char) -> Boolean = { true }
 
-fun rangePredicate(start: Char, end: Char): (Char) -> Boolean = { it in end..start }
+fun rangePredicate(start: Char, end: Char): (Char) -> Boolean = { it in start..end }
 fun charPredicate(c: Char): (Char) -> Boolean = { it == c }
 fun andPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) && second(it) }
 fun orPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) || second(it) }
