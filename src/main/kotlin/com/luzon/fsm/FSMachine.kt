@@ -1,34 +1,58 @@
 package com.luzon.fsm
 
 //TODO: Helper class to deal with inputs and exiting with possible outputs at a specific location; to consume the correct input into a token.
-data class FSMachine<T>(var states: List<State<T>>) {
-    constructor(root: State<T>) : this(listOf(root))
+class FSMachine<T>(statesList: List<State<T>>) {
+    constructor(root: State<T>) : this(mutableListOf(root))
+
+    private val states = statesList.toMutableList()
 
     companion object {
-        fun <T> fromRegex(str: String): FSMachine<T> {
-            TODO()
-        }
+        fun <T> fromRegex(str: String) = FSMachine(RegexScanner<T>(str).toFSM())
     }
 
     fun accept(char: Char): Boolean {
-        var newStates = emptyList<State<T>>()
-        states.forEach { newStates += it.accept(char) }
-        states = newStates
+        val epsilons = states.map { it.acceptEpsilons() }.merge() //TODO: Figure out how to deal with epsilons properly, kind of need to add epsilons recursively
+        states.addAll(epsilons)
+        val newStates = states.map { it.accept(char) }.merge()
+        states.clear()
+        states.addAll(newStates)
+
         return newStates.isNotEmpty()
     }
+
+    fun isRunning() = states.isNotEmpty()
 
     fun getCurrentOutput(): List<T> = states.filter { it.isAccepting() }.map { it.output!! }.distinct()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
     fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
+
+    fun getStateCount() = states.count()
 }
 
 class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharacters
-    private val endChar: Char = '\n'
     private var current = 0
 
+    companion object {
+        private const val END_CHAR: Char = '\n'
+    }
+
     fun toFSM(): State<T> {
-        TODO("Scan Regex String into an FSM")
+        val root = State<T>()
+        var endStates = listOf(root)
+        while (!atEnd()) {
+            val char = peek()
+
+            val sectionRoot = when (char) {
+                '[' -> orBlock()
+                else -> char()
+            }
+
+            endStates.forEach { it.addEpsilonTransition(sectionRoot) }
+            endStates = sectionRoot.findLeaves()
+        }
+
+        return root
     }
 
     fun advance(): Char {
@@ -37,27 +61,34 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         return char
     }
 
-    fun peek() = if (regex.length > current) regex[current] else endChar
+    fun peek() = if (current in 0 until regex.length) regex[current] else END_CHAR //In case backtracking is needed
 
     fun atEnd() = current > regex.length
+
+    fun char(): State<T> {
+        val start = State<T>()
+        start.addTransition(charPredicate(advance()), State())
+        return start
+    }
 
     fun orBlock(): State<T> {
         val root = State<T>()
         val end = State<T>()
-        var pred: (Char) -> Boolean = { false }
+        var transitionPredicate: (Char) -> Boolean = { false }
 
-        if (peek() == '[') advance() //Make sure the '[' isn't included within the range predicates
+        advance() //Consume '['
 
         do {
             val char = advance()
-            pred = if (peek() == '-') { //Is Range
+            transitionPredicate = if (peek() == '-') { //Is Range
                 advance() //Consume '-'
-                orPredicate(pred, rangePredicate(char, advance()))
-            } else orPredicate(pred, charPredicate(char))
-        } while (char != ']' && char != endChar)
+                orPredicate(transitionPredicate, rangePredicate(char, advance()))
+            } else orPredicate(transitionPredicate, charPredicate(char))
+        } while (char != ']' && char != END_CHAR)
+
         advance() //Consume ']'
 
-        root.addTransition(pred, end)
+        root.addTransition(transitionPredicate, end)
         return root
     }
 
@@ -71,8 +102,8 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         do {
             val char = advance()
             sb.append(char)
-        } while (!pred(char) && char != endChar) //TODO: Error if hits endChar rather than the predicate
-        //TODO: Could check atEnd() rather than char != endChar
+        } while (!pred(char) && char != END_CHAR) //TODO: Error if hits END_CHAR rather than the predicate
+        //TODO: Could check atEnd() rather than char != END_CHAR
 
         return sb.toString()
     }
@@ -109,68 +140,11 @@ class RegexStateHelper<T> {
     }
 }
 
-class State<T>(val output: T? = null) {
-    private var transitions = emptyList<Pair<(Char) -> Boolean, State<T>>>() //TODO: Merge transitions going between the same states, using or predicates for each transitional predicate (Possibly an optimization)
-
-    fun accept(char: Char, containsEpsilons: Boolean = false): List<State<T>> {
-        var newStates = transitions.filter { it.first(char) }.map { it.second }.toList()
-        var epsilonStates = emptyList<State<T>>()
-        if (containsEpsilons) {
-            newStates.forEach {
-                val epsilonTransitions = it.transitions.filter { it.first == epsilon }.map { it.second }
-
-                epsilonStates += epsilonTransitions
-            }
-            newStates += epsilonStates
-        }
-
-        return newStates
-    }
-
-    fun mergeTransitions() { //TODO: Test
-        val newTransitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>()
-        val groupedTransitions = transitions.groupBy { it.second }
-        groupedTransitions.entries.forEach {
-            var pred: (Char) -> Boolean = { false }
-            it.value.forEach { pred = orPredicate(pred, it.first) }
-            newTransitions.add(pred to it.key)
-        }
-    }
-
-    //TODO: DSL?
-    fun addTransition(pred: (Char) -> Boolean, state: State<T>) {
-        transitions += pred to state
-    }
-
-    fun addEpsilonTransition(state: State<T>) {
-        transitions += epsilon to state
-    }
-
-    fun addEpsilonTransition(vararg states: State<T>) {
-        states.forEach { transitions += epsilon to it }
-    }
-
-    fun isAccepting() = output != null
-
-    fun findLeaves(): List<State<T>> { //TODO: Test
-        if (transitions.isEmpty()) return listOf(this) //TODO: This is pretty inefficient as I'm creating a list for each single state but is a simple solution
-        val list = mutableListOf<State<T>>()
-        transitions.filter { it.second != this }.forEach { list.addAll(it.second.findLeaves()) }
-        return list
-    }
-
-    fun setLeafEpsilons(endState: State<T>) {
-        findLeaves().forEach { it.addEpsilonTransition(endState) }
-    }
-
-    fun setLeafEpsilons(vararg states: State<T>) {
-        findLeaves().forEach { it.addEpsilonTransition(*states) }
-    }
-}
-
 val epsilon: (Char) -> Boolean = { true }
 
 fun rangePredicate(start: Char, end: Char): (Char) -> Boolean = { it in start..end }
 fun charPredicate(c: Char): (Char) -> Boolean = { it == c }
 fun andPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) && second(it) }
 fun orPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) || second(it) }
+
+fun <T> List<List<T>>.merge() = fold(emptyList<T>()) { acc, stateList -> acc + stateList }

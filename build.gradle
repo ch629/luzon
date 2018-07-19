@@ -33,7 +33,7 @@ repositories {
     jcenter()
 }
 
-dependencies { //TODO: Version variables.
+dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
 
