@@ -11,7 +11,13 @@ class FSMachine<T>(statesList: List<State<T>>) {
     }
 
     fun accept(char: Char): Boolean {
-        val epsilons = states.map { it.acceptEpsilons() }.merge() //TODO: Figure out how to deal with epsilons properly, kind of need to add epsilons recursively
+        val epsilons = states.map { it.acceptEpsilons() }.merge().toMutableList()
+
+        do {
+            val moreEpsilons = epsilons.filter { !epsilons.contains(it) && it.hasEpsilonTransitions() }
+            epsilons.addAll(moreEpsilons)
+        } while (moreEpsilons.isNotEmpty())
+
         states.addAll(epsilons)
         val newStates = states.map { it.accept(char) }.merge()
         states.clear()
@@ -32,24 +38,53 @@ class FSMachine<T>(statesList: List<State<T>>) {
 
 class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharacters
     private var current = 0
+    private val meta = RegexMetaCharHelper<T>()
+    private val root = State<T>()
+    private var endState = root
 
     companion object {
         private const val END_CHAR: Char = '\n'
+        private const val metaCharacters = "*+?|"
+    }
+
+    private class RegexMetaCharHelper<T> {
+        fun asterix(inner: State<T>) = metaChar(inner, rootEpsilonEnd = true)
+        fun plus(inner: State<T>) = metaChar(inner, rootLeafRoot = true)
+        fun question(inner: State<T>) = metaChar(inner, rootEpsilonEnd = true)
+        fun or(left: State<T>, right: State<T>) = metaChar(left, right)
+
+        private fun metaChar(vararg rootEpsilon: State<T>) = metaChar(rootEpsilon.asList())
+
+        private fun metaChar(rootEpsilon: State<T>, rootEpsilonEnd: Boolean = false,
+                             leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false) =
+                metaChar(listOf(rootEpsilon), rootEpsilonEnd, leafEpsilon, rootLeafRoot)
+
+        private fun metaChar(rootEpsilon: List<State<T>>, rootEpsilonEnd: Boolean = false,
+                             leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false): State<T> {
+            val root = State<T>()
+            val endState = State<T>()
+            val leafEpsilons = leafEpsilon + endState
+
+            if (rootEpsilonEnd) root.addEpsilonTransition(*(rootEpsilon + endState).toTypedArray())
+            else root.addEpsilonTransition(*rootEpsilon.toTypedArray())
+
+            if (rootLeafRoot) root.setLeafEpsilons(*(leafEpsilon + root).toTypedArray())
+            else root.setLeafEpsilons(*leafEpsilons.toTypedArray())
+
+            return root
+        }
     }
 
     fun toFSM(): State<T> {
-        val root = State<T>()
-        var endStates = listOf(root)
         while (!atEnd()) {
             val char = peek()
 
-            val sectionRoot = when (char) {
+            endState = when (char) {
                 '[' -> orBlock()
+                '(' -> parenthesis()
+                in metaCharacters -> metaCharacter()
                 else -> char()
             }
-
-            endStates.forEach { it.addEpsilonTransition(sectionRoot) }
-            endStates = sectionRoot.findLeaves()
         }
 
         return root
@@ -61,18 +96,24 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         return char
     }
 
+    fun back(): Char {
+        if (current > 0) current--
+        return peek()
+    }
+
+    fun isNormalChar() = peek() !in "*+?|(){}[]\n"
+
     fun peek() = if (current in 0 until regex.length) regex[current] else END_CHAR //In case backtracking is needed
 
     fun atEnd() = current > regex.length
 
-    fun char(): State<T> {
-        val start = State<T>()
-        start.addTransition(charPredicate(advance()), State())
-        return start
+    fun char(): State<T> { //TODO: Could return the end state here, or just set it at the end and remove the return type
+        val charEnd = State<T>()
+        endState.addTransition(charPredicate(advance()), charEnd)
+        return charEnd
     }
 
     fun orBlock(): State<T> {
-        val root = State<T>()
         val end = State<T>()
         var transitionPredicate: (Char) -> Boolean = { false }
 
@@ -88,11 +129,20 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
 
         advance() //Consume ']'
 
-        root.addTransition(transitionPredicate, end)
-        return root
+        endState.addTransition(transitionPredicate, end)
+        return end
     }
 
-    fun parenthesis() = RegexScanner<T>(advanceUntil(')')).toFSM()
+    fun parenthesis(): State<T> {
+        advance() //Consume '('
+        val states = RegexScanner<T>(advanceUntil(')')).toFSM()
+        endState.addEpsilonTransition(states)
+        return states.findLeaves()[0]
+    }
+
+    fun metaCharacter(): State<T> {
+        TODO()
+    }
 
     private fun advanceUntil(char: Char) = advanceUntil { it == char }
 
@@ -106,37 +156,6 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         //TODO: Could check atEnd() rather than char != END_CHAR
 
         return sb.toString()
-    }
-}
-
-//TODO: This might just be included within the RegexScanner, as should be the only time it's all used.
-class RegexStateHelper<T> {
-    //TODO: Check all these are correct with the new metaChar stuff
-
-    fun asterix(inner: State<T>) = metaChar(inner, rootEpsilonEnd = true)
-    fun plus(inner: State<T>) = metaChar(inner, rootLeafRoot = true)
-    fun question(inner: State<T>) = metaChar(inner, rootEpsilonEnd = true)
-    fun or(left: State<T>, right: State<T>) = metaChar(left, right)
-
-    private fun metaChar(vararg rootEpsilon: State<T>) = metaChar(rootEpsilon.asList())
-
-    private fun metaChar(rootEpsilon: State<T>, rootEpsilonEnd: Boolean = false,
-                         leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false) =
-            metaChar(listOf(rootEpsilon), rootEpsilonEnd, leafEpsilon, rootLeafRoot)
-
-    private fun metaChar(rootEpsilon: List<State<T>>, rootEpsilonEnd: Boolean = false,
-                         leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false): State<T> {
-        val root = State<T>()
-        val endState = State<T>()
-        val leafEpsilons = leafEpsilon + endState
-
-        if (rootEpsilonEnd) root.addEpsilonTransition(*(rootEpsilon + endState).toTypedArray())
-        else root.addEpsilonTransition(*rootEpsilon.toTypedArray())
-
-        if (rootLeafRoot) root.setLeafEpsilons(*(leafEpsilon + root).toTypedArray())
-        else root.setLeafEpsilons(*leafEpsilons.toTypedArray())
-
-        return root
     }
 }
 

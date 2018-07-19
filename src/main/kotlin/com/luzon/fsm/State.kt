@@ -33,6 +33,7 @@ class State<T>(val output: T? = null) {
 
     fun isAccepting() = output != null
     fun hasEpsilonTransitions() = epsilonTransitions.isNotEmpty()
+    fun hasOnlyEpsilon() = epsilonTransitions.isNotEmpty() && transitions.isEmpty()
 
     fun findLeaves(): List<State<T>> { //TODO: Test
         if (transitions.isEmpty()) return listOf(this) //TODO: This is pretty inefficient as I'm creating a list for each single state but is a simple solution
