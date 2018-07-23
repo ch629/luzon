@@ -33,6 +33,24 @@ object FSMTest : Spek({
     }
 
     given("a regex parser") {
+        on("a character block") {
+            val regex = "ABCD"
+            it("should accept correct values for ABCD") {
+                val machine = FSMachine.fromRegex<Int>(regex)
+                regex.forEach {
+                    machine.accept(it)
+                    machine.isRunning() shouldBe true
+                }
+            }
+
+            it("should not accept invalid values for ABCD") {
+                val machine = FSMachine.fromRegex<Int>(regex)
+                machine.accept('A')
+                machine.accept('D')
+                machine.isRunning() shouldBe false
+            }
+        }
+
         on("an or block") {
             val orBlockRegex = "[ABD-Za-z]"
 
