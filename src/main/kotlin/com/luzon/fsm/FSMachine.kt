@@ -46,6 +46,8 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
     private var metaScope = root //To be used with metacharacters to know where to join that up (Mainly with or)
     private var scopeChange = false //Whether the scope should be changed next character
     private var orState: State<T>? = null
+    private var orEndState: State<T>? = null
+    private var afterOr = false
     //TODO: Figure out where to reset this to apply metacharacters correctly
 
     companion object {
@@ -85,12 +87,19 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         while (!atEnd()) {
             val char = peek()
 
-            endState = when (char) {
+            val start = when (char) { //TODO: I might need to return the first state here instead, then I can find the leaf from that
                 '[' -> orBlock()
                 '(' -> parenthesis()
                 '{' -> TODO("Repetitions -> Relies on metaScope too") //TODO: Might not need this for my language specifically, but should implement if I want this to be a full regex parser
                 in metaCharacters -> metaCharacter()
                 else -> char()
+            }
+
+            endState = start.findLeaves()[0]
+
+            if (afterOr) {
+                endState.addEpsilonTransition(orEndState!!)
+                afterOr = false
             }
 
             if (scopeChange) {
@@ -142,7 +151,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         advance() //Consume ']'
 
         endState.addTransition(transitionPredicate, end)
-        return end
+        return endState
     }
 
     fun parenthesis(): State<T> {
@@ -151,37 +160,34 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         endState.addEpsilonTransition(states)
         metaScope = states
 
-        return states.findLeaves()[0]
+        return states
     }
 
     fun metaCharacter(): State<T> = when (advance()) {
         '|' -> {
             scopeChange = true
-            //TODO: I could implement this in a similar way to parenthesis, but return back if it hits a '|'
-            //TODO: Basically the second parameter of this would be the next state, but then if another '|' is hit -> needs to append onto the first or state
             if (orState == null) { //First or in the regex
                 val or = State<T>()
                 orState = or
+                root.addEpsilonTransition(orState!!) //TODO: Or replace root
             }
 
             orState!!.addEpsilonTransition(metaScope)
-            TODO()
+
+            if (orState == null) { //First or
+                orState = State()
+                orEndState = State()
+                orState!!.addEpsilonTransition(metaScope)
+                metaScope.findLeaves()[0].addEpsilonTransition(orEndState!!)
+            }
+
+            afterOr = true
+            orState!!
         }
-        '*' -> metaCharacter(meta::asterix)
-        '+' -> metaCharacter(meta::plus)
-        '?' -> metaCharacter(meta::question)
+        '*' -> meta.asterix(metaScope)
+        '+' -> meta.plus(metaScope)
+        '?' -> meta.question(metaScope) //TODO: Some of these may need to change the metaScope
         else -> TODO("Not a valid metaCharacter (Should never happen). Throw Exception, or log error")
-    }
-
-    private fun metaCharacter(metaFunction: (State<T>) -> State<T>): State<T> { //TODO: This could be an inner function within the other metaCharacter, but I can't use = when if doing that.
-        val states = metaFunction(metaScope)
-        metaScope = states
-        endState = states.findLeaves()[0] //TODO: I may also need to set scopeChange to true
-        return states
-    }
-
-    private fun handleOr() {
-        TODO("Ran after the FSM scanning, just adds the epsilon transition from the orState to the final state section")
     }
 
     private fun advanceUntil(char: Char) = advanceUntil { it == char }
