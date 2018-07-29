@@ -33,7 +33,7 @@ class FSMachine<T>(statesList: List<State<T>>) {
     fun getCurrentOutput(): List<T> = states.filter { it.isAccepting() }.map { it.output!! }.distinct()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
-    fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
+    fun merge(other: FSMachine<T>) = FSMachine(states + other.states) //TODO: Set accept output for each side of the machine here then set any accept states to the appropriate value.
 
     fun getStateCount() = states.count()
 }
@@ -43,12 +43,11 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
     private val meta = RegexMetaCharHelper<T>()
     private val root = State<T>()
     private var endState = root
-    private var metaScope = root //To be used with metacharacters to know where to join that up (Mainly with or)
-    private var scopeChange = false //Whether the scope should be changed next character
+    private var metaScope = root
+    private var scopeChange = false
     private var orState: State<T>? = null
     private var orEndState: State<T>? = null
     private var afterOr = false
-    //TODO: Figure out where to reset this to apply metacharacters correctly
 
     companion object {
         private const val END_CHAR: Char = '\n'
@@ -56,12 +55,8 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
     }
 
     private class RegexMetaCharHelper<T> {
-        fun asterix(inner: State<T>) = metaChar(inner, rootEpsilonEnd = true)
         fun plus(inner: State<T>) = metaChar(inner, rootLeafRoot = true)
         fun question(inner: State<T>) = metaChar(inner, rootEpsilonEnd = true)
-        fun or(left: State<T>, right: State<T>) = metaChar(left, right) //TODO: If the first state only has epsilons, just add an epsilon transition to the other
-
-        private fun metaChar(vararg rootEpsilon: State<T>) = metaChar(rootEpsilon.asList())
 
         private fun metaChar(rootEpsilon: State<T>, rootEpsilonEnd: Boolean = false,
                              leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false) =
@@ -70,16 +65,25 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         private fun metaChar(rootEpsilon: List<State<T>>, rootEpsilonEnd: Boolean = false,
                              leafEpsilon: List<State<T>> = emptyList(), rootLeafRoot: Boolean = false): State<T> {
             val root = State<T>()
-            val endState = State<T>()
+            val endState = State<T>(forceAccept = true)
             val leafEpsilons = leafEpsilon + endState
 
-            if (rootEpsilonEnd) root.addEpsilonTransition(*(rootEpsilon + endState).toTypedArray())
-            else root.addEpsilonTransition(*rootEpsilon.toTypedArray())
+            root.addEpsilonTransition(*rootEpsilon.toTypedArray())
+            if (rootEpsilonEnd) root.addEpsilonTransition(endState)
 
-            if (rootLeafRoot) root.setLeafEpsilons(*(leafEpsilon + root).toTypedArray())
-            else root.setLeafEpsilons(*leafEpsilons.toTypedArray())
+            root.addLeafEpsilons(*leafEpsilons.toTypedArray())
+            if (rootLeafRoot) root.addLeafEpsilons(root)
 
             return root
+        }
+
+        fun asterisk(scope: State<T>, endState: State<T>): State<T> {
+            val newEndState = State<T>(forceAccept = true)
+
+            endState.addEpsilonTransition(scope)
+            scope.addEpsilonTransition(newEndState)
+
+            return scope
         }
     }
 
@@ -87,7 +91,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         while (!atEnd()) {
             val char = peek()
 
-            val start = when (char) { //TODO: I might need to return the first state here instead, then I can find the leaf from that
+            val start = when (char) {
                 '[' -> orBlock()
                 '(' -> parenthesis()
                 '{' -> TODO("Repetitions -> Relies on metaScope too") //TODO: Might not need this for my language specifically, but should implement if I want this to be a full regex parser
@@ -95,7 +99,9 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
                 else -> char()
             }
 
-            endState = start.findLeaves()[0]
+            val accept = endState.findAcceptChildren()
+            endState = if (accept.isNotEmpty()) accept[0] else start.findLeaves()[0] //TODO: Make sure everything either returns with an accepting state or a single leaf.
+            endState.removeAccept()
 
             if (afterOr) {
                 endState.addEpsilonTransition(orEndState!!)
@@ -108,6 +114,8 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
             }
         }
 
+        endState.forceAccept = true //Mainly for parenthesis
+
         return root
     }
 
@@ -117,25 +125,20 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         return char
     }
 
-    fun back(): Char {
-        if (current > 0) current--
-        return peek()
-    }
-
     fun isNormalChar() = peek() !in "*+?|(){}[]\n"
 
-    fun peek() = if (current in 0 until regex.length) regex[current] else END_CHAR //In case backtracking is needed
+    fun peek() = if (current < regex.length) regex[current] else END_CHAR
 
-    fun atEnd() = current > regex.length
+    fun atEnd() = current >= regex.length
 
     fun char(): State<T> {
-        val charEnd = State<T>()
+        val charEnd = State<T>(forceAccept = true)
         endState.addTransition(charPredicate(advance()), charEnd)
-        return charEnd
+        return endState
     }
 
-    fun orBlock(): State<T> {
-        val end = State<T>()
+    fun orBlock(): State<T> { //TODO: Potentially return a Pair<State<T>, State<T>> containing both first and last states -> Maybe make a data class to make it easier to understand
+        val end = State<T>(forceAccept = true)
         var transitionPredicate: (Char) -> Boolean = { false }
 
         advance() //Consume '['
@@ -158,7 +161,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         advance() //Consume '('
         val states = RegexScanner<T>(advanceUntil(')')).toFSM()
         endState.addEpsilonTransition(states)
-        metaScope = states
+        metaScope = states //TODO: scopeChange = true?
 
         return states
     }
@@ -169,7 +172,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
             if (orState == null) { //First or in the regex
                 val or = State<T>()
                 orState = or
-                root.addEpsilonTransition(orState!!) //TODO: Or replace root
+                root.addEpsilonTransition(orState!!)
             }
 
             orState!!.addEpsilonTransition(metaScope)
@@ -184,7 +187,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
             afterOr = true
             orState!!
         }
-        '*' -> meta.asterix(metaScope)
+        '*' -> meta.asterisk(metaScope, endState)
         '+' -> meta.plus(metaScope)
         '?' -> meta.question(metaScope) //TODO: Some of these may need to change the metaScope
         else -> TODO("Not a valid metaCharacter (Should never happen). Throw Exception, or log error")

@@ -1,8 +1,10 @@
 package com.luzon.fsm
 
-class State<T>(val output: T? = null) {
-    private var transitions = emptyList<Pair<(Char) -> Boolean, State<T>>>() //TODO: Merge transitions going between the same states, using or predicates for each transitional predicate (Possibly an optimization)
-    private var epsilonTransitions = emptyList<State<T>>()
+import java.util.*
+
+class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
+    private var transitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>() //TODO: Merge transitions going between the same states, using or predicates for each transitional predicate (Possibly an optimization)
+    private var epsilonTransitions = mutableListOf<State<T>>()
 
     fun acceptEpsilons() = epsilonTransitions
     fun accept(char: Char) = transitions.filter { it.first(char) }.map { it.second }.toList()
@@ -10,7 +12,7 @@ class State<T>(val output: T? = null) {
     fun mergeTransitions() { //TODO: Test
         val newTransitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>()
         val groupedTransitions = transitions.groupBy { it.second }
-        epsilonTransitions = epsilonTransitions.distinct()
+        epsilonTransitions = epsilonTransitions.distinct().toMutableList()
         groupedTransitions.entries.forEach {
             var pred: (Char) -> Boolean = { false }
             it.value.forEach { pred = orPredicate(pred, it.first) }
@@ -20,33 +22,53 @@ class State<T>(val output: T? = null) {
 
     //TODO: DSL?
     fun addTransition(pred: (Char) -> Boolean, state: State<T>) {
-        transitions += pred to state
+        transitions.add(pred to state)
     }
 
     fun addEpsilonTransition(state: State<T>) {
-        epsilonTransitions += state
+        epsilonTransitions.add(state)
     }
 
     fun addEpsilonTransition(vararg states: State<T>) {
         states.forEach { addEpsilonTransition(it) }
     }
 
-    fun isAccepting() = output != null
+    fun isAccepting() = forceAccept || output != null
     fun hasEpsilonTransitions() = epsilonTransitions.isNotEmpty()
     fun hasOnlyEpsilon() = epsilonTransitions.isNotEmpty() && transitions.isEmpty()
+    fun findLeaves() = findAllChildren().filter { it.transitions.isEmpty() && it.epsilonTransitions.isEmpty() }
+    fun findAcceptChildren() = findAllChildren().filter { it.isAccepting() }
 
-    fun findLeaves(): List<State<T>> { //TODO: Test
-        if (transitions.isEmpty()) return listOf(this) //TODO: This is pretty inefficient as I'm creating a list for each single state but is a simple solution
-        val list = mutableListOf<State<T>>()
-        transitions.filter { it.second != this }.forEach { list.addAll(it.second.findLeaves()) }
-        return list
+    private fun findAllChildren(): Set<State<T>> {
+        val cachedStates = mutableSetOf<State<T>>()
+        val stateStack = Stack<State<T>>()
+        cachedStates.add(this)
+        stateStack.push(this)
+
+        while (stateStack.isNotEmpty()) {
+            val currentState = stateStack.pop()
+            currentState.transitions.forEach { (_, state) ->
+                if (cachedStates.add(state)) stateStack.push(state)
+            }
+
+            currentState.epsilonTransitions.forEach { state ->
+                if (cachedStates.add(state)) stateStack.push(state)
+            }
+        }
+
+        return cachedStates
     }
 
-    fun setLeafEpsilons(endState: State<T>) {
+    fun addLeafEpsilons(endState: State<T>) {
         findLeaves().forEach { it.addEpsilonTransition(endState) }
     }
 
-    fun setLeafEpsilons(vararg states: State<T>) {
+    fun addLeafEpsilons(vararg states: State<T>) {
         findLeaves().forEach { it.addEpsilonTransition(*states) }
+    }
+
+    fun removeAccept() {
+        forceAccept = false
+        output = null
     }
 }

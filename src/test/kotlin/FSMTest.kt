@@ -30,13 +30,22 @@ object FSMTest : Spek({
                 machine.getStateCount() shouldBe 1
             }
         }
+
+        on("a state") {
+            it("finds leaf states correctly") {
+                val root = State<Int>()
+                for (i in 1..5) root.addEpsilonTransition(State())
+                root.findLeaves().size shouldBe 5
+
+            }
+        }
     }
 
     given("a regex parser") {
         on("a character block") {
             val regex = "ABCD"
             it("should accept correct values for ABCD") {
-                val machine = FSMachine.fromRegex<Int>(regex)
+                val machine = regex(regex)
                 regex.forEach {
                     machine.accept(it)
                     machine.isRunning() shouldBe true
@@ -44,7 +53,7 @@ object FSMTest : Spek({
             }
 
             it("should not accept invalid values for ABCD") {
-                val machine = FSMachine.fromRegex<Int>(regex)
+                val machine = regex(regex)
                 machine.accept('A')
                 machine.accept('D')
                 machine.isRunning() shouldBe false
@@ -56,7 +65,7 @@ object FSMTest : Spek({
 
             it("should accept correct values for [ABD-Za-z]") {
                 "ABDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".forEach {
-                    val machine = FSMachine.fromRegex<Int>(orBlockRegex)
+                    val machine = regex(orBlockRegex)
                     machine.accept(it)
                     machine.isRunning() shouldBe true
                 }
@@ -64,11 +73,51 @@ object FSMTest : Spek({
 
             it("should not accept invalid values for [ABD-Za-z]") {
                 "C0123456789".forEach {
-                    val machine = FSMachine.fromRegex<Int>(orBlockRegex)
+                    val machine = regex(orBlockRegex)
                     machine.accept(it)
                     machine.isRunning() shouldBe false
                 }
             }
         }
+
+        on("parenthesis") {
+            val parenthesisRegex = "(ABCD)"
+            it("should accept correct values for (ABCD)") {
+                val machine = regex(parenthesisRegex)
+                "ABCD".forEach {
+                    machine.accept(it)
+                }
+                machine.isRunning() shouldBe true
+            }
+
+            it("should not accept invalid values for (ABCD)") {
+                val machine = FSMachine.fromRegex<Int>(parenthesisRegex)
+                machine.accept('D')
+                machine.isRunning() shouldBe false
+            }
+        }
+
+        on("an asterisk regex") {
+            it("should accept multiple A's for A*") {
+                val machine = regex("A*")
+
+                for (i in 1..5) machine.accept('A')
+
+                machine.isRunning() shouldBe true
+            }
+
+            it("should accept multiple AB's for AB*") {
+                val machine = regex("AB*")
+
+                for (i in 1..5) {
+                    machine.accept('A')
+                    machine.accept('B')
+                }
+
+                machine.isRunning() shouldBe true
+            }
+        }
     }
 })
+
+private fun regex(regex: String): FSMachine<Int> = FSMachine.fromRegex(regex)
