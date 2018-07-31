@@ -50,6 +50,7 @@ object FSMTest : Spek({
                     machine.accept(it)
                     machine.isRunning() shouldBe true
                 }
+                machine.isAccepting() shouldBe true
             }
 
             it("should not accept invalid values for ABCD") {
@@ -67,7 +68,7 @@ object FSMTest : Spek({
                 "ABDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".forEach {
                     val machine = regex(orBlockRegex)
                     machine.accept(it)
-                    machine.isRunning() shouldBe true
+                    machine.isAccepting() shouldBe true
                 }
             }
 
@@ -87,7 +88,7 @@ object FSMTest : Spek({
                 "ABCD".forEach {
                     machine.accept(it)
                 }
-                machine.isRunning() shouldBe true
+                machine.isAccepting() shouldBe true
             }
 
             it("should not accept invalid values for (ABCD)") {
@@ -98,12 +99,13 @@ object FSMTest : Spek({
         }
 
         on("an asterisk regex") {
+            //TODO: Fail Tests, no input test
             it("should accept multiple A's for A*") {
                 val machine = regex("A*")
 
                 for (i in 1..5) machine.accept('A')
 
-                machine.isRunning() shouldBe true
+                machine.isAccepting() shouldBe true
             }
 
             it("should accept multiple AB's for AB*") {
@@ -114,7 +116,18 @@ object FSMTest : Spek({
                     machine.accept('B')
                 }
 
-                machine.isRunning() shouldBe true
+                machine.isAccepting() shouldBe true
+            }
+        }
+
+        on("a plus regex") {
+            //TODO: Fail tests
+            it("should accept multiple A's for A+") {
+                val machine = regex("A+")
+
+                for (i in 1..5) machine.accept('A')
+
+                machine.isAccepting() shouldBe true
             }
         }
     }
