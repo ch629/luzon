@@ -145,28 +145,22 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
     fun metaCharacter(): Pair<State<T>, State<T>> = when (advance()) {
         '|' -> or()
         '*' -> asterisk()
-        '+' -> newPlus()
-        '?' -> newQuestion() //TODO: Some of these may need to change the metaScope
+        '+' -> plus()
+        '?' -> question() //TODO: Some of these may need to change the metaScope
         else -> TODO("Not a valid metaCharacter (Should never happen). Throw Exception, or log error")
     }
 
-    fun or(): Pair<State<T>, State<T>> {
+    fun or(): Pair<State<T>, State<T>> { //TODO: Properly look at this and the toFSM method to get this right.
         scopeChange = true
-        if (orState == null) { //First or in the regex
-            val or = State<T>()
-            orState = or
-            root.addEpsilonTransition(orState!!)
-        }
 
-        orState!!.addEpsilonTransition(metaScope)
-
-        if (orState == null) { //First or
+        if (orState == null) { //First or in regex
             orState = State()
             orEndState = State()
         }
 
         orState!!.addEpsilonTransition(metaScope)
-        metaScope.findLeaves()[0].addEpsilonTransition(orEndState!!)
+//        metaScope.findLeaves()[0].addEpsilonTransition(orEndState!!)
+        endState.addEpsilonTransition(orEndState!!)
 
         afterOr = true
         return orState!! to orEndState!!
@@ -181,7 +175,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         return metaScope to newEndState
     }
 
-    fun newPlus(): Pair<State<T>, State<T>> {
+    fun plus(): Pair<State<T>, State<T>> {
         val newEndState = State<T>(forceAccept = true)
 
         endState.addEpsilonTransition(metaScope)
@@ -190,8 +184,13 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         return metaScope to newEndState
     }
 
-    fun newQuestion(): Pair<State<T>, State<T>> {
-        TODO()
+    fun question(): Pair<State<T>, State<T>> {
+        val newEndState = State<T>(forceAccept = true)
+
+        metaScope.addEpsilonTransition(newEndState)
+        endState.addEpsilonTransition(newEndState)
+
+        return metaScope to newEndState
     }
 
     private fun advanceUntil(char: Char) = advanceUntil { it == char }

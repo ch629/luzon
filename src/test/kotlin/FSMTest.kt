@@ -99,11 +99,16 @@ object FSMTest : Spek({
         }
 
         on("an asterisk regex") {
-            //TODO: Fail Tests, no input test
             it("should accept multiple A's for A*") {
                 val machine = regex("A*")
 
                 for (i in 1..5) machine.accept('A')
+
+                machine.isAccepting() shouldBe true
+            }
+
+            it("should accept no input") {
+                val machine = regex("A*")
 
                 machine.isAccepting() shouldBe true
             }
@@ -121,11 +126,48 @@ object FSMTest : Spek({
         }
 
         on("a plus regex") {
-            //TODO: Fail tests
+            val plusRegex = "A+"
             it("should accept multiple A's for A+") {
-                val machine = regex("A+")
+                val machine = regex(plusRegex)
 
                 for (i in 1..5) machine.accept('A')
+
+                machine.isAccepting() shouldBe true
+            }
+
+            it("it should not accept no input") {
+                val machine = regex(plusRegex)
+
+                machine.isAccepting() shouldBe false
+            }
+        }
+
+        on("a question regex") {
+            val questionRegex = "A?"
+            it("should accept a single A for A?") {
+                val machine = regex(questionRegex)
+                machine.accept('A')
+
+                machine.isAccepting() shouldBe true
+            }
+
+            it("should accept for no input") {
+                val machine = regex(questionRegex)
+
+                machine.isAccepting() shouldBe true
+            }
+        }
+
+        on("an or regex") {
+            val orRegex = "A|B"
+            it("should accept either A or B for A|B") {
+                var machine = regex(orRegex)
+                machine.accept('A')
+
+                machine.isAccepting() shouldBe true
+
+                machine = regex(orRegex)
+                machine.accept('B')
 
                 machine.isAccepting() shouldBe true
             }
