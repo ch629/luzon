@@ -57,6 +57,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
     private var orState: State<T>? = null
     private var orEndState: State<T>? = null
     private var afterOr = false
+    private var escape = false //Backslash escape
 
     companion object {
         private const val END_CHAR: Char = '\n'
@@ -67,13 +68,24 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         while (!atEnd()) {
             val char = peek()
 
-            val startEnd = when (char) {
-                '[' -> orBlock()
-                '(' -> parenthesis()
-                '{' -> TODO("Repetitions -> Relies on metaScope too") //TODO: Might not need this for my language specifically, but should implement if I want this to be a full regex parser
-                in metaCharacters -> metaCharacter()
-                else -> char()
+            if (char == '\\') {
+                escape = true //TODO: Make this local instead?
+                advance()
             }
+
+            val startEnd = if (!escape) {
+                when (char) {
+                    '[' -> orBlock()
+                    '(' -> parenthesis()
+                    '{' -> TODO("Repetitions -> Relies on metaScope too") //TODO: Might not need this for my language specifically, but should implement if I want this to be a full regex parser
+                    in metaCharacters -> metaCharacter()
+                    else -> char()
+                }
+            } else {
+                char() //TODO: Extra metacharacters like \\w \\d etc (Might not really need it)
+            }
+
+            escape = false
 
             endState = startEnd.second
             endState.removeAccept()
@@ -106,9 +118,16 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
 
     fun atEnd() = current >= regex.length
 
-    fun char(): Pair<State<T>, State<T>> {
+    fun char(): Pair<State<T>, State<T>> { //TODO: Error when escaping normal characters, also implement \w \d etc.?
         val charEnd = State<T>(forceAccept = true)
-        endState.addTransition(charPredicate(advance()), charEnd)
+        val char = advance()
+        val predicate = when (char) {
+            '.' -> orPredicate(orPredicate(rangePredicate('0', '9'), rangePredicate('A', 'Z')), rangePredicate('a', 'z')) //TODO: Neaten (Maybe in a variable or something)
+            else -> charPredicate(char)
+        }
+
+        endState.addTransition(predicate, charEnd)
+
         return endState to charEnd
     }
 
