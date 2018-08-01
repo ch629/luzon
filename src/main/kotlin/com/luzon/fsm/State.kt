@@ -39,6 +39,35 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
     fun findLeaves() = findAllChildren().filter { it.transitions.isEmpty() && it.epsilonTransitions.isEmpty() }
     fun findAcceptChildren() = findAllChildren().filter { it.isAccepting() }
 
+    fun transferTo(other: State<T>) { //Transfers all the transitional data to another state
+        other.epsilonTransitions.addAll(epsilonTransitions)
+        other.transitions.addAll(transitions)
+        other.output = output
+        other.forceAccept = forceAccept
+
+        epsilonTransitions.clear()
+        transitions.clear()
+        output = null
+        forceAccept = false
+    }
+
+    fun transferToNext(): State<T> {
+        val newState = State<T>()
+        transferTo(newState)
+        addEpsilonTransition(newState)
+        return newState
+    }
+
+    fun replaceWith(other: State<T>) {
+//        epsilonTransitions.clear()
+//        transitions.clear()
+
+        epsilonTransitions.addAll(other.epsilonTransitions)
+        transitions.addAll(other.transitions)
+        output = other.output
+        forceAccept = other.forceAccept
+    }
+
     private fun findAllChildren(): Set<State<T>> {
         val cachedStates = mutableSetOf<State<T>>()
         val stateStack = Stack<State<T>>()

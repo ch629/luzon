@@ -57,7 +57,6 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
     private var orState: State<T>? = null
     private var orEndState: State<T>? = null
     private var afterOr = false
-    private var escape = false //Backslash escape
 
     companion object {
         private const val END_CHAR: Char = '\n'
@@ -66,10 +65,16 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
 
     fun toFSM(): State<T> {
         while (!atEnd()) {
+            var escape = false
             val char = peek()
 
+            if (scopeChange) {
+                metaScope = endState
+                scopeChange = false
+            }
+
             if (char == '\\') {
-                escape = true //TODO: Make this local instead?
+                escape = true
                 advance()
             }
 
@@ -85,20 +90,18 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
                 char() //TODO: Extra metacharacters like \\w \\d etc (Might not really need it)
             }
 
-            escape = false
-
             endState = startEnd.second
             endState.removeAccept()
 
-            if (afterOr) { //TODO: Re-look at this and the or function, as endState is adding an epsilon twice sometimes.
-                endState.addEpsilonTransition(orEndState!!)
+            if (afterOr) {
+                endState = startEnd.first
                 afterOr = false
             }
+        }
 
-            if (scopeChange) {
-                metaScope = endState
-                scopeChange = false
-            }
+        if (orState != null) {
+            endState.addEpsilonTransition(orEndState!!)
+            endState = orEndState!!
         }
 
         endState.forceAccept = true
@@ -169,20 +172,28 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         else -> TODO("Not a valid metaCharacter (Should never happen). Throw Exception, or log error")
     }
 
-    fun or(): Pair<State<T>, State<T>> { //TODO: Properly look at this and the toFSM method to get this right.
+    fun or(): Pair<State<T>, State<T>> {
         scopeChange = true
 
         if (orState == null) { //First or in regex
             orState = State()
             orEndState = State()
-        }
 
-        orState!!.addEpsilonTransition(metaScope)
+            val newState = metaScope.transferToNext()
+            metaScope.replaceWith(orState!!)
+            orState = metaScope
+            metaScope = newState
+        } else orState!!.addEpsilonTransition(metaScope)
+
 //        metaScope.findLeaves()[0].addEpsilonTransition(orEndState!!)
         endState.addEpsilonTransition(orEndState!!)
 
+        val extraState = State<T>()
+
+        orState!!.addEpsilonTransition(extraState)
+
         afterOr = true
-        return orState!! to orEndState!!
+        return extraState to orEndState!!
     }
 
     fun asterisk(): Pair<State<T>, State<T>> {
