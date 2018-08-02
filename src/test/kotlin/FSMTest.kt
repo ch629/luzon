@@ -36,12 +36,12 @@ object FSMTest : Spek({
                 val root = State<Int>()
                 for (i in 1..5) root.addEpsilonTransition(State())
                 root.findLeaves().size shouldBe 5
-
             }
         }
     }
 
     given("a regex parser") {
+        //TODO: Test everything together
         on("a character block") {
             val regex = "ABCD"
             it("should accept correct values for ABCD") {
@@ -55,8 +55,7 @@ object FSMTest : Spek({
 
             it("should not accept invalid values for ABCD") {
                 val machine = regex(regex)
-                machine.accept('A')
-                machine.accept('D')
+                machine.accept("AD")
                 machine.isRunning() shouldBe false
             }
         }
@@ -85,9 +84,7 @@ object FSMTest : Spek({
             val parenthesisRegex = "(ABCD)"
             it("should accept correct values for (ABCD)") {
                 val machine = regex(parenthesisRegex)
-                "ABCD".forEach {
-                    machine.accept(it)
-                }
+                machine.accept("ABCD")
                 machine.isAccepting() shouldBe true
             }
 
@@ -102,7 +99,7 @@ object FSMTest : Spek({
             it("should accept multiple A's for A*") {
                 val machine = regex("A*")
 
-                for (i in 1..5) machine.accept('A')
+                machine.accept("AAAAA")
 
                 machine.isAccepting() shouldBe true
             }
@@ -116,9 +113,8 @@ object FSMTest : Spek({
             it("should accept multiple AB's for AB*") {
                 val machine = regex("AB*")
 
-                for (i in 1..5) {
-                    machine.accept('A')
-                    machine.accept('B')
+                "AB".repeat(5).forEach {
+                    machine.accept(it)
                 }
 
                 machine.isAccepting() shouldBe true
@@ -159,15 +155,52 @@ object FSMTest : Spek({
         }
 
         on("an or regex") {
-            val orRegex = "A|B"
             it("should accept either A or B for A|B") {
+                val orRegex = "A|B"
                 var machine = regex(orRegex)
-                machine.accept('A')
 
+                machine.accept('A')
                 machine.isAccepting() shouldBe true
 
                 machine = regex(orRegex)
+
                 machine.accept('B')
+                machine.isAccepting() shouldBe true
+            }
+
+            it("should accept either AB or CD for AB|CD") {
+                val orRegex = "AB|CD"
+                var machine = regex(orRegex)
+
+                machine.accept("AB")
+                machine.isAccepting() shouldBe true
+
+                machine = regex(orRegex)
+
+                machine.accept("CD")
+                machine.isAccepting() shouldBe true
+            }
+        }
+
+        on("a complex regex") {
+            val reg = "(AB|CD)*"
+            it("should pass with no inputs") {
+                val machine = regex(reg)
+                machine.isAccepting() shouldBe true
+            }
+
+            it("should pass with multiple ABs") {
+                val machine = regex(reg)
+
+                "AB".repeat(5).forEach { machine.accept(it) }
+
+                machine.isAccepting() shouldBe true
+            }
+
+            it("should pass with ABCD") {
+                val machine = regex(reg)
+
+                "ABCD".forEach { machine.accept(it) }
 
                 machine.isAccepting() shouldBe true
             }
@@ -176,3 +209,9 @@ object FSMTest : Spek({
 })
 
 private fun regex(regex: String): FSMachine<Int> = FSMachine.fromRegex(regex)
+
+private fun FSMachine<Int>.accept(input: String) {
+    input.forEach {
+        accept(it)
+    }
+}
