@@ -131,25 +131,26 @@ class RegexScanner<T>(private val regex: String) {
     fun char(escape: Boolean = false): Pair<State<T>, State<T>> { //TODO: Error when escaping normal characters, also implement \w \d etc.?
         val charEnd = State<T>(forceAccept = true)
         val char = advance()
+        var isRange = true
 
         val predicate = if (!escape) when (char) { //TODO: Find a nicer way to deal with this, including the isRange part.
             '.' -> anyCharacterPredicate //Any
             else -> {
-                afterMeta = true
+                isRange = false
                 char.predicate()
             }
         } else when (char) {
             'd' -> numericalPredicate
             'w' -> alphaNumericPredicate //Alphanumerical
             else -> {
-                afterMeta = false
+                isRange = false
                 char.predicate()
             }
         }
 
         endState.addTransition(predicate, charEnd)
 
-        if (afterMeta) {
+        if (afterMeta || isRange) {
             afterMeta = false
             metaScope = endState
         }
