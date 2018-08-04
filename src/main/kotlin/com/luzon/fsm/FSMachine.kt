@@ -5,6 +5,7 @@ class FSMachine<T>(statesList: List<State<T>>) {
     constructor(root: State<T>) : this(mutableListOf(root))
 
     private val states = statesList.toMutableList()
+    private val originalStates = statesList
 
     init {
         updateEpsilons()
@@ -46,6 +47,13 @@ class FSMachine<T>(statesList: List<State<T>>) {
     fun merge(other: FSMachine<T>) = FSMachine(states + other.states) //TODO: Set accept output for each side of the machine here then set any accept states to the appropriate value.
 
     fun getStateCount() = states.count()
+
+    fun reset() { //Resets machine to it's original state.
+        states.clear()
+        states.addAll(originalStates)
+
+        updateEpsilons()
+    }
 }
 
 class RegexScanner<T>(private val regex: String) {
