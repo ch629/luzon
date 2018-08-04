@@ -34,10 +34,7 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
     }
 
     fun isAccepting() = forceAccept || output != null
-    fun hasEpsilonTransitions() = epsilonTransitions.isNotEmpty()
-    fun hasOnlyEpsilon() = epsilonTransitions.isNotEmpty() && transitions.isEmpty()
     fun findLeaves() = findAllChildren().filter { it.transitions.isEmpty() && it.epsilonTransitions.isEmpty() }
-    fun findAcceptChildren() = findAllChildren().filter { it.isAccepting() }
 
     fun transferTo(other: State<T>) { //Transfers all the transitional data to another state
         other.epsilonTransitions.addAll(epsilonTransitions)
@@ -86,14 +83,6 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
         }
 
         return cachedStates
-    }
-
-    fun addLeafEpsilons(endState: State<T>) {
-        findLeaves().forEach { it.addEpsilonTransition(endState) }
-    }
-
-    fun addLeafEpsilons(vararg states: State<T>) {
-        findLeaves().forEach { it.addEpsilonTransition(*states) }
     }
 
     fun removeAccept() {

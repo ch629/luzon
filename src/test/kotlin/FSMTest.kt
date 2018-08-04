@@ -1,5 +1,6 @@
 import com.luzon.fsm.FSMachine
 import com.luzon.fsm.State
+import com.luzon.fsm.predicate
 import org.amshove.kluent.shouldBe
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
@@ -12,7 +13,7 @@ object FSMTest : Spek({
     given("a finite state machine") {
         on("a simple transition") {
             val root = State<Int>()
-            root.addTransition({ it == 'A' }, State())
+            root.addTransition('A'.predicate(), State())
             val machine = FSMachine(root)
             it("should accept to the next state successfully") {
                 machine.accept('A')
@@ -23,7 +24,7 @@ object FSMTest : Spek({
         on("an epsilon transition") {
             val root = State<Int>()
             val otherState = State<Int>()
-            otherState.addTransition({ it == 'A' }, State())
+            otherState.addTransition('A'.predicate(), State())
             root.addEpsilonTransition(otherState)
             val machine = FSMachine(root)
 
