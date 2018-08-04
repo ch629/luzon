@@ -1,0 +1,2 @@
+[1-9]\d*d|\d*\.\d+d? 1d true 101234d true 1 false 101234 false 0123d false 10.092 true 10.092d true 0.1d true .1d true .1 true 10d true .01 true .551 true abc false
+ABCD ABCD true D false ABC false

@@ -3,7 +3,7 @@ package com.luzon.fsm
 import java.util.*
 
 class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
-    private var transitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>() //TODO: Merge transitions going between the same states, using or predicates for each transitional predicate (Possibly an optimization)
+    private var transitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>()
     private var epsilonTransitions = mutableListOf<State<T>>()
 
     fun acceptEpsilons() = epsilonTransitions
@@ -26,7 +26,7 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
     }
 
     fun addEpsilonTransition(state: State<T>) {
-        epsilonTransitions.add(state)
+        if (state != this && !epsilonTransitions.contains(state)) epsilonTransitions.add(state)
     }
 
     fun addEpsilonTransition(vararg states: State<T>) {
@@ -59,8 +59,8 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
     }
 
     fun replaceWith(other: State<T>) {
-//        epsilonTransitions.clear()
-//        transitions.clear()
+        epsilonTransitions.clear()
+        transitions.clear()
 
         epsilonTransitions.addAll(other.epsilonTransitions)
         transitions.addAll(other.transitions)

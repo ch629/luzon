@@ -48,15 +48,21 @@ class FSMachine<T>(statesList: List<State<T>>) {
     fun getStateCount() = states.count()
 }
 
-class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharacters
+class RegexScanner<T>(private val regex: String) {
     private var current = 0
     private val root = State<T>()
     private var endState = root
     private var metaScope = root
+    private var orScope = root
     private var scopeChange = false
     private var orState: State<T>? = null
     private var orEndState: State<T>? = null
     private var afterOr = false
+    private var afterMeta = false
+
+    private val numericalPredicate = '0' range '9' //
+    private val alphaNumericPredicate = numericalPredicate or ('A' range 'Z') or ('a' range 'z')
+    private val anyCharacterPredicate: (Char) -> Boolean = { true }
 
     companion object {
         private const val END_CHAR: Char = '\n'
@@ -87,7 +93,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
                     else -> char()
                 }
             } else {
-                char() //TODO: Extra metacharacters like \\w \\d etc (Might not really need it)
+                char(escape)
             }
 
             endState = startEnd.second
@@ -95,6 +101,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
 
             if (afterOr) {
                 endState = startEnd.first
+                orScope = endState //This is the only place it changes
                 afterOr = false
             }
         }
@@ -121,20 +128,37 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
 
     fun atEnd() = current >= regex.length
 
-    fun char(): Pair<State<T>, State<T>> { //TODO: Error when escaping normal characters, also implement \w \d etc.?
+    fun char(escape: Boolean = false): Pair<State<T>, State<T>> { //TODO: Error when escaping normal characters, also implement \w \d etc.?
         val charEnd = State<T>(forceAccept = true)
         val char = advance()
-        val predicate = when (char) {
-            '.' -> orPredicate(orPredicate(rangePredicate('0', '9'), rangePredicate('A', 'Z')), rangePredicate('a', 'z')) //TODO: Neaten (Maybe in a variable or something)
-            else -> charPredicate(char)
+
+        val predicate = if (!escape) when (char) { //TODO: Find a nicer way to deal with this, including the isRange part.
+            '.' -> anyCharacterPredicate //Any
+            else -> {
+                afterMeta = true
+                char.predicate()
+            }
+        } else when (char) {
+            'd' -> numericalPredicate
+            'w' -> alphaNumericPredicate //Alphanumerical
+            else -> {
+                afterMeta = false
+                char.predicate()
+            }
         }
 
         endState.addTransition(predicate, charEnd)
+
+        if (afterMeta) {
+            afterMeta = false
+            metaScope = endState
+        }
 
         return endState to charEnd
     }
 
     fun orBlock(): Pair<State<T>, State<T>> {
+        scopeChange = true
         val end = State<T>(forceAccept = true)
         var transitionPredicate: (Char) -> Boolean = { false }
 
@@ -144,9 +168,9 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
             val char = advance()
             transitionPredicate = if (peek() == '-') { //Is Range
                 advance() //Consume '-'
-                orPredicate(transitionPredicate, rangePredicate(char, advance()))
-            } else orPredicate(transitionPredicate, charPredicate(char))
-        } while (char != ']' && char != END_CHAR)
+                transitionPredicate or (char range advance())
+            } else transitionPredicate or char.predicate()
+        } while (peek() != ']' && peek() != END_CHAR)
 
         advance() //Consume ']'
 
@@ -164,35 +188,38 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
         return states to scanner.endState
     }
 
-    fun metaCharacter(): Pair<State<T>, State<T>> = when (advance()) {
-        '|' -> or()
-        '*' -> asterisk()
-        '+' -> plus()
-        '?' -> question() //TODO: Some of these may need to change the metaScope
-        else -> TODO("Not a valid metaCharacter (Should never happen). Throw Exception, or log error")
+    fun metaCharacter(): Pair<State<T>, State<T>> {
+        afterMeta = true
+
+        return when (advance()) {
+            '|' -> or()
+            '*' -> asterisk()
+            '+' -> plus()
+            '?' -> question()
+            else -> TODO("Not a valid metaCharacter (Should never happen). Throw Exception, or log error")
+        }
     }
 
     fun or(): Pair<State<T>, State<T>> {
         scopeChange = true
+        afterOr = true
 
         if (orState == null) { //First or in regex
             orState = State()
             orEndState = State()
 
-            val newState = metaScope.transferToNext()
-            metaScope.replaceWith(orState!!)
-            orState = metaScope
-            metaScope = newState
-        } else orState!!.addEpsilonTransition(metaScope)
+            val newState = orScope.transferToNext()
+            orScope.replaceWith(orState!!)
+            orState = orScope
+            orScope.addEpsilonTransition(newState)
+        } else orState!!.addEpsilonTransition(orScope)
 
-//        metaScope.findLeaves()[0].addEpsilonTransition(orEndState!!)
         endState.addEpsilonTransition(orEndState!!)
 
         val extraState = State<T>()
 
         orState!!.addEpsilonTransition(extraState)
 
-        afterOr = true
         return extraState to orEndState!!
     }
 
@@ -238,8 +265,12 @@ class RegexScanner<T>(private val regex: String) { //TODO: Backslash metacharact
     }
 }
 
-fun rangePredicate(start: Char, end: Char): (Char) -> Boolean = { it in start..end }
-fun charPredicate(c: Char): (Char) -> Boolean = { it == c }
-fun orPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) || second(it) }
+internal fun rangePredicate(start: Char, end: Char): (Char) -> Boolean = { it in start..end }
+internal fun charPredicate(c: Char): (Char) -> Boolean = { it == c }
+internal fun orPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) || second(it) }
 
-fun <T> List<List<T>>.merge() = fold(emptyList<T>()) { acc, stateList -> acc + stateList }
+internal infix fun ((Char) -> Boolean).or(other: (Char) -> Boolean): (Char) -> Boolean = orPredicate(this, other)
+internal infix fun Char.range(other: Char) = rangePredicate(this, other)
+internal fun Char.predicate() = charPredicate(this)
+
+internal fun <T> List<List<T>>.merge() = fold(emptyList<T>()) { acc, stateList -> acc + stateList }

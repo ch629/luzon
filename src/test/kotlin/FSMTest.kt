@@ -5,6 +5,8 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
+import java.nio.file.Files
+import java.nio.file.Paths
 
 object FSMTest : Spek({
     given("a finite state machine") {
@@ -203,6 +205,31 @@ object FSMTest : Spek({
                 "ABCD".forEach { machine.accept(it) }
 
                 machine.isAccepting() shouldBe true
+            }
+        }
+    }
+
+    given("examples with a regex parser") {
+        val examples = mutableListOf<Pair<String, List<Pair<String, String>>>>()
+        val fileText = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.txt").toURI()))
+
+        fileText.forEach {
+            val split = it.split(" ")
+            val regex = split[0]
+            val test = split.subList(1, split.size).zipWithNext()
+
+            examples.add(regex to test)
+        }
+
+        examples.forEach { (regex, tests) ->
+            on("the regular expression $regex") {
+                tests.forEach { (test, result) ->
+                    it("should receive $result for isAccepting with the input $test") {
+                        val machine = regex(regex)
+                        machine.accept(test)
+                        machine.isAccepting() shouldBe result.toBoolean()
+                    }
+                }
             }
         }
     }
