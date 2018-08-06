@@ -219,9 +219,10 @@ object FSMTest : Spek({
             on("the regular expression $regex") {
                 val machine = regex(regex)
                 tests.forEach { (test, result) ->
+                    val emptyInput = test == "<none>"
                     it("should receive $result for isAccepting with the input $test") {
                         machine.reset()
-                        machine.accept(test)
+                        if (!emptyInput) machine.accept(test)
                         machine.isAccepting() shouldBe result.toBoolean()
                     }
                 }

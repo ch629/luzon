@@ -108,7 +108,7 @@ class RegexScanner<T>(private val regex: String) {
     }
 
     private fun orBlock(): Pair<State<T>, State<T>> {
-        scopeChange = true
+        afterMeta = true
         val end = State<T>(forceAccept = true)
         var transitionPredicate: (Char) -> Boolean = { false }
 
