@@ -1,6 +1,6 @@
 package com.luzon.fsm
 
-class RegexScanner<T>(private val regex: String) {
+class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
     private val root = State<T>()
     private var current = 0
     private var endState = root
@@ -69,7 +69,7 @@ class RegexScanner<T>(private val regex: String) {
 
     private fun advance(): Char {
         val char = peek()
-        if (!atEnd()) current++
+        current++
         return char
     }
 

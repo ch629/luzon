@@ -1,6 +1,5 @@
 package com.luzon.fsm
 
-//TODO: Helper class to deal with inputs and exiting with possible outputs at a specific location; to consume the correct input into a token.
 class FSMachine<T>(statesList: List<State<T>>) {
     constructor(root: State<T>) : this(mutableListOf(root))
 
@@ -41,10 +40,26 @@ class FSMachine<T>(statesList: List<State<T>>) {
 
     fun isAccepting() = states.any { it.isAccepting() }
 
+    fun acceptingStates() = states.filter { it.isAccepting() }
+
     fun getCurrentOutput(): List<T> = states.filter { it.isAccepting() }.map { it.output!! }.distinct()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
-    fun merge(other: FSMachine<T>) = FSMachine(states + other.states) //TODO: Set accept output for each side of the machine here then set any accept states to the appropriate value.
+    fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
+
+    fun mergeWithOutput(thisOutput: T, other: FSMachine<T>, otherOutput: T): FSMachine<T> {
+        setOutput(thisOutput)
+        other.setOutput(otherOutput)
+
+        return merge(other)
+    }
+
+    private fun setOutput(output: T) {
+        acceptingStates().forEach {
+            it.output = output
+            it.forceAccept = false
+        }
+    }
 
     fun getStateCount() = states.count()
 

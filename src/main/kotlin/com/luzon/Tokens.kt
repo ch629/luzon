@@ -28,9 +28,9 @@ enum class Operators {
     DECREMENT
 }
 
-sealed class Token
+sealed class Token(val PRIORITY: Int = 0)
 
-data class ID(val name: String, val value: Token) : Token() //TODO: Point to a location in the symbol table?
+data class ID(val name: String, val value: Token) : Token(-100) //TODO: Point to a location in the symbol table?
 
 data class OPERATOR(val op: Operators) : Token()
 
@@ -46,11 +46,11 @@ class CHAR_LITERAL(c: Char) : LiteralToken<Char>(c)
 class BOOLEAN_LITERAL(b: Boolean) : LiteralToken<Boolean>(b)
 
 //TODO: Interpreter Pattern?
-sealed class Expression<T> : Token() { //TODO: Maybe make a class to hold T for Expressions so I can easily implement things like plus i.e. a.plus(b) without worrying about types outside
+sealed class Expression<T>(PRIORITY: Int = 0) : Token(PRIORITY) { //TODO: Maybe make a class to hold T for Expressions so I can easily implement things like plus i.e. a.plus(b) without worrying about types outside
     abstract fun resolve(): T
 }
 
-class ExprID<T> : Expression<T>() {
+class ExprID<T> : Expression<T>(-100) {
     override fun resolve(): T {
         TODO("Symbol Table")
     }
