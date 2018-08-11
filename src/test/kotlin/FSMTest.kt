@@ -1,6 +1,8 @@
 import com.luzon.fsm.FSMachine
 import com.luzon.fsm.State
 import com.luzon.fsm.predicate
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import org.amshove.kluent.shouldBe
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
@@ -204,26 +206,20 @@ object FSMTest : Spek({
     }
 
     given("examples with a regex parser") {
-        val examples = mutableListOf<Pair<String, List<Pair<String, String>>>>()
-        val fileText = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.txt").toURI()))
-
-        fileText.forEach {
-            val split = it.split(" ")
-            val regex = split[0]
-            val test = split.subList(1, split.size).zipWithNext()
-
-            examples.add(regex to test)
-        }
+        val json = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.json").toURI())).joinToString(" ")
+        val paramType = Types.newParameterizedType(List::class.java, RegexIOTest::class.java)
+        val adapter = Moshi.Builder().build().adapter<List<RegexIOTest>>(paramType)
+        val examples = adapter.fromJson(json)!!
 
         examples.forEach { (regex, tests) ->
             on("the regular expression $regex") {
                 val machine = regex(regex)
                 tests.forEach { (test, result) ->
-                    val emptyInput = test == "<none>"
+                    val emptyInput = test.isEmpty()
                     it("should receive $result for isAccepting with the input $test") {
                         machine.reset()
                         if (!emptyInput) machine.accept(test)
-                        machine.isAccepting() shouldBe result.toBoolean()
+                        machine.isAccepting() shouldBe result
                     }
                 }
             }
@@ -237,4 +233,26 @@ private fun FSMachine<Int>.accept(input: String) {
     input.forEach {
         accept(it)
     }
+
+}
+
+//Just converts the old format of "<regex> (<input> <expected output>)+"
+private fun fromTestTxtToJson(): String {
+    val fileText = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.txt").toURI()))
+    val paramType = Types.newParameterizedType(List::class.java, RegexIOTest::class.java)
+    val adapter = Moshi.Builder().build().adapter<List<RegexIOTest>>(paramType)
+
+    val tests = fileText.map { line ->
+        val split = line.split(" ")
+        val regex = split[0]
+        val tests = split.subList(1, split.size).zipWithNext()
+
+        RegexIOTest(regex,
+                tests.map { (test, result) ->
+                    TestObject(if (test == "<none>") "" else test, result.toBoolean())
+                }
+        )
+    }
+
+    return adapter.toJson(tests)
 }
