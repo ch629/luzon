@@ -1,6 +1,7 @@
 import com.luzon.fsm.FSMachine
 import com.luzon.fsm.State
 import com.luzon.fsm.predicate
+import com.luzon.kodein
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import org.amshove.kluent.shouldBe
@@ -8,6 +9,7 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
+import org.kodein.di.generic.instance
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -236,11 +238,13 @@ private fun FSMachine<Int>.accept(input: String) {
 
 }
 
+
 //Just converts the old format of "<regex> (<input> <expected output>)+"
 private fun fromTestTxtToJson(): String {
     val fileText = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.txt").toURI()))
     val paramType = Types.newParameterizedType(List::class.java, RegexIOTest::class.java)
-    val adapter = Moshi.Builder().build().adapter<List<RegexIOTest>>(paramType)
+    val moshi: Moshi by kodein.instance()
+    val adapter = moshi.adapter<List<RegexIOTest>>(paramType)
 
     val tests = fileText.map { line ->
         val split = line.split(" ")

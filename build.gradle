@@ -41,6 +41,8 @@ dependencies {
     compile "com.squareup.moshi:moshi:$moshiVersion"
     compile "com.squareup.moshi:moshi-kotlin:$moshiVersion"
 
+    compile "org.kodein.di:kodein-di-generic-jvm:5.2.0"
+
     testCompile "junit:junit:4.12"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     testRuntime "org.junit.jupiter:junit-jupiter-engine:$junitVersion"

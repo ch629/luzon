@@ -12,6 +12,10 @@ class FSMachine<T>(statesList: List<State<T>>) {
 
     companion object {
         fun <T> fromRegex(str: String) = FSMachine(RegexScanner<T>(str).toFSM())
+
+        fun <T> merge(vararg machines: FSMachine<T>): FSMachine<T> = machines.reduce { acc, fsMachine ->
+            acc.merge(fsMachine)
+        }
     }
 
     private fun updateEpsilons(): Boolean {
@@ -54,11 +58,13 @@ class FSMachine<T>(statesList: List<State<T>>) {
         return merge(other)
     }
 
-    private fun setOutput(output: T) {
+    fun setOutput(output: T): FSMachine<T> {
         acceptingStates().forEach {
             it.output = output
             it.forceAccept = false
         }
+
+        return this
     }
 
     fun getStateCount() = states.count()
