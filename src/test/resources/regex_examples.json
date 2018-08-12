@@ -1,416 +1,95 @@
 [
   {
     "regex": "[1-9]\\d*d|\\d*\\.\\d+d?",
-    "tests": [
-      {
-        "input": "1d",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "101234d",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "1",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "101234",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "0123d",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "10.092",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "10.092d",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "0.1d",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": ".1d",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": ".1",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "10d",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": ".01",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": ".551",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "abc",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "",
-        "result": false
-      }
-    ]
+    "tests": {
+      "1d": true,
+      "true": false,
+      "101234d": true,
+      "1": false,
+      "false": false,
+      "101234": false,
+      "0123d": false,
+      "10.092": true,
+      "10.092d": true,
+      "0.1d": true,
+      ".1d": true,
+      ".1": true,
+      "10d": true,
+      ".01": true,
+      ".551": true,
+      "abc": false,
+      "": false
+    }
   },
   {
     "regex": "ABCD",
-    "tests": [
-      {
-        "input": "ABCD",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "D",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "ABC",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "",
-        "result": false
-      }
-    ]
+    "tests": {
+      "ABCD": true,
+      "true": false,
+      "D": false,
+      "false": false,
+      "ABC": false,
+      "": false
+    }
   },
   {
     "regex": "AB*C+",
-    "tests": [
-      {
-        "input": "C",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "ABC",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "AB",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "ABABABABABC",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "CCCCC",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "ABCCCC",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "ABABCCC",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "ABA",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "ABB",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "ABACCC",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "B",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "",
-        "result": false
-      }
-    ]
+    "tests": {
+      "C": true,
+      "true": false,
+      "ABC": true,
+      "AB": false,
+      "false": false,
+      "ABABABABABC": true,
+      "CCCCC": true,
+      "ABCCCC": true,
+      "ABABCCC": true,
+      "ABA": false,
+      "ABB": false,
+      "ABACCC": false,
+      "B": false,
+      "": false
+    }
   },
   {
     "regex": "(A|B)*",
-    "tests": [
-      {
-        "input": "A",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "B",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "ABABABABAB",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "AAAA",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "AC",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "BBBB",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "",
-        "result": true
-      }
-    ]
+    "tests": {
+      "A": true,
+      "true": false,
+      "B": true,
+      "ABABABABAB": true,
+      "AAAA": true,
+      "AC": false,
+      "false": false,
+      "BBBB": true,
+      "": true
+    }
   },
   {
     "regex": "[ABCD]*",
-    "tests": [
-      {
-        "input": "ABCD",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "BABABA",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "E",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "AAAAA",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "A",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "D",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "",
-        "result": true
-      }
-    ]
+    "tests": {
+      "ABCD": true,
+      "true": false,
+      "BABABA": true,
+      "E": false,
+      "false": false,
+      "AAAAA": true,
+      "A": true,
+      "D": true,
+      "": true
+    }
   },
   {
     "regex": "(ABCD)*",
-    "tests": [
-      {
-        "input": "ABCD",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "AB",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "ABCDABCD",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "A",
-        "result": false
-      },
-      {
-        "input": "false",
-        "result": false
-      },
-      {
-        "input": "ABCDABCDABCD",
-        "result": true
-      },
-      {
-        "input": "true",
-        "result": false
-      },
-      {
-        "input": "",
-        "result": true
-      }
-    ]
+    "tests": {
+      "ABCD": true,
+      "true": false,
+      "AB": false,
+      "false": false,
+      "ABCDABCD": true,
+      "A": false,
+      "ABCDABCDABCD": true,
+      "": true
+    }
   }
 ]

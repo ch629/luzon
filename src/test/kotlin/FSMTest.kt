@@ -238,7 +238,6 @@ private fun FSMachine<Int>.accept(input: String) {
 
 }
 
-
 //Just converts the old format of "<regex> (<input> <expected output>)+"
 private fun fromTestTxtToJson(): String {
     val fileText = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.txt").toURI()))
@@ -249,13 +248,11 @@ private fun fromTestTxtToJson(): String {
     val tests = fileText.map { line ->
         val split = line.split(" ")
         val regex = split[0]
-        val tests = split.subList(1, split.size).zipWithNext()
+        val tests = split.subList(1, split.size).zipWithNext().map {
+            (if (it.first == "<none>") "" else it.first) to it.second.toBoolean()
+        }.toMap()
 
-        RegexIOTest(regex,
-                tests.map { (test, result) ->
-                    TestObject(if (test == "<none>") "" else test, result.toBoolean())
-                }
-        )
+        RegexIOTest(regex, tests)
     }
 
     return adapter.toJson(tests)
