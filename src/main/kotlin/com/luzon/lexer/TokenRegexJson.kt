@@ -24,14 +24,22 @@ data class TokenRegexJson(
         }
     }
 
-    fun toFSM() = FSMachine.merge(literals.toFSM(), keywords.toFSM(), symbols.toFSM(), comments.toFSM())
+    fun toFSM() = FSMachine.merge(literals.toFSM(), keywords.toFSM(true), symbols.toFSM(true), comments.toFSM())
 
-    private fun Map<String, String>.toFSM(): FSMachine<Token> {
+    private fun Map<String, String>.toFSM(plainText: Boolean = false): FSMachine<Token> {
         val map = map { (token, regex) ->
+            if (plainText)
+                replaceMetacharacters(regex)
             FSMachine.fromRegex<Token>(regex).setOutput(getToken(token))
         }
 
         return FSMachine.merge(*map.toTypedArray())
+    }
+
+    private fun replaceMetacharacters(regex: String) {
+        "\\*+?[]()".forEach {
+            regex.replace("$it", "\\$it")
+        }
     }
 
     //TODO: Need to differentiate between the literal int and the keyword int (May need to append the name to literals:<name> would be one solution)
