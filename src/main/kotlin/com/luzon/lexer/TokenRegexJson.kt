@@ -24,13 +24,14 @@ data class TokenRegexJson(
         }
     }
 
-    fun toFSM() = FSMachine.merge(literals.toFSM(), keywords.toFSM(true), symbols.toFSM(true), comments.toFSM())
+    fun toFSM() = FSMachine.merge(literals.toFSM("literal"), keywords.toFSM("keyword", true), symbols.toFSM(plainText = true), comments.toFSM())
 
-    private fun Map<String, String>.toFSM(plainText: Boolean = false): FSMachine<Token> {
-        val map = map { (token, regex) ->
+    private fun Map<String, String>.toFSM(name: String = "", plainText: Boolean = false): FSMachine<Token> {
+        val map = map { (tokenName, regex) ->
             if (plainText)
                 replaceMetacharacters(regex)
-            FSMachine.fromRegex<Token>(regex).setOutput(getToken(token))
+            val token = getToken(if (name.isNotEmpty()) "$name:$tokenName" else tokenName)
+            FSMachine.fromRegex<Token>(regex).setOutput(token)
         }
 
         return FSMachine.merge(*map.toTypedArray())
@@ -42,6 +43,5 @@ data class TokenRegexJson(
         }
     }
 
-    //TODO: Need to differentiate between the literal int and the keyword int (May need to append the name to literals:<name> would be one solution)
     private fun getToken(name: String): Token = TODO()
 }
