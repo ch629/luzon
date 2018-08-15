@@ -1,5 +1,7 @@
 package com.luzon.fsm
 
+import com.luzon.utils.merge
+
 class FSMachine<T>(statesList: List<State<T>>) {
     constructor(root: State<T>) : this(mutableListOf(root))
 
@@ -46,7 +48,7 @@ class FSMachine<T>(statesList: List<State<T>>) {
 
     fun acceptingStates() = states.filter { it.isAccepting() }
 
-    fun getCurrentOutput(): List<T> = states.filter { it.isAccepting() }.map { it.output!! }.distinct()
+    fun getCurrentOutput(): List<T> = acceptingStates().map { it.output!! }.distinct()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
     fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
@@ -75,9 +77,4 @@ class FSMachine<T>(statesList: List<State<T>>) {
 
         updateEpsilons()
     }
-}
-
-internal fun <T> List<List<T>>.merge(): List<T> = fold(mutableListOf()) { acc, stateList ->
-    acc.addAll(stateList)
-    acc
 }

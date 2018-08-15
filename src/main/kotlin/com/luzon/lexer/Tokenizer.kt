@@ -44,12 +44,6 @@ class FSMTokenizerHelper(val scanner: Scanner) {
     }
 }
 
-class ExpressionTokenizer {
-    private val float = Regex("-?[0-9]+\\.?[0-9]*f")
-    private val double = Regex("-?[0-9]+\\.?[0-9]*")
-    private val int = Regex("-?[0-9]+")
-}
-
 abstract class Scanner(val text: String) {
     var current = 0
 

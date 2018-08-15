@@ -1,7 +1,7 @@
 import com.luzon.fsm.FSMachine
 import com.luzon.fsm.State
-import com.luzon.fsm.predicate
 import com.luzon.kodein
+import com.luzon.utils.predicate
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import org.amshove.kluent.shouldBe

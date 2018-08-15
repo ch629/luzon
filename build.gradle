@@ -43,6 +43,9 @@ dependencies {
 
     compile "org.kodein.di:kodein-di-generic-jvm:5.2.0"
 
+    compile "org.slf4j:slf4j-simple:1.8.0-beta2"
+    compile "io.github.microutils:kotlin-logging:1.5.9"
+
     testCompile "junit:junit:4.12"
     testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
     testRuntime "org.junit.jupiter:junit-jupiter-engine:$junitVersion"

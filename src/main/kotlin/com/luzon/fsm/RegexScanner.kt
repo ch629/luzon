@@ -1,5 +1,11 @@
 package com.luzon.fsm
 
+import com.luzon.utils.errorWithException
+import com.luzon.utils.or
+import com.luzon.utils.predicate
+import com.luzon.utils.range
+import mu.NamedKLogging
+
 class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
     private val root = State<T>()
     private var current = 0
@@ -12,7 +18,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
     private var afterOr = false
     private var afterMeta = false
 
-    companion object {
+    companion object : NamedKLogging("Regex-Logger") {
         private const val END_CHAR: Char = '\n'
         private const val metaCharacters = "*+?|"
         private val numericalPredicate = '0' range '9'
@@ -73,29 +79,35 @@ class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
         return char
     }
 
-    private fun peek() = if (current < regex.length) regex[current] else END_CHAR
+    private fun peek() = if (!atEnd()) regex[current] else END_CHAR
 
     private fun atEnd() = current >= regex.length
 
-    private fun char(escape: Boolean = false): Pair<State<T>, State<T>> { //TODO: Error when escaping normal characters, also implement \w \d etc.?
+    private fun char(escape: Boolean = false): Pair<State<T>, State<T>> {
         val charEnd = State<T>(forceAccept = true)
         val char = advance()
         var isRange = true
 
-        val predicate = if (!escape) when (char) { //TODO: Find a nicer way to deal with this, including the isRange part.
-            '.' -> anyCharacterPredicate
-            else -> {
-                isRange = false
-                char.predicate()
-            }
-        } else when (char) {
-            'd' -> numericalPredicate
-            'w' -> alphaNumericPredicate
-            else -> {
-                isRange = false
-                char.predicate()
-            }
-        }
+        val unescapedCharacters = hashMapOf(
+                '.' to anyCharacterPredicate
+        )
+
+        val escapedCharacters = hashMapOf(
+                'd' to numericalPredicate,
+                'w' to alphaNumericPredicate
+        )
+
+        val predicate =
+                if (!escape && char in unescapedCharacters.keys) unescapedCharacters[char]!!
+                else if (escape && char in escapedCharacters.keys) escapedCharacters[char]!!
+                else {
+                    isRange = false
+
+                    if (escape && char !in unescapedCharacters.keys)
+                        logger.warn("There is no escaped meaning to the character '$char'.")
+
+                    char.predicate()
+                }
 
         endState.addTransition(predicate, charEnd)
 
@@ -133,25 +145,26 @@ class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
         val scanner = RegexScanner<T>(advanceUntil(')'))
         val states = scanner.toFSM()
         endState.addEpsilonTransition(states)
-        metaScope = states //TODO: scopeChange = true?
+        metaScope = states
 
         return states to scanner.endState
     }
 
     private fun metaCharacter(): Pair<State<T>, State<T>> {
         afterMeta = true
+        val char = advance()
 
-        return when (advance()) {
+        return when (char) {
             '|' -> or()
             '*' -> asterisk()
             '+' -> plus()
             '?' -> question()
-            else -> TODO("Not a valid metaCharacter (Should never happen). Throw Exception, or log error")
+            else -> logger.errorWithException("metaCharacter was called on an invalid character '$char'")
         }
     }
 
     private fun or(): Pair<State<T>, State<T>> {
-        val extraState = State<T>()
+        val extraState = State<T>() //TODO: Could remove this and newState for efficiency?
         scopeChange = true
         afterOr = true
 
@@ -203,20 +216,16 @@ class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
     private fun advanceUntil(pred: (Char) -> Boolean): String {
         val sb = StringBuilder()
 
-        do {
+        while (true) {
             val char = advance()
-            if (!pred(char)) sb.append(char) //Ensure the final character isn't included. i.e. ')'
-        } while (!pred(char) && char != END_CHAR) //TODO: Error if hits END_CHAR rather than the predicate
-        //TODO: Could check atEnd() rather than char != END_CHAR
+            val predResult = pred(char)
+
+            if (predResult) break
+            if (atEnd()) logger.errorWithException("advancedUntil hit the end before passing the predicate.")
+
+            sb.append(char)
+        }
 
         return sb.toString()
     }
 }
-
-internal fun rangePredicate(start: Char, end: Char): (Char) -> Boolean = { it in start..end }
-internal fun charPredicate(c: Char): (Char) -> Boolean = { it == c }
-internal fun orPredicate(first: (Char) -> Boolean, second: (Char) -> Boolean): (Char) -> Boolean = { first(it) || second(it) }
-
-internal infix fun ((Char) -> Boolean).or(other: (Char) -> Boolean): (Char) -> Boolean = orPredicate(this, other)
-internal infix fun Char.range(other: Char) = rangePredicate(this, other)
-internal fun Char.predicate() = charPredicate(this)

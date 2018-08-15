@@ -1,23 +1,27 @@
 package com.luzon.fsm
 
+import com.luzon.utils.orPredicate
 import java.util.*
 
 class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
-    private var transitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>()
-    private var epsilonTransitions = mutableListOf<State<T>>()
+    private val transitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>()
+    private val epsilonTransitions = mutableListOf<State<T>>()
 
     fun acceptEpsilons() = epsilonTransitions
-    fun accept(char: Char) = transitions.filter { it.first(char) }.map { it.second }.toList()
+    fun accept(char: Char) = transitions.filter { it.first(char) }.map { it.second }
 
     fun mergeTransitions() { //TODO: Test
-        val newTransitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>()
         val groupedTransitions = transitions.groupBy { it.second }
-        epsilonTransitions = epsilonTransitions.distinct().toMutableList()
-        groupedTransitions.entries.forEach {
-            var pred: (Char) -> Boolean = { false }
-            it.value.forEach { pred = orPredicate(pred, it.first) }
-            newTransitions.add(pred to it.key)
+        val newEpsilonTransitions = epsilonTransitions.distinct()
+
+        val newTransitions = groupedTransitions.entries.map { (state, list) ->
+            orPredicate(*list.map { it.first }.toTypedArray()) to state
         }
+
+        epsilonTransitions.clear()
+        epsilonTransitions.addAll(newEpsilonTransitions)
+        transitions.clear()
+        transitions.addAll(newTransitions)
     }
 
     //TODO: DSL?
