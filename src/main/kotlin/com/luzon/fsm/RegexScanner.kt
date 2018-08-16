@@ -1,14 +1,14 @@
 package com.luzon.fsm
 
+import com.luzon.lexer.Scanner
 import com.luzon.utils.errorWithException
 import com.luzon.utils.or
 import com.luzon.utils.predicate
 import com.luzon.utils.range
 import mu.NamedKLogging
 
-class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
+class RegexScanner<T>(regex: String) : Scanner(regex) {
     private val root = State<T>()
-    private var current = 0
     private var endState = root
     private var metaScope = root
     private var orScope = root
@@ -27,7 +27,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
     }
 
     fun toFSM(): State<T> {
-        while (!atEnd()) {
+        while (!isAtEnd()) {
             var escape = false
             val char = peek()
 
@@ -72,16 +72,6 @@ class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
 
         return root
     }
-
-    private fun advance(): Char {
-        val char = peek()
-        current++
-        return char
-    }
-
-    private fun peek() = if (!atEnd()) regex[current] else END_CHAR
-
-    private fun atEnd() = current >= regex.length
 
     private fun char(escape: Boolean = false): Pair<State<T>, State<T>> {
         val charEnd = State<T>(forceAccept = true)
@@ -221,7 +211,7 @@ class RegexScanner<T>(private val regex: String) { //TODO: : Scanner(regex)
             val predResult = pred(char)
 
             if (predResult) break
-            if (atEnd()) logger.errorWithException("advancedUntil hit the end before passing the predicate.")
+            if (isAtEnd()) logger.errorWithException("advancedUntil hit the end before passing the predicate.")
 
             sb.append(char)
         }
