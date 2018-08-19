@@ -1,6 +1,6 @@
 package com.luzon.lexer
 
-abstract class Scanner(val text: String) {
+open class Scanner(val text: String) {
     var current = 0
 
     fun advance(): Char {

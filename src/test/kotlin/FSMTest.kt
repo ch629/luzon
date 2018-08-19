@@ -1,3 +1,4 @@
+
 import com.luzon.fsm.FSMachine
 import com.luzon.fsm.State
 import com.luzon.kodein
@@ -207,6 +208,45 @@ object FSMTest : Spek({
         }
     }
 
+    given("a merged state machine") {
+        val machine1 = regex("AB")
+        val machine2 = regex("CD")
+
+        it("should accept either AB or CD") {
+            val merged = machine1.merge(machine2)
+
+            merged.accept("AB")
+            merged.isAccepting() shouldBe true
+
+            merged.reset()
+            merged.accept("CD")
+            merged.isAccepting() shouldBe true
+
+            merged.accept("A")
+            merged.isAccepting() shouldBe false
+        }
+
+        val machine3 = regex("EF")
+
+        it("should work with more merged machines") {
+            val merged = FSMachine.merge(machine1, machine2, machine3)
+
+            merged.accept("AB")
+            merged.isAccepting() shouldBe true
+
+            merged.reset()
+            merged.accept("CD")
+            merged.isAccepting() shouldBe true
+
+            merged.reset()
+            merged.accept("EF")
+            merged.isAccepting() shouldBe true
+
+            merged.accept("A")
+            merged.isAccepting() shouldBe false
+        }
+    }
+
     given("examples with a regex parser") {
         val json = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.json").toURI())).joinToString(" ")
         val paramType = Types.newParameterizedType(List::class.java, RegexIOTest::class.java)
@@ -230,13 +270,6 @@ object FSMTest : Spek({
 })
 
 private fun regex(regex: String): FSMachine<Int> = FSMachine.fromRegex(regex)
-
-private fun FSMachine<Int>.accept(input: String) {
-    input.forEach {
-        accept(it)
-    }
-
-}
 
 //Just converts the old format of "<regex> (<input> <expected output>)+"
 private fun fromTestTxtToJson(): String {

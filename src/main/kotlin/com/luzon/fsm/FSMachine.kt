@@ -48,7 +48,7 @@ class FSMachine<T>(statesList: List<State<T>>) {
 
     fun acceptingStates() = states.filter { it.isAccepting() }
 
-    fun getCurrentOutput(): List<T> = acceptingStates().map { it.output!! }.distinct()
+    fun getCurrentOutput(): List<T> = acceptingStates().filter { !it.forceAccept }.map { it.output!! }.distinct()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
     fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
@@ -61,9 +61,8 @@ class FSMachine<T>(statesList: List<State<T>>) {
     }
 
     fun setOutput(output: T): FSMachine<T> {
-        acceptingStates().forEach {
-            it.output = output
-            it.forceAccept = false
+        states.forEach {
+            it.replaceChildOutput(output)
         }
 
         return this

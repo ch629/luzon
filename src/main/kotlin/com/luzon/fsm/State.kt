@@ -39,6 +39,10 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
 
     fun isAccepting() = forceAccept || output != null
     fun findLeaves() = findAllChildren().filter { it.transitions.isEmpty() && it.epsilonTransitions.isEmpty() }
+    fun replaceChildOutput(output: T) = findAllChildren().filter { it.isAccepting() }.forEach {
+        it.forceAccept = false
+        it.output = output
+    }
 
     fun transferTo(other: State<T>) { //Transfers all the transitional data to another state
         other.epsilonTransitions.addAll(epsilonTransitions)

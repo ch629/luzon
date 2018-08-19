@@ -20,7 +20,8 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
 
     companion object : NamedKLogging("Regex-Logger") {
         private const val END_CHAR: Char = '\n'
-        private const val metaCharacters = "*+?|"
+        private const val META_CHARACTERS = "*+?|"
+        private const val BRACKET_CHARACTERS = "()[]"
         private val numericalPredicate = '0' range '9'
         private val alphaNumericPredicate = numericalPredicate or ('A' range 'Z') or ('a' range 'z')
         private val anyCharacterPredicate: (Char) -> Boolean = { true }
@@ -29,7 +30,7 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
     fun toFSM(): State<T> {
         while (!isAtEnd()) {
             var escape = false
-            val char = peek()
+            var char = peek()
 
             if (scopeChange) {
                 metaScope = endState
@@ -39,14 +40,15 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
             if (char == '\\') {
                 escape = true
                 advance()
+                char = peek()
             }
 
             val startEnd = if (!escape) {
                 when (char) {
                     '[' -> orBlock()
                     '(' -> parenthesis()
-                    '{' -> TODO("Repetitions -> Relies on metaScope too") //TODO: Might not need this for my language specifically, but should implement if I want this to be a full regex parser
-                    in metaCharacters -> metaCharacter()
+//                    '{' -> TODO("Repetitions -> Relies on metaScope too") //TODO: Might not need this for my language specifically, but should implement if I want this to be a full regex parser
+                    in META_CHARACTERS -> metaCharacter()
                     else -> char()
                 }
             } else {
@@ -58,7 +60,7 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
 
             if (afterOr) {
                 endState = startEnd.first
-                orScope = endState //This is the only place it changes
+                orScope = endState
                 afterOr = false
             }
         }
@@ -93,7 +95,7 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
                 else {
                     isRange = false
 
-                    if (escape && char !in unescapedCharacters.keys)
+                    if (escape && char !in unescapedCharacters.keys && char !in META_CHARACTERS && char !in BRACKET_CHARACTERS)
                         logger.warn("There is no escaped meaning to the character '$char'.")
 
                     char.predicate()
@@ -201,9 +203,9 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         return metaScope to newEndState
     }
 
-    private fun advanceUntil(char: Char) = advanceUntil { it == char }
+    private fun advanceUntil(char: Char) = advanceUntil(char) { it == char }
 
-    private fun advanceUntil(pred: (Char) -> Boolean): String {
+    private fun advanceUntil(c: Char, pred: (Char) -> Boolean): String {
         val sb = StringBuilder()
 
         while (true) {
@@ -211,7 +213,7 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
             val predResult = pred(char)
 
             if (predResult) break
-            if (isAtEnd()) logger.errorWithException("advancedUntil hit the end before passing the predicate.")
+            if (isAtEnd()) logger.errorWithException("advancedUntil hit the end before passing the predicate $c.")
 
             sb.append(char)
         }

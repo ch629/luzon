@@ -1,6 +1,5 @@
 package com.luzon.lexer
 
-import com.luzon.Token
 import com.luzon.fsm.FSMachine
 import com.luzon.kodein
 import com.squareup.moshi.Moshi
@@ -24,24 +23,41 @@ data class TokenRegexJson(
         }
     }
 
-    fun toFSM() = FSMachine.merge(literals.toFSM("literal"), keywords.toFSM("keyword", true), symbols.toFSM(plainText = true), comments.toFSM())
+    fun toFSM() = FSMachine.merge(
+            literals.toFSM(TokenType.LITERAL),
+            keywords.toFSM(TokenType.KEYWORD, true),
+            symbols.toFSM(TokenType.SYMBOL, true),
+            comments.toFSM(TokenType.COMMENT))
 
-    private fun Map<String, String>.toFSM(name: String = "", plainText: Boolean = false): FSMachine<Token> {
+    private fun Map<String, String>.toFSM(name: TokenType, plainText: Boolean = false): FSMachine<TokenHolder> {
         val map = map { (tokenName, regex) ->
-            if (plainText)
-                replaceMetacharacters(regex)
-            val token = getToken(if (name.isNotEmpty()) "$name:$tokenName" else tokenName)
-            FSMachine.fromRegex<Token>(regex).setOutput(token)
+            val token = getToken(tokenName, name)
+            val usedRegex = if (plainText) replaceMetacharacters(regex) else regex
+
+            FSMachine.fromRegex<TokenHolder>(usedRegex).setOutput(token)
         }
 
         return FSMachine.merge(*map.toTypedArray())
     }
 
-    private fun replaceMetacharacters(regex: String) {
-        "\\*+?[]()".forEach {
-            regex.replace("$it", "\\$it")
+    private fun replaceMetacharacters(regex: String): String {
+        var newRegex = regex
+
+        "\\*+?[]().".forEach {
+            newRegex = newRegex.replace("$it", "\\$it")
         }
+
+        return newRegex
     }
 
-    private fun getToken(name: String): Token = TODO()
+    private fun getToken(name: String, type: TokenType): TokenHolder {
+        val token = findToken(name, type)
+
+        return TokenHolder(when (token) {
+            is Literal -> LiteralContainer(token)
+            is Keyword -> KeywordContainer(token)
+            is Symbol -> SymbolContainer(token)
+            else -> None
+        })
+    }
 }
