@@ -9,6 +9,7 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
 
     fun acceptEpsilons() = epsilonTransitions
     fun accept(char: Char) = transitions.filter { it.first(char) }.map { it.second }
+    fun isLeaf() = transitions.isEmpty() && epsilonTransitions.isEmpty()
 
     fun mergeTransitions() { //TODO: Test
         val groupedTransitions = transitions.groupBy { it.second }

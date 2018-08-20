@@ -13,8 +13,8 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
     private var metaScope = root
     private var orScope = root
     private var scopeChange = false
-    private var orState: State<T>? = null
-    private var orEndState: State<T>? = null
+    private var orState = State<T>()
+    private val orEndState = State<T>()
     private var afterOr = false
     private var afterMeta = false
 
@@ -47,13 +47,10 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
                 when (char) {
                     '[' -> orBlock()
                     '(' -> parenthesis()
-//                    '{' -> TODO("Repetitions -> Relies on metaScope too") //TODO: Might not need this for my language specifically, but should implement if I want this to be a full regex parser
                     in META_CHARACTERS -> metaCharacter()
                     else -> char()
                 }
-            } else {
-                char(escape)
-            }
+            } else char(escape)
 
             endState = startEnd.second
             endState.removeAccept()
@@ -65,9 +62,9 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
             }
         }
 
-        if (orState != null) {
-            endState.addEpsilonTransition(orEndState!!)
-            endState = orEndState!!
+        if (hasOr()) {
+            endState.addEpsilonTransition(orEndState)
+            endState = orEndState
         }
 
         endState.forceAccept = true
@@ -156,24 +153,21 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
     }
 
     private fun or(): Pair<State<T>, State<T>> {
-        val extraState = State<T>() //TODO: Could remove this and newState for efficiency?
+        val extraState = State<T>()
         scopeChange = true
         afterOr = true
 
-        if (orState == null) { //First or in regex
-            orState = State()
-            orEndState = State()
-
+        if (!hasOr()) { //First or in regex
             val newState = orScope.transferToNext()
-            orScope.replaceWith(orState!!)
+            orScope.replaceWith(orState)
             orState = orScope
             orScope.addEpsilonTransition(newState)
-        } else orState!!.addEpsilonTransition(orScope)
+        } else orState.addEpsilonTransition(orScope)
 
-        endState.addEpsilonTransition(orEndState!!)
-        orState!!.addEpsilonTransition(extraState)
+        endState.addEpsilonTransition(orEndState)
+        orState.addEpsilonTransition(extraState)
 
-        return extraState to orEndState!!
+        return extraState to orEndState
     }
 
     private fun asterisk(): Pair<State<T>, State<T>> {
@@ -220,4 +214,6 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
 
         return sb.toString()
     }
+
+    private fun hasOr() = !orState.isLeaf()
 }
