@@ -1,6 +1,7 @@
 package com.luzon.lexer
 
 import com.luzon.kodein
+import mu.KLogging
 import org.kodein.di.generic.instance
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -14,10 +15,6 @@ class Tokenizer(text: String) : Scanner(text) {
         )
 
         fun fromFile(file: String) = Tokenizer(Files.readAllLines(Paths.get(file)).joinToString("\n"))
-    }
-
-    init {
-        println("Tokenizer Read:\n$text")
     }
 
     fun findTokens() = generateSequence {
@@ -34,34 +31,54 @@ class Tokenizer(text: String) : Scanner(text) {
 }
 
 class FSMTokenizerHelper(private val scanner: Scanner) {
-    private var latestToken: TokenHolder = TokenHolder(None)
-    private var latestCurrent: Int = 0
     private val machine = machineTemplate.copy()
     //TODO: Maybe have a save FSM to file, then I can just read that directly in from the initial Regex, rather than scan regex every time?
 
-    companion object {
+    companion object : KLogging() {
         private val regexJson: TokenRegexJson by kodein.instance()
         private val machineTemplate = regexJson.toFSM()
     }
 
     fun findNextToken(): TokenHolder {
-        machine.reset()
+        val stringBuffer = StringBuffer()
+        var token: TokenHolder?
+
+        do {
+            machine.reset()
+            val char = scanner.peek()
+            val current = scanner.current
+            token = findToken()
+
+            if (token == null)
+                stringBuffer.append(char).append(" starting at character ").append(current) //TODO: Better error logging. (Line, character, log all once the tokenizer has finished)
+
+        } while (token == null && !scanner.isAtEnd()) //Keep trying to find tokens if it finds an invalid character
+
+        if (stringBuffer.isNotEmpty()) logger.warn("Found invalid characters: $stringBuffer")
+
+        return token ?: TokenHolder(None)
+    }
+
+    private fun findToken(): TokenHolder? {
+        var foundToken: TokenHolder? = null
+        var foundCurrent = scanner.current + 1 //If there isn't one found, the next character will be checked
+
         while (machine.isRunning() && !scanner.isAtEnd()) {
             machine.accept(scanner.advance())
             val acceptingStates = machine.acceptingStates()
 
             if (acceptingStates.isNotEmpty()) {
-                val tmp = acceptingStates.filter { it.output != null }.map { it.output }.first()
+                val newToken = acceptingStates.filter { it.output != null }.map { it.output }.first()
 
-                if (tmp != null) {
-                    latestToken = tmp
-                    latestCurrent = scanner.current
+                if (newToken != null) {
+                    foundToken = newToken
+                    foundCurrent = scanner.current
                 }
             }
         }
 
-        scanner.current = latestCurrent //Back to where the last found token was
-        return latestToken
+        scanner.current = foundCurrent
+        return foundToken
     }
 }
 
