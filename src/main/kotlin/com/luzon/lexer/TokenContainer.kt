@@ -9,13 +9,31 @@ fun findToken(id: String, type: TokenType) = when (type) {
     COMMENT -> Comment.values().firstOrNull { it.id == id }
 }
 
-sealed class TokenContainer
-data class KeywordContainer(val keyword: Keyword) : TokenContainer()
-data class SymbolContainer(val symbol: Symbol) : TokenContainer()
-data class LiteralContainer(val literal: Literal) : TokenContainer()
-object None : TokenContainer()
+sealed class TokenContainer //TODO: Maybe have a CommentContainer, which then can just be ignored in parsing
 
-data class TokenHolder(val container: TokenContainer)
+data class KeywordContainer(val keyword: Keyword) : TokenContainer() {
+    override fun toString() = "keyword:${keyword.name}"
+}
+
+data class SymbolContainer(val symbol: Symbol) : TokenContainer() {
+    override fun toString() = "symbol:${symbol.name}"
+}
+
+data class LiteralContainer(val literal: Literal) : TokenContainer() {
+    override fun toString() = "literal:${literal.name}"
+}
+
+data class CommentContainer(val comment: Comment) : TokenContainer() {
+    override fun toString() = "comment:${comment.name}"
+}
+
+object None : TokenContainer() {
+    override fun toString() = "none"
+}
+
+data class TokenHolder(val container: TokenContainer) {
+    override fun toString() = container.toString()
+}
 
 enum class TokenType {
     KEYWORD, SYMBOL, LITERAL, COMMENT
@@ -25,7 +43,7 @@ enum class Keyword {
     FOR, WHILE, IF, ELSE, WHEN, BREAK,
     VAR, VAL, FUN, CLASS, ABSTRACT, ENUM,
     DOUBLE, FLOAT, INT, STRING, CHAR, BOOLEAN,
-    IS, AS;
+    IS, AS, IN;
 
     val id: String by lazy { name.toLowerCase() }
 }

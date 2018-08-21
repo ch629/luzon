@@ -20,7 +20,7 @@ object TokenTest : Spek({
             fsm.isRunning() shouldBe true
         }
 
-        it("") {
+        it("should successfully recognize Float as a Keyword.FLOAT, and additions to that as a Literal.IDENTIFIER") {
             fsm.accept("Float")
 
             fsm.isAccepting() shouldBe true

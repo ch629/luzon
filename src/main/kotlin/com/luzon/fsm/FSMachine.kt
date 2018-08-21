@@ -20,6 +20,8 @@ class FSMachine<T>(statesList: List<State<T>>) {
         }
     }
 
+    fun copy() = FSMachine(originalStates)
+
     private fun updateEpsilons(): Boolean {
         val epsilons = states.map { it.acceptEpsilons() }.merge().toMutableList()
 

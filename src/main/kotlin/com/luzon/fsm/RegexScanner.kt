@@ -19,12 +19,19 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
     private var afterMeta = false
 
     companion object : NamedKLogging("Regex-Logger") {
-        private const val END_CHAR: Char = '\n'
         private const val META_CHARACTERS = "*+?|"
         private const val BRACKET_CHARACTERS = "()[]"
         private val numericalPredicate = '0' range '9'
         private val alphaNumericPredicate = numericalPredicate or ('A' range 'Z') or ('a' range 'z')
-        private val anyCharacterPredicate: (Char) -> Boolean = { true }
+        private val anyCharacterPredicate: (Char) -> Boolean = { it != '\n' } //TODO: Could make a new predicate for this, but this just simplifies problems with newlines
+        val unescapedCharacters = hashMapOf(
+                '.' to anyCharacterPredicate
+        )
+
+        val escapedCharacters = hashMapOf(
+                'd' to numericalPredicate,
+                'w' to alphaNumericPredicate
+        )
     }
 
     fun toFSM(): State<T> {
@@ -77,15 +84,6 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         val char = advance()
         var isRange = true
 
-        val unescapedCharacters = hashMapOf(
-                '.' to anyCharacterPredicate
-        )
-
-        val escapedCharacters = hashMapOf(
-                'd' to numericalPredicate,
-                'w' to alphaNumericPredicate
-        )
-
         val predicate =
                 if (!escape && char in unescapedCharacters.keys) unescapedCharacters[char]!!
                 else if (escape && char in escapedCharacters.keys) escapedCharacters[char]!!
@@ -109,23 +107,34 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
     }
 
     private fun orBlock(): Pair<State<T>, State<T>> {
-        afterMeta = true
+//        afterMeta = true
         val end = State<T>(forceAccept = true)
         var transitionPredicate: (Char) -> Boolean = { false }
 
         advance() //Consume '['
 
         do {
-            val char = advance()
-            transitionPredicate = if (peek() == '-') { //Is Range
+            var char = advance()
+            var escape = false
+            if (char == '\\') {
+                escape = true
+                char = advance()
+            }
+
+            transitionPredicate = if (!escape && peek() == '-') { //Is Range
                 advance() //Consume '-'
                 transitionPredicate or (char range advance())
-            } else transitionPredicate or char.predicate()
-        } while (peek() != ']' && peek() != END_CHAR)
+            } else {
+                if (escape || char !in unescapedCharacters) transitionPredicate or char.predicate()
+                else transitionPredicate or unescapedCharacters[char]!!
+            }
+
+        } while (peek() != ']' && !isAtEnd())
 
         advance() //Consume ']'
 
         endState.addTransition(transitionPredicate, end)
+        metaScope = endState
         return endState to end
     }
 

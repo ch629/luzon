@@ -91,5 +91,36 @@
       "ABCDABCDABCD": true,
       "": true
     }
+  },
+  {
+    "regex": "\n",
+    "tests": {
+      "\n": true,
+      "a": false,
+      "": false
+    }
+  },
+  {
+    "regex": "[.\n]*",
+    "tests": {
+      "B": true,
+      "\n": true,
+      "A": true,
+      "AA": true,
+      "\n\n": true,
+      "A\n": true,
+      "": true
+    }
+  },
+  {
+    "regex": "A[.\n]*",
+    "tests": {
+      "A": true,
+      "AA": true,
+      "A\n\n": true,
+      "\n": false,
+      "": false
+    }
   }
+
 ]
