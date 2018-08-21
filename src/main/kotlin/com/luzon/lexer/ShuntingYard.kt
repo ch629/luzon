@@ -5,14 +5,14 @@ import java.util.*
 
 //From https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 //Orders expression in Reverse Polish Notation with precedence
-class ShuntingYard {
-    private var output = mutableListOf<Any>()
+class ShuntingYard { //TODO: This will probably need to work with a Token Sequence, and manipulate it when it finds an expression
+    private var output = mutableListOf<Any>() //TODO: This will be a Token
     private val operatorStack = Stack<ExprOperators>()
 
     companion object {
         fun fromString(str: String): ShuntingYard {
             val yard = ShuntingYard()
-            str.split(" ").forEach { yard.add(it) } //TODO: Better way of adding each token (So spaces aren't needed between every one)
+            str.split(" ").forEach { yard.add(it) } //TODO: This can be changed to read from a Token Sequence rather than space delimited strings
             yard.done()
             return yard
         }

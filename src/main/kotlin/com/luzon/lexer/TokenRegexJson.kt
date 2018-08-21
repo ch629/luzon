@@ -51,13 +51,13 @@ data class TokenRegexJson(
     }
 
     private fun getToken(name: String, type: TokenType): TokenHolder {
-        val token = findToken(name, type)
+        val token = type.findToken(name)
 
         return TokenHolder(when (token) {
             is Literal -> LiteralContainer(token)
             is Keyword -> KeywordContainer(token)
             is Symbol -> SymbolContainer(token)
-            is Comment -> CommentContainer(token) //TODO: Figure a nice way to deal with comments (With single line comments, if I use .* rather than \w* it will consume the first R_BRACE on the next line)
+            is Comment -> CommentContainer(token)
             else -> None
         })
     }

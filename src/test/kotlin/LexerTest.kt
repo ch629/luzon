@@ -10,16 +10,10 @@ object LexerTest : Spek({
         on("examples") {
             examples.forEach { (code, output) ->
                 it("should match the expected output") {
-                    val tokenizer = Tokenizer(code)
-                    tokenizer.tokensAsString() shouldEqual output.map {
-                        when (it) {
-                            is Keyword -> KeywordContainer(it)
-                            is Symbol -> SymbolContainer(it)
-                            is Literal -> LiteralContainer(it)
-                            is Comment -> CommentContainer(it)
-                            else -> None
-                        }
-                    }.joinToString(" ") { it.toString() }
+                    val tokenizerString = Tokenizer(code).tokensAsString()
+                    val outputString = output.map { it.toContainer() }.joinToString(" ")
+
+                    tokenizerString shouldEqual outputString
                 }
             }
         }
@@ -40,7 +34,7 @@ private val examples = arrayOf(
             }
         """.trimIndent()
                 to
-                arrayOf(
+                arrayOf<TokenEnum>(
                         Keyword.FOR,
                         Symbol.L_PAREN,
                         Keyword.VAR,

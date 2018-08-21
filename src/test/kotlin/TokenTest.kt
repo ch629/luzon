@@ -1,6 +1,9 @@
 
 import com.luzon.kodein
-import com.luzon.lexer.*
+import com.luzon.lexer.Keyword
+import com.luzon.lexer.Literal
+import com.luzon.lexer.TokenContainer
+import com.luzon.lexer.TokenRegexJson
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeGreaterThan
 import org.amshove.kluent.shouldBeInstanceOf
@@ -42,7 +45,3 @@ private fun testOutput(container: TokenContainer, shouldBe: TokenContainer) {
     container shouldBeInstanceOf shouldBe::class
     container.tokenType shouldBe shouldBe.tokenType
 }
-
-private fun Literal.toContainer() = LiteralContainer(this)
-private fun Keyword.toContainer() = KeywordContainer(this)
-private fun Symbol.toContainer() = SymbolContainer(this)
