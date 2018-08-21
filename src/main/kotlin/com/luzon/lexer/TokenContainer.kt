@@ -9,23 +9,14 @@ fun findToken(id: String, type: TokenType) = when (type) {
     COMMENT -> Comment.values().firstOrNull { it.id == id }
 }
 
-sealed class TokenContainer //TODO: Maybe have a CommentContainer, which then can just be ignored in parsing
-
-data class KeywordContainer(val keyword: Keyword) : TokenContainer() {
-    override fun toString() = "keyword:${keyword.name}"
+sealed class TokenContainer(val tokenType: Enum<*>? = null, private val prefix: String? = null) {
+    override fun toString() = "${prefix!!}:${tokenType!!.name}"
 }
 
-data class SymbolContainer(val symbol: Symbol) : TokenContainer() {
-    override fun toString() = "symbol:${symbol.name}"
-}
-
-data class LiteralContainer(val literal: Literal) : TokenContainer() {
-    override fun toString() = "literal:${literal.name}"
-}
-
-data class CommentContainer(val comment: Comment) : TokenContainer() {
-    override fun toString() = "comment:${comment.name}"
-}
+class KeywordContainer(keyword: Keyword) : TokenContainer(keyword, "keyword")
+class SymbolContainer(symbol: Symbol) : TokenContainer(symbol, "symbol")
+class LiteralContainer(literal: Literal) : TokenContainer(literal, "literal")
+class CommentContainer(comment: Comment) : TokenContainer(comment, "comment")
 
 object None : TokenContainer() {
     override fun toString() = "none"

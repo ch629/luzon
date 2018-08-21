@@ -1,3 +1,4 @@
+
 import com.luzon.kodein
 import com.luzon.lexer.*
 import org.amshove.kluent.shouldBe
@@ -38,26 +39,8 @@ object TokenTest : Spek({
 })
 
 private fun testOutput(container: TokenContainer, shouldBe: TokenContainer) {
-    when (shouldBe) {
-        is LiteralContainer -> container shouldBeInstanceOf LiteralContainer::class
-        is KeywordContainer -> container shouldBeInstanceOf KeywordContainer::class
-        is SymbolContainer -> container shouldBeInstanceOf SymbolContainer::class
-    }
-
-    when (container) {
-        is LiteralContainer -> {
-            if (shouldBe is LiteralContainer)
-                container.literal shouldBe shouldBe.literal
-        }
-        is KeywordContainer -> {
-            if (shouldBe is KeywordContainer)
-                container.keyword shouldBe shouldBe.keyword
-        }
-        is SymbolContainer -> {
-            if (shouldBe is SymbolContainer)
-                container.symbol shouldBe shouldBe.symbol
-        }
-    }
+    container shouldBeInstanceOf shouldBe::class
+    container.tokenType shouldBe shouldBe.tokenType
 }
 
 private fun Literal.toContainer() = LiteralContainer(this)
