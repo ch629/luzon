@@ -9,9 +9,8 @@ object LexerTest : Spek({
     given("a lexer") {
         on("examples") {
             examples.forEach { (code, output) ->
-                it("should ...") {
+                it("should match the expected output") {
                     val tokenizer = Tokenizer(code)
-                    tokenizer.findTokens()
                     tokenizer.tokensAsString() shouldEqual output.map {
                         when (it) {
                             is Keyword -> KeywordContainer(it)

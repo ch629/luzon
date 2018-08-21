@@ -5,15 +5,8 @@ import org.kodein.di.generic.instance
 import java.nio.file.Files
 import java.nio.file.Paths
 
-fun main(args: Array<String>) {
-    val tokenizer = Tokenizer.fromFile("C:\\Programming\\luzon\\code_examples\\One.lz")
-
-    tokenizer.findTokens()
-    tokenizer.print()
-}
-
 class Tokenizer(text: String) : Scanner(text) {
-    private val tokens = mutableListOf<TokenHolder>()
+    private val tokenizerHelper = FSMTokenizerHelper(this)
 
     companion object {
         private val skipChars = arrayOf(
@@ -27,16 +20,13 @@ class Tokenizer(text: String) : Scanner(text) {
         println("Tokenizer Read:\n$text")
     }
 
-    fun findTokens() {
-        val tokenizerHelper = FSMTokenizerHelper(this)
-
-        while (!isAtEnd()) {
-            while (peek() in skipChars) advance() //Skip whitespace between any found tokens
-            tokens.add(tokenizerHelper.findNextToken())
-        }
+    fun findTokens() = generateSequence {
+        while (peek() in skipChars && !isAtEnd()) advance()
+        if (isAtEnd()) null
+        else tokenizerHelper.findNextToken()
     }
 
-    fun tokensAsString() = tokens.joinToString(" ") { it.toString() }
+    fun tokensAsString() = findTokens().joinToString(" ")
 
     fun print() {
         println(tokensAsString())
