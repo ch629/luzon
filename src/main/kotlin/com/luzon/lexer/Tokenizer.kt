@@ -39,9 +39,9 @@ class FSMTokenizerHelper(private val scanner: Scanner) {
         private val machineTemplate = regexJson.toFSM()
     }
 
-    fun findNextToken(): TokenEnum {
-        val stringBuffer = StringBuffer()
-        var token: TokenEnum?
+    fun findNextToken(): Token {
+        val errorBuffer = StringBuffer()
+        var token: Token?
 
         do {
             machine.reset()
@@ -50,21 +50,25 @@ class FSMTokenizerHelper(private val scanner: Scanner) {
             token = findToken()
 
             if (token == null)
-                stringBuffer.append(char).append(" starting at character ").append(current) //TODO: Better error logging. (Line, character, log all once the tokenizer has finished)
+                errorBuffer.append(char).append(" starting at character ").append(current) //TODO: Better error logging. (Line, character, log all once the tokenizer has finished)
 
         } while (token == null && !scanner.isAtEnd()) //Keep trying to find tokens if it finds an invalid character
 
-        if (stringBuffer.isNotEmpty()) logger.warn("Found invalid characters: $stringBuffer")
+        if (errorBuffer.isNotEmpty()) logger.warn("Found invalid characters: $errorBuffer")
 
-        return token ?: None
+        return token ?: None.toToken("")
     }
 
-    private fun findToken(): TokenEnum? {
+    private fun findToken(): Token? {
         var foundToken: TokenEnum? = null
         var foundCurrent = scanner.current + 1 //If there isn't one found, the next character will be checked
+        val tokenDataBuffer = StringBuffer()
+        val startCurrent = scanner.current
 
         while (machine.isRunning() && !scanner.isAtEnd()) {
-            machine.accept(scanner.advance())
+            val c = scanner.advance()
+            machine.accept(c)
+            tokenDataBuffer.append(c)
             val acceptingStates = machine.acceptingStates()
 
             if (acceptingStates.isNotEmpty()) {
@@ -77,8 +81,8 @@ class FSMTokenizerHelper(private val scanner: Scanner) {
             }
         }
 
+        val data = tokenDataBuffer.substring(0, foundCurrent - startCurrent)
         scanner.current = foundCurrent
-        return foundToken
+        return (foundToken ?: None).toToken(data)
     }
 }
-

@@ -11,7 +11,13 @@ object LexerTest : Spek({
             examples.forEach { (code, output) ->
                 it("should match the expected output") {
                     val tokenizerString = Tokenizer(code).tokensAsString()
-                    val outputString = output.joinToString(" ")
+                    val outputString = output.joinToString(" ") {
+                        if (it is Pair<*, *>) "(${it.first}, ${it.second})"
+                        else "${it as TokenEnum}"
+                    }
+
+                    println("tokenizer: $tokenizerString")
+                    println("output: $outputString")
 
                     tokenizerString shouldEqual outputString
                 }
@@ -34,28 +40,28 @@ private val examples = arrayOf(
             }
         """.trimIndent()
                 to
-                arrayOf<TokenEnum>(
+                arrayOf<Any>(
                         Keyword.FOR,
                         Symbol.L_PAREN,
                         Keyword.VAR,
-                        Literal.IDENTIFIER,
+                        Literal.IDENTIFIER to "i",
                         Keyword.IN,
-                        Literal.INT,
+                        Literal.INT to "1",
                         Symbol.RANGE,
-                        Literal.INT,
+                        Literal.INT to "5",
                         Symbol.R_PAREN,
                         Symbol.L_BRACE,
                         Keyword.IF,
                         Symbol.L_PAREN,
-                        Literal.IDENTIFIER,
+                        Literal.IDENTIFIER to "i",
                         Symbol.EQUAL_EQUAL,
-                        Literal.INT,
+                        Literal.INT to "2",
                         Symbol.R_PAREN,
                         Symbol.L_BRACE,
                         Keyword.VAL,
-                        Literal.IDENTIFIER,
+                        Literal.IDENTIFIER to "c",
                         Symbol.EQUAL,
-                        Literal.STRING,
+                        Literal.STRING to "\"test\"",
                         Comment.COMMENT_MULTI,
                         Comment.COMMENT_SINGLE,
                         Symbol.R_BRACE,
