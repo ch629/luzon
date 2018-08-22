@@ -16,9 +16,6 @@ object LexerTest : Spek({
                         else "${it as TokenEnum}"
                     }
 
-                    println("tokenizer: $tokenizerString")
-                    println("output: $outputString")
-
                     tokenizerString shouldEqual outputString
                 }
             }
