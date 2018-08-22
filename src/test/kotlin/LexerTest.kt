@@ -12,7 +12,7 @@ object LexerTest : Spek({
                 it("should match the expected output") {
                     val tokenizerString = Tokenizer(code).tokensAsString()
                     val outputString = output.joinToString(" ") {
-                        if (it is Pair<*, *>) "(${it.first}, ${it.second})"
+                        if (it is Pair<*, *>) "${it.first}(${it.second})"
                         else "${it as TokenEnum}"
                     }
 
