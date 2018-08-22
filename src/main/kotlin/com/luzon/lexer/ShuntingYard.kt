@@ -1,45 +1,60 @@
 package com.luzon.lexer
 
-import com.luzon.lexer.ShuntingYard.ExprOperators.*
 import java.util.*
 
 //From https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 //Orders expression in Reverse Polish Notation with precedence
-class ShuntingYard { //TODO: This will probably need to work with a Token Sequence, and manipulate it when it finds an expression
-    private var output = mutableListOf<Any>() //TODO: This will be a Token
-    private val operatorStack = Stack<ExprOperators>()
+class ShuntingYard {
+    private var output = mutableListOf<Token>()
+    private val operatorStack = Stack<Token>()
 
     companion object {
         fun fromString(str: String): ShuntingYard {
             val yard = ShuntingYard()
-            str.split(" ").forEach { yard.add(it) } //TODO: This can be changed to read from a Token Sequence rather than space delimited strings
+            str.split(" ").forEach { yard.add(it) }
+            yard.done()
+            return yard
+        }
+
+        fun fromTokenSequence(seq: Sequence<Token>): ShuntingYard {
+            val yard = ShuntingYard()
+            seq.forEach {
+                when (it.tokenEnum) {
+                    is Symbol -> yard.addOperator(it)
+                    is Literal -> yard.addLiteral(it)
+                }
+            }
+
             yard.done()
             return yard
         }
     }
 
     fun add(inp: String) {
-        val oper: ExprOperators? = when (inp) {
-            "+" -> PLUS
-            "-" -> MINUS
-            "*" -> MULTIPLY
-            "/" -> DIVIDE
-            "(" -> LPAREN
-            ")" -> RPAREN
+        val oper: Symbol? = when (inp) {
+            "+" -> Symbol.PLUS
+            "-" -> Symbol.SUBTRACT
+            "*" -> Symbol.MULTIPLY
+            "/" -> Symbol.DIVIDE
+            "(" -> Symbol.L_PAREN
+            ")" -> Symbol.R_PAREN
             else -> null
         }
 
-        when (oper) {
-            LPAREN -> operatorStack.push(LPAREN)
-            RPAREN -> {
-                while (operatorStack.peek() != LPAREN) //TODO: Check that a LPAREN exists, otherwise error with invalid expression
+        if (oper != null) addOperator(oper.toToken())
+    }
+
+    fun addOperator(oper: Token) {
+        when (oper.tokenEnum) {
+            Symbol.L_PAREN -> operatorStack.push(oper)
+            Symbol.R_PAREN -> {
+                while (operatorStack.peek().tokenEnum != Symbol.L_PAREN) //TODO: Check that a L_PAREN exists, otherwise error with invalid expression
                     output.add(operatorStack.pop())
-                operatorStack.pop() //Pop the LPAREN
+                operatorStack.pop() //Pop the L_PAREN
             }
-            null -> output.add(inp.toInt()) //TODO: Check Int or function call or identifier etc
             else -> { //Operator
                 var peek = if (operatorStack.isEmpty()) null else operatorStack.peek()
-                while (peek != null && (peek.prec < oper.prec || (peek.prec == oper.prec && peek.leftAssociative)) && peek != LPAREN) {
+                while (peek != null && (prec(peek) < prec(oper) || (prec(peek) == prec(oper) && leftAssociative(peek))) && peek.tokenEnum != Symbol.L_PAREN) {
                     //Higher precedence in stack
                     output.add(operatorStack.pop())
                     peek = if (operatorStack.isEmpty()) null else operatorStack.peek()
@@ -49,21 +64,32 @@ class ShuntingYard { //TODO: This will probably need to work with a Token Sequen
         }
     }
 
+    fun addLiteral(token: Token) {
+        output.add(token) //TODO: Correct value here dependant on literal
+    }
+
     fun done() {
         while (operatorStack.isNotEmpty())
             output.add(operatorStack.pop())
     }
 
     override fun toString(): String {
-        return output.joinToString(separator = " ")
+        return output.joinToString(" ")
     }
 
-    enum class ExprOperators(val prec: Int, val leftAssociative: Boolean = false) {
-        LPAREN(0),
-        RPAREN(0),
-        DIVIDE(1, true),
-        MULTIPLY(1),
-        PLUS(2),
-        MINUS(2, true)
+    private fun prec(symbol: Token) = when (symbol.tokenEnum) {
+        Symbol.L_PAREN,
+        Symbol.R_PAREN -> 0
+        Symbol.DIVIDE,
+        Symbol.MULTIPLY -> 1
+        Symbol.PLUS,
+        Symbol.SUBTRACT -> 2
+        else -> 3
+    }
+
+    private fun leftAssociative(symbol: Token) = when (symbol.tokenEnum) {
+        Symbol.DIVIDE,
+        Symbol.SUBTRACT -> true
+        else -> false
     }
 }

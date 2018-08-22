@@ -24,6 +24,7 @@ interface TokenEnum {
     fun isId(id: String) = id() == id
 
     fun toToken(data: String) = Token(this, data)
+    fun toToken() = toToken("")
 }
 
 object None : TokenEnum {
