@@ -29,12 +29,12 @@ data class TokenRegexJson(
             symbols.toFSM(TokenType.SYMBOL, true),
             comments.toFSM(TokenType.COMMENT))
 
-    private fun Map<String, String>.toFSM(name: TokenType, plainText: Boolean = false): FSMachine<TokenHolder> {
+    private fun Map<String, String>.toFSM(name: TokenType, plainText: Boolean = false): FSMachine<TokenEnum> {
         val map = map { (tokenName, regex) ->
             val token = getToken(tokenName, name)
             val usedRegex = if (plainText) replaceMetacharacters(regex) else regex
 
-            FSMachine.fromRegex<TokenHolder>(usedRegex).setOutput(token)
+            FSMachine.fromRegex<TokenEnum>(usedRegex).setOutput(token)
         }
 
         return FSMachine.merge(*map.toTypedArray())
@@ -50,15 +50,5 @@ data class TokenRegexJson(
         return newRegex
     }
 
-    private fun getToken(name: String, type: TokenType): TokenHolder {
-        val token = type.findToken(name)
-
-        return TokenHolder(when (token) {
-            is Literal -> LiteralContainer(token)
-            is Keyword -> KeywordContainer(token)
-            is Symbol -> SymbolContainer(token)
-            is Comment -> CommentContainer(token)
-            else -> None
-        })
-    }
+    private fun getToken(name: String, type: TokenType) = type.findToken(name)
 }

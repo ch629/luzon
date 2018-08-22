@@ -39,9 +39,9 @@ class FSMTokenizerHelper(private val scanner: Scanner) {
         private val machineTemplate = regexJson.toFSM()
     }
 
-    fun findNextToken(): TokenHolder {
+    fun findNextToken(): TokenEnum {
         val stringBuffer = StringBuffer()
-        var token: TokenHolder?
+        var token: TokenEnum?
 
         do {
             machine.reset()
@@ -56,11 +56,11 @@ class FSMTokenizerHelper(private val scanner: Scanner) {
 
         if (stringBuffer.isNotEmpty()) logger.warn("Found invalid characters: $stringBuffer")
 
-        return token ?: TokenHolder(None)
+        return token ?: None
     }
 
-    private fun findToken(): TokenHolder? {
-        var foundToken: TokenHolder? = null
+    private fun findToken(): TokenEnum? {
+        var foundToken: TokenEnum? = null
         var foundCurrent = scanner.current + 1 //If there isn't one found, the next character will be checked
 
         while (machine.isRunning() && !scanner.isAtEnd()) {

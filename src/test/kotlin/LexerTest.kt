@@ -11,7 +11,7 @@ object LexerTest : Spek({
             examples.forEach { (code, output) ->
                 it("should match the expected output") {
                     val tokenizerString = Tokenizer(code).tokensAsString()
-                    val outputString = output.map { it.toContainer() }.joinToString(" ")
+                    val outputString = output.joinToString(" ")
 
                     tokenizerString shouldEqual outputString
                 }
@@ -61,5 +61,4 @@ private val examples = arrayOf(
                         Symbol.R_BRACE,
                         Symbol.R_BRACE
                 )
-
 )
