@@ -2,10 +2,6 @@ package com.luzon.fsm
 
 import com.luzon.utils.merge
 
-fun main(args: Array<String>) {
-    val machine = FSMachine.fromRegex<Int>("abc*")
-}
-
 class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>) {
     constructor(root: State<Alphabet, Output>) : this(mutableListOf(root))
 

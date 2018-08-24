@@ -31,13 +31,11 @@ class Tokenizer(text: String) : Scanner(text) {
 }
 
 class FSMTokenizerHelper(private val scanner: Scanner) {
-    private val machine = machineTemplate.copy()
+    private val tokenMachine: TokenMachine by kodein.instance()
+    private val machine = tokenMachine.getFSM()
     //TODO: Maybe have a save FSM to file, then I can just read that directly in from the initial Regex, rather than scan regex every time?
 
-    companion object : KLogging() {
-        private val regexJson: TokenRegexJson by kodein.instance()
-        private val machineTemplate = regexJson.toFSM()
-    }
+    companion object : KLogging()
 
     fun findNextToken(): Token {
         val errorBuffer = StringBuffer()

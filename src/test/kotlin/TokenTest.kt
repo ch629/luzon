@@ -1,11 +1,11 @@
+
 import com.luzon.fsm.FSMachine
 import com.luzon.kodein
 import com.luzon.lexer.Keyword
 import com.luzon.lexer.Literal
 import com.luzon.lexer.TokenEnum
-import com.luzon.lexer.TokenRegexJson
+import com.luzon.lexer.TokenMachine
 import org.amshove.kluent.shouldBe
-import org.amshove.kluent.shouldBeGreaterThan
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
@@ -13,12 +13,8 @@ import org.kodein.di.generic.instance
 
 object TokenTest : Spek({
     given("a token file") {
-        val tokens: TokenRegexJson by kodein.instance()
-        it("should load correctly into a TokenRegexJson") {
-            tokens.keywords.size shouldBeGreaterThan 0
-        }
-
-        val fsm = tokens.toFSM()
+        val tokens: TokenMachine by kodein.instance()
+        val fsm = tokens.getFSM()
         it("should successfully convert to an FSM") {
             fsm.isRunning() shouldBe true
         }
