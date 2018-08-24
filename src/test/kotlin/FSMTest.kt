@@ -17,7 +17,7 @@ import java.nio.file.Paths
 object FSMTest : Spek({
     given("a finite state machine") {
         on("a simple transition") {
-            val root = State<Int>()
+            val root = State<Char, Int>()
             root.addTransition('A'.predicate(), State())
             val machine = FSMachine(root)
             it("should accept to the next state successfully") {
@@ -27,8 +27,8 @@ object FSMTest : Spek({
         }
 
         on("an epsilon transition") {
-            val root = State<Int>()
-            val otherState = State<Int>()
+            val root = State<Char, Int>()
+            val otherState = State<Char, Int>()
             otherState.addTransition('A'.predicate(), State())
             root.addEpsilonTransition(otherState)
             val machine = FSMachine(root)
@@ -41,7 +41,7 @@ object FSMTest : Spek({
 
         on("a state") {
             it("finds leaf states correctly") {
-                val root = State<Int>()
+                val root = State<Char, Int>()
                 for (i in 1..5) root.addEpsilonTransition(State())
                 root.findLeaves().size shouldBe 5
             }
@@ -269,7 +269,7 @@ object FSMTest : Spek({
     }
 })
 
-private fun regex(regex: String): FSMachine<Int> = FSMachine.fromRegex(regex)
+private fun regex(regex: String): FSMachine<Char, Int> = FSMachine.fromRegex(regex)
 
 //Just converts the old format of "<regex> (<input> <expected output>)+"
 private fun fromTestTxtToJson(): String {

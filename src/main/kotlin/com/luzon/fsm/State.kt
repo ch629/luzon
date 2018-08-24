@@ -3,12 +3,12 @@ package com.luzon.fsm
 import com.luzon.utils.orPredicate
 import java.util.*
 
-class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
-    private val transitions = mutableListOf<Pair<(Char) -> Boolean, State<T>>>()
-    private val epsilonTransitions = mutableListOf<State<T>>()
+class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boolean = false) {
+    private val transitions = mutableListOf<Pair<(Alphabet) -> Boolean, State<Alphabet, Output>>>()
+    private val epsilonTransitions = mutableListOf<State<Alphabet, Output>>()
 
     fun acceptEpsilons() = epsilonTransitions
-    fun accept(char: Char) = transitions.filter { it.first(char) }.map { it.second }
+    fun accept(value: Alphabet) = transitions.filter { it.first(value) }.map { it.second }
     fun isLeaf() = transitions.isEmpty() && epsilonTransitions.isEmpty()
 
     fun mergeTransitions() { //TODO: Test
@@ -26,26 +26,26 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
     }
 
     //TODO: DSL?
-    fun addTransition(pred: (Char) -> Boolean, state: State<T>) {
+    fun addTransition(pred: (Alphabet) -> Boolean, state: State<Alphabet, Output>) {
         transitions.add(pred to state)
     }
 
-    fun addEpsilonTransition(state: State<T>) {
+    fun addEpsilonTransition(state: State<Alphabet, Output>) {
         if (state != this && !epsilonTransitions.contains(state)) epsilonTransitions.add(state)
     }
 
-    fun addEpsilonTransition(vararg states: State<T>) {
+    fun addEpsilonTransition(vararg states: State<Alphabet, Output>) {
         states.forEach { addEpsilonTransition(it) }
     }
 
     fun isAccepting() = forceAccept || output != null
     fun findLeaves() = findAllChildren().filter { it.transitions.isEmpty() && it.epsilonTransitions.isEmpty() }
-    fun replaceChildOutput(output: T) = findAllChildren().filter { it.isAccepting() }.forEach {
+    fun replaceChildOutput(output: Output) = findAllChildren().filter { it.isAccepting() }.forEach {
         it.forceAccept = false
         it.output = output
     }
 
-    fun transferTo(other: State<T>) { //Transfers all the transitional data to another state
+    fun transferTo(other: State<Alphabet, Output>) { //Transfers all the transitional data to another state
         other.epsilonTransitions.addAll(epsilonTransitions)
         other.transitions.addAll(transitions)
         other.output = output
@@ -57,14 +57,14 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
         forceAccept = false
     }
 
-    fun transferToNext(): State<T> {
-        val newState = State<T>()
+    fun transferToNext(): State<Alphabet, Output> {
+        val newState = State<Alphabet, Output>()
         transferTo(newState)
         addEpsilonTransition(newState)
         return newState
     }
 
-    fun replaceWith(other: State<T>) {
+    fun replaceWith(other: State<Alphabet, Output>) {
         epsilonTransitions.clear()
         transitions.clear()
 
@@ -74,9 +74,9 @@ class State<T>(var output: T? = null, var forceAccept: Boolean = false) {
         forceAccept = other.forceAccept
     }
 
-    private fun findAllChildren(): Set<State<T>> {
-        val cachedStates = mutableSetOf<State<T>>()
-        val stateStack = Stack<State<T>>()
+    private fun findAllChildren(): Set<State<Alphabet, Output>> {
+        val cachedStates = mutableSetOf<State<Alphabet, Output>>()
+        val stateStack = Stack<State<Alphabet, Output>>()
         cachedStates.add(this)
         stateStack.push(this)
 

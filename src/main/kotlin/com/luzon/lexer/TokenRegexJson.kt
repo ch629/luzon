@@ -29,7 +29,7 @@ data class TokenRegexJson(
             symbols.toFSM(TokenType.SYMBOL, true),
             comments.toFSM(TokenType.COMMENT))
 
-    private fun Map<String, String>.toFSM(name: TokenType, plainText: Boolean = false): FSMachine<TokenEnum> {
+    private fun Map<String, String>.toFSM(name: TokenType, plainText: Boolean = false): FSMachine<Char, TokenEnum> {
         val map = map { (tokenName, regex) ->
             val token = getToken(tokenName, name)
             val usedRegex = if (plainText) replaceMetacharacters(regex) else regex

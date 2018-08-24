@@ -7,14 +7,14 @@ import com.luzon.utils.predicate
 import com.luzon.utils.range
 import mu.NamedKLogging
 
-class RegexScanner<T>(regex: String) : Scanner(regex) {
-    private val root = State<T>()
+class RegexScanner<Output>(regex: String) : Scanner(regex) { //TODO: Might need to modify this to work with AST creation too
+    private val root = State<Char, Output>()
     private var endState = root
     private var metaScope = root
     private var orScope = root
     private var scopeChange = false
-    private var orState = State<T>()
-    private val orEndState = State<T>()
+    private var orState = State<Char, Output>()
+    private val orEndState = State<Char, Output>()
     private var afterOr = false
     private var afterMeta = false
 
@@ -34,7 +34,7 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         )
     }
 
-    fun toFSM(): State<T> {
+    fun toFSM(): State<Char, Output> {
         while (!isAtEnd()) {
             var escape = false
             var char = peek()
@@ -79,8 +79,8 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         return root
     }
 
-    private fun char(escape: Boolean = false): Pair<State<T>, State<T>> {
-        val charEnd = State<T>(forceAccept = true)
+    private fun char(escape: Boolean = false): Pair<State<Char, Output>, State<Char, Output>> {
+        val charEnd = State<Char, Output>(forceAccept = true)
         val char = advance()
         var isRange = true
 
@@ -106,9 +106,9 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         return endState to charEnd
     }
 
-    private fun orBlock(): Pair<State<T>, State<T>> {
+    private fun orBlock(): Pair<State<Char, Output>, State<Char, Output>> {
 //        afterMeta = true
-        val end = State<T>(forceAccept = true)
+        val end = State<Char, Output>(forceAccept = true)
         var transitionPredicate: (Char) -> Boolean = { false }
 
         advance() //Consume '['
@@ -138,9 +138,9 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         return endState to end
     }
 
-    private fun parenthesis(): Pair<State<T>, State<T>> {
+    private fun parenthesis(): Pair<State<Char, Output>, State<Char, Output>> {
         advance() //Consume '('
-        val scanner = RegexScanner<T>(advanceUntil(')'))
+        val scanner = RegexScanner<Output>(advanceUntil(')'))
         val states = scanner.toFSM()
         endState.addEpsilonTransition(states)
         metaScope = states
@@ -148,7 +148,7 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         return states to scanner.endState
     }
 
-    private fun metaCharacter(): Pair<State<T>, State<T>> {
+    private fun metaCharacter(): Pair<State<Char, Output>, State<Char, Output>> {
         afterMeta = true
         val char = advance()
 
@@ -161,8 +161,8 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         }
     }
 
-    private fun or(): Pair<State<T>, State<T>> {
-        val extraState = State<T>()
+    private fun or(): Pair<State<Char, Output>, State<Char, Output>> {
+        val extraState = State<Char, Output>()
         scopeChange = true
         afterOr = true
 
@@ -179,8 +179,8 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         return extraState to orEndState
     }
 
-    private fun asterisk(): Pair<State<T>, State<T>> {
-        val newEndState = State<T>(forceAccept = true)
+    private fun asterisk(): Pair<State<Char, Output>, State<Char, Output>> {
+        val newEndState = State<Char, Output>(forceAccept = true)
 
         endState.addEpsilonTransition(metaScope)
         metaScope.addEpsilonTransition(newEndState)
@@ -188,8 +188,8 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         return metaScope to newEndState
     }
 
-    private fun plus(): Pair<State<T>, State<T>> {
-        val newEndState = State<T>(forceAccept = true)
+    private fun plus(): Pair<State<Char, Output>, State<Char, Output>> {
+        val newEndState = State<Char, Output>(forceAccept = true)
 
         endState.addEpsilonTransition(metaScope)
         endState.addEpsilonTransition(newEndState)
@@ -197,8 +197,8 @@ class RegexScanner<T>(regex: String) : Scanner(regex) {
         return metaScope to newEndState
     }
 
-    private fun question(): Pair<State<T>, State<T>> {
-        val newEndState = State<T>(forceAccept = true)
+    private fun question(): Pair<State<Char, Output>, State<Char, Output>> {
+        val newEndState = State<Char, Output>(forceAccept = true)
 
         metaScope.addEpsilonTransition(newEndState)
         endState.addEpsilonTransition(newEndState)

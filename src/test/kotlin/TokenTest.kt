@@ -35,4 +35,4 @@ object TokenTest : Spek({
     }
 })
 
-private fun FSMachine<TokenEnum>.getOutput() = getCurrentOutput().first()
+private fun FSMachine<Char, TokenEnum>.getOutput() = getCurrentOutput().first()

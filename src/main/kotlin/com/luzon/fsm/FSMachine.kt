@@ -2,8 +2,12 @@ package com.luzon.fsm
 
 import com.luzon.utils.merge
 
-class FSMachine<T>(statesList: List<State<T>>) {
-    constructor(root: State<T>) : this(mutableListOf(root))
+fun main(args: Array<String>) {
+    val machine = FSMachine.fromRegex<Int>("abc*")
+}
+
+class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>) {
+    constructor(root: State<Alphabet, Output>) : this(mutableListOf(root))
 
     private val states = statesList.toMutableList()
     private val originalStates = statesList
@@ -13,11 +17,12 @@ class FSMachine<T>(statesList: List<State<T>>) {
     }
 
     companion object {
-        fun <T> fromRegex(str: String) = FSMachine(RegexScanner<T>(str).toFSM())
+        fun <Output> fromRegex(str: String) = FSMachine(RegexScanner<Output>(str).toFSM())
 
-        fun <T> merge(vararg machines: FSMachine<T>): FSMachine<T> = machines.reduce { acc, fsMachine ->
-            acc.merge(fsMachine)
-        }
+        fun <Alphabet, Output> merge(vararg machines: FSMachine<Alphabet, Output>): FSMachine<Alphabet, Output> =
+                machines.reduce { acc, fsMachine ->
+                    acc.merge(fsMachine)
+                }
     }
 
     fun copy() = FSMachine(originalStates)
@@ -36,8 +41,8 @@ class FSMachine<T>(statesList: List<State<T>>) {
         return epsilons.isNotEmpty()
     }
 
-    fun accept(char: Char): Boolean {
-        val newStates = states.map { it.accept(char) }.merge()
+    fun accept(value: Alphabet): Boolean {
+        val newStates = states.map { it.accept(value) }.merge()
         states.clear()
         states.addAll(newStates)
 
@@ -50,19 +55,19 @@ class FSMachine<T>(statesList: List<State<T>>) {
 
     fun acceptingStates() = states.filter { it.isAccepting() }
 
-    fun getCurrentOutput(): List<T> = acceptingStates().filter { !it.forceAccept }.map { it.output!! }.distinct()
+    fun getCurrentOutput(): List<Output> = acceptingStates().filter { !it.forceAccept }.map { it.output!! }.distinct()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
-    fun merge(other: FSMachine<T>) = FSMachine(states + other.states)
+    fun merge(other: FSMachine<Alphabet, Output>) = FSMachine(states + other.states)
 
-    fun mergeWithOutput(thisOutput: T, other: FSMachine<T>, otherOutput: T): FSMachine<T> {
+    fun mergeWithOutput(thisOutput: Output, other: FSMachine<Alphabet, Output>, otherOutput: Output): FSMachine<Alphabet, Output> {
         setOutput(thisOutput)
         other.setOutput(otherOutput)
 
         return merge(other)
     }
 
-    fun setOutput(output: T): FSMachine<T> {
+    fun setOutput(output: Output): FSMachine<Alphabet, Output> {
         states.forEach {
             it.replaceChildOutput(output)
         }
