@@ -2,14 +2,14 @@ package com.luzon.fsm
 
 import com.luzon.utils.merge
 
-class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>) {
-    constructor(root: State<Alphabet, Output>) : this(mutableListOf(root))
+class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, updateEpsilons: Boolean = true) {
+    constructor(root: State<Alphabet, Output>, updateEpsilons: Boolean = true) : this(mutableListOf(root), updateEpsilons)
 
     private val states = statesList.toMutableList()
-    private val originalStates = statesList
+    private val originalStates = statesList.toMutableList()
 
     init {
-        updateEpsilons()
+        if (updateEpsilons) updateEpsilons(true)
     }
 
     companion object {
@@ -21,9 +21,9 @@ class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>) {
                 }
     }
 
-    fun copy() = FSMachine(originalStates)
+    fun copy() = FSMachine(originalStates, false)
 
-    private fun updateEpsilons(): Boolean {
+    private fun updateEpsilons(updateOriginal: Boolean = false): Boolean {
         val epsilons = states.map { it.acceptEpsilons() }.merge().toMutableList()
 
         do {
@@ -34,6 +34,8 @@ class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>) {
         } while (moreEpsilons.isNotEmpty())
 
         states.addAll(epsilons)
+        if (updateOriginal) originalStates.addAll(epsilons)
+
         return epsilons.isNotEmpty()
     }
 
@@ -54,7 +56,7 @@ class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>) {
     fun getCurrentOutput(): List<Output> = acceptingStates().filter { !it.forceAccept }.map { it.output!! }.distinct()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
-    fun merge(other: FSMachine<Alphabet, Output>) = FSMachine(states + other.states)
+    fun merge(other: FSMachine<Alphabet, Output>) = FSMachine(originalStates + other.originalStates, false)
 
     fun mergeWithOutput(thisOutput: Output, other: FSMachine<Alphabet, Output>, otherOutput: Output): FSMachine<Alphabet, Output> {
         setOutput(thisOutput)
@@ -76,7 +78,5 @@ class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>) {
     fun reset() { //Resets machine to it's original state.
         states.clear()
         states.addAll(originalStates)
-
-        updateEpsilons()
     }
 }
