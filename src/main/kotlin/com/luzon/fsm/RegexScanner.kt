@@ -1,26 +1,12 @@
 package com.luzon.fsm
 
-import com.luzon.lexer.Scanner
-import com.luzon.utils.errorWithException
 import com.luzon.utils.or
 import com.luzon.utils.predicate
 import com.luzon.utils.range
 import mu.NamedKLogging
 
-class RegexScanner<Output>(regex: String) : Scanner(regex) { //TODO: Might need to modify this to work with AST creation too
-    private val root = State<Char, Output>()
-    private var endState = root
-    private var metaScope = root
-    private var orScope = root
-    private var scopeChange = false
-    private var orState = State<Char, Output>()
-    private val orEndState = State<Char, Output>()
-    private var afterOr = false
-    private var afterMeta = false
-
+class RegexScanner<Output>(regex: String) : MetaCharScanner<Output>(regex) { //TODO: Might need to modify this to work with AST creation too
     companion object : NamedKLogging("Regex-Logger") {
-        private const val META_CHARACTERS = "*+?|"
-        private const val BRACKET_CHARACTERS = "()[]"
         private val numericalPredicate = '0' range '9'
         private val alphaNumericPredicate = numericalPredicate or ('A' range 'Z') or ('a' range 'z')
         private val anyCharacterPredicate: (Char) -> Boolean = { it != '\n' } //TODO: Could make a new predicate for this, but this just simplifies problems with newlines
@@ -34,7 +20,9 @@ class RegexScanner<Output>(regex: String) : Scanner(regex) { //TODO: Might need 
         )
     }
 
-    fun toFSM(): State<Char, Output> {
+    override fun createScanner(text: String) = RegexScanner<Output>(text)
+
+    override fun toFSM(): State<Char, Output> {
         while (!isAtEnd()) {
             var escape = false
             var char = peek()
@@ -53,17 +41,16 @@ class RegexScanner<Output>(regex: String) : Scanner(regex) { //TODO: Might need 
             val startEnd = if (!escape) {
                 when (char) {
                     '[' -> orBlock()
-                    '(' -> parenthesis()
                     in META_CHARACTERS -> metaCharacter()
                     else -> char()
                 }
             } else char(escape)
 
-            endState = startEnd.second
+            endState = startEnd.end
             endState.removeAccept()
 
             if (afterOr) {
-                endState = startEnd.first
+                endState = startEnd.start
                 orScope = endState
                 afterOr = false
             }
@@ -79,7 +66,7 @@ class RegexScanner<Output>(regex: String) : Scanner(regex) { //TODO: Might need 
         return root
     }
 
-    private fun char(escape: Boolean = false): Pair<State<Char, Output>, State<Char, Output>> {
+    private fun char(escape: Boolean = false): StatePair<Output> {
         val charEnd = State<Char, Output>(forceAccept = true)
         val char = advance()
         var isRange = true
@@ -106,8 +93,8 @@ class RegexScanner<Output>(regex: String) : Scanner(regex) { //TODO: Might need 
         return endState to charEnd
     }
 
-    private fun orBlock(): Pair<State<Char, Output>, State<Char, Output>> {
-//        afterMeta = true
+    //[ABC]
+    private fun orBlock(): StatePair<Output> {
         val end = State<Char, Output>(forceAccept = true)
         var transitionPredicate: (Char) -> Boolean = { false }
 
@@ -137,92 +124,4 @@ class RegexScanner<Output>(regex: String) : Scanner(regex) { //TODO: Might need 
         metaScope = endState
         return endState to end
     }
-
-    private fun parenthesis(): Pair<State<Char, Output>, State<Char, Output>> {
-        advance() //Consume '('
-        val scanner = RegexScanner<Output>(advanceUntil(')'))
-        val states = scanner.toFSM()
-        endState.addEpsilonTransition(states)
-        metaScope = states
-
-        return states to scanner.endState
-    }
-
-    private fun metaCharacter(): Pair<State<Char, Output>, State<Char, Output>> {
-        afterMeta = true
-        val char = advance()
-
-        return when (char) {
-            '|' -> or()
-            '*' -> asterisk()
-            '+' -> plus()
-            '?' -> question()
-            else -> logger.errorWithException("metaCharacter was called on an invalid character '$char'")
-        }
-    }
-
-    private fun or(): Pair<State<Char, Output>, State<Char, Output>> {
-        val extraState = State<Char, Output>()
-        scopeChange = true
-        afterOr = true
-
-        if (!hasOr()) { //First or in regex
-            val newState = orScope.transferToNext()
-            orScope.replaceWith(orState)
-            orState = orScope
-            orScope.addEpsilonTransition(newState)
-        } else orState.addEpsilonTransition(orScope)
-
-        endState.addEpsilonTransition(orEndState)
-        orState.addEpsilonTransition(extraState)
-
-        return extraState to orEndState
-    }
-
-    private fun asterisk(): Pair<State<Char, Output>, State<Char, Output>> {
-        val newEndState = State<Char, Output>(forceAccept = true)
-
-        endState.addEpsilonTransition(metaScope)
-        metaScope.addEpsilonTransition(newEndState)
-
-        return metaScope to newEndState
-    }
-
-    private fun plus(): Pair<State<Char, Output>, State<Char, Output>> {
-        val newEndState = State<Char, Output>(forceAccept = true)
-
-        endState.addEpsilonTransition(metaScope)
-        endState.addEpsilonTransition(newEndState)
-
-        return metaScope to newEndState
-    }
-
-    private fun question(): Pair<State<Char, Output>, State<Char, Output>> {
-        val newEndState = State<Char, Output>(forceAccept = true)
-
-        metaScope.addEpsilonTransition(newEndState)
-        endState.addEpsilonTransition(newEndState)
-
-        return metaScope to newEndState
-    }
-
-    private fun advanceUntil(char: Char) = advanceUntil(char) { it == char }
-
-    private fun advanceUntil(c: Char, pred: (Char) -> Boolean): String {
-        val sb = StringBuilder()
-
-        while (true) {
-            val char = advance()
-            val predResult = pred(char)
-
-            if (predResult) break
-            if (isAtEnd()) logger.errorWithException("advancedUntil hit the end before passing the predicate $c.")
-
-            sb.append(char)
-        }
-
-        return sb.toString()
-    }
-
-    private fun hasOr() = !orState.isLeaf()
 }
