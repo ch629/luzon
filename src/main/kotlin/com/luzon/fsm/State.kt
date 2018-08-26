@@ -4,19 +4,24 @@ import com.luzon.utils.orPredicate
 import java.util.*
 
 class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boolean = false) {
-    private val transitions = mutableListOf<Pair<(Alphabet) -> Boolean, State<Alphabet, Output>>>()
+    private val transitions = mutableListOf<Transition<Alphabet, Output>>()
     private val epsilonTransitions = mutableListOf<State<Alphabet, Output>>()
 
+    private data class Transition<Alphabet, Output>(val predicate: (Alphabet) -> Boolean,
+                                                    val state: State<Alphabet, Output>) {
+        fun accepts(value: Alphabet) = predicate(value)
+    }
+
     fun acceptEpsilons() = epsilonTransitions
-    fun accept(value: Alphabet) = transitions.filter { it.first(value) }.map { it.second }
+    fun accept(value: Alphabet) = transitions.filter { it.accepts(value) }.map { it.state }
     fun isLeaf() = transitions.isEmpty() && epsilonTransitions.isEmpty()
 
     fun mergeTransitions() { //TODO: Test
-        val groupedTransitions = transitions.groupBy { it.second }
+        val groupedTransitions = transitions.groupBy { it.state }
         val newEpsilonTransitions = epsilonTransitions.distinct()
 
         val newTransitions = groupedTransitions.entries.map { (state, list) ->
-            orPredicate(*list.map { it.first }.toTypedArray()) to state
+            Transition(orPredicate(*list.map { it.predicate }.toTypedArray()), state)
         }
 
         epsilonTransitions.clear()
@@ -26,8 +31,8 @@ class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boole
     }
 
     //TODO: DSL?
-    fun addTransition(pred: (Alphabet) -> Boolean, state: State<Alphabet, Output>) {
-        transitions.add(pred to state)
+    fun addTransition(predicate: (Alphabet) -> Boolean, state: State<Alphabet, Output>) {
+        transitions.add(Transition(predicate, state))
     }
 
     fun addEpsilonTransition(state: State<Alphabet, Output>) {
