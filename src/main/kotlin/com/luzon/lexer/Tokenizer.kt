@@ -6,7 +6,7 @@ import org.kodein.di.generic.instance
 import java.nio.file.Files
 import java.nio.file.Paths
 
-class Tokenizer(text: String) : Scanner(text) {
+class Tokenizer(text: String) : StringScanner(text) {
     private val tokenizerHelper = FSMTokenizerHelper(this)
 
     companion object {
@@ -30,7 +30,7 @@ class Tokenizer(text: String) : Scanner(text) {
     }
 }
 
-class FSMTokenizerHelper(private val scanner: Scanner) {
+class FSMTokenizerHelper(private val scanner: StringScanner) {
     private val tokenMachine: TokenMachine by kodein.instance()
     private val machine = tokenMachine.getFSM()
     //TODO: Maybe have a save FSM to file, then I can just read that directly in from the initial Regex, rather than scan regex every time?

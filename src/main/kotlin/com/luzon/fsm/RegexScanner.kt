@@ -5,96 +5,48 @@ import com.luzon.utils.predicate
 import com.luzon.utils.range
 import mu.NamedKLogging
 
-class RegexScanner<Output>(regex: String) : MetaCharScanner<Output>(regex) { //TODO: Might need to modify this to work with AST creation too
+class RegexScanner<Output>(regex: String) : MetaScanner<Char, Output>(regex.toCharArray().asList(), '\n') {
+    override val orPredicate: (Char) -> Boolean
+        get() = { it == '|' }
+    override val kleeneStarPredicate: (Char) -> Boolean
+        get() = { it == '*' }
+    override val kleenePlusPredicate: (Char) -> Boolean
+        get() = { it == '+' }
+    override val optionalPredicate: (Char) -> Boolean
+        get() = { it == '?' }
+    override val startGroupPredicate: (Char) -> Boolean
+        get() = { it == '(' }
+    override val endGroupPredicate: (Char) -> Boolean
+        get() = { it == ')' }
+    override val escapePredicate: (Char) -> Boolean
+        get() = { it == '\\' }
+
+    override fun escapedCharacters(char: Char) = when (char) {
+        'd' -> numericalPredicate
+        'w' -> alphaNumericPredicate
+        else -> null
+    }
+
+    override fun unescapedCharacters(char: Char) = when (char) {
+        '.' -> anyCharacterPredicate
+        else -> null
+    }
+
     companion object : NamedKLogging("Regex-Logger") {
         private val numericalPredicate = '0' range '9'
         private val alphaNumericPredicate = numericalPredicate or ('A' range 'Z') or ('a' range 'z')
-        private val anyCharacterPredicate: (Char) -> Boolean = { it != '\n' } //TODO: Could make a new predicate for this, but this just simplifies problems with newlines
-        val unescapedCharacters = hashMapOf(
-                '.' to anyCharacterPredicate
-        )
-
-        val escapedCharacters = hashMapOf(
-                'd' to numericalPredicate,
-                'w' to alphaNumericPredicate
-        )
+        private val anyCharacterPredicate: (Char) -> Boolean = { it != '\n' }
     }
 
     override fun createScanner(text: String) = RegexScanner<Output>(text)
 
-    override fun toFSM(): State<Char, Output> {
-        while (!isAtEnd()) {
-            var escape = false
-            var char = peek()
-
-            if (scopeChange) {
-                metaScope = endState
-                scopeChange = false
-            }
-
-            if (char == '\\') {
-                escape = true
-                advance()
-                char = peek()
-            }
-
-            val startEnd = if (!escape) {
-                when (char) {
-                    '[' -> orBlock()
-                    in META_CHARACTERS -> metaCharacter()
-                    else -> char()
-                }
-            } else char(escape)
-
-            endState = startEnd.end
-            endState.removeAccept()
-
-            if (afterOr) {
-                endState = startEnd.start
-                orScope = endState
-                afterOr = false
-            }
-        }
-
-        if (hasOr()) {
-            endState.addEpsilonTransition(orEndState)
-            endState = orEndState
-        }
-
-        endState.forceAccept = true
-
-        return root
-    }
-
-    private fun char(escape: Boolean = false): StatePair<Output> {
-        val charEnd = State<Char, Output>(forceAccept = true)
-        val char = advance()
-        var isRange = true
-
-        val predicate =
-                if (!escape && char in unescapedCharacters.keys) unescapedCharacters[char]!!
-                else if (escape && char in escapedCharacters.keys) escapedCharacters[char]!!
-                else {
-                    isRange = false
-
-                    if (escape && char !in unescapedCharacters.keys && char !in META_CHARACTERS && char !in BRACKET_CHARACTERS)
-                        logger.warn("There is no escaped meaning to the character '$char'.")
-
-                    char.predicate()
-                }
-
-        endState.addTransition(predicate, charEnd)
-
-        if (afterMeta || isRange) {
-            afterMeta = false
-            metaScope = endState
-        }
-
-        return endState to charEnd
+    override fun customCharacters(char: Char) = when (char) {
+        '[' -> orBlock()
+        else -> null
     }
 
     //[ABC]
-    private fun orBlock(): StatePair<Output> {
+    private fun orBlock(): StatePair<Char, Output> {
         val end = State<Char, Output>(forceAccept = true)
         var transitionPredicate: (Char) -> Boolean = { false }
 
@@ -103,7 +55,7 @@ class RegexScanner<Output>(regex: String) : MetaCharScanner<Output>(regex) { //T
         do {
             var char = advance()
             var escape = false
-            if (char == '\\') {
+            if (escapePredicate(char)) {
                 escape = true
                 char = advance()
             }
@@ -111,9 +63,13 @@ class RegexScanner<Output>(regex: String) : MetaCharScanner<Output>(regex) { //T
             transitionPredicate = if (!escape && peek() == '-') { //Is Range
                 advance() //Consume '-'
                 transitionPredicate or (char range advance())
-            } else {
-                if (escape || char !in unescapedCharacters) transitionPredicate or char.predicate()
-                else transitionPredicate or unescapedCharacters[char]!!
+            } else { //Normal Character
+                val unescapedCharacter = unescapedCharacters(char)
+                val escapedCharacter = escapedCharacters(char)
+
+                if (escape && escapedCharacter != null) transitionPredicate or escapedCharacter
+                else if (unescapedCharacter == null) transitionPredicate or char.predicate()
+                else transitionPredicate or unescapedCharacter
             }
 
         } while (peek() != ']' && !isAtEnd())

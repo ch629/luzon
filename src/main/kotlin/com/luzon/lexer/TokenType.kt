@@ -117,7 +117,7 @@ enum class Comment(val regex: String) : TokenEnum {
 
 private fun Enum<*>.generateID(): String {
     val sb = StringBuffer()
-    val scanner = Scanner(name.toLowerCase())
+    val scanner = StringScanner(name.toLowerCase())
 
     while (!scanner.isAtEnd()) {
         var c = scanner.advance()

@@ -8,3 +8,5 @@ internal fun <T> Collection<Collection<T>>.merge(): Collection<T> = fold(mutable
 }
 
 internal fun <K, T> Collection<FSMachine<K, T>>.toMergedFSM() = FSMachine.merge(*toTypedArray())
+
+internal fun String.toCharList() = toCharArray().toList()
