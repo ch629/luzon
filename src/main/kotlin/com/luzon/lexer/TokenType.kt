@@ -98,9 +98,9 @@ enum class Symbol(val regex: String) : TokenEnum {
 }
 
 enum class Literal(val regex: String) : TokenEnum {
-    DOUBLE("[1-9]\\d*d|\\d*\\.\\d+d?"),
-    FLOAT("[1-9]\\d*f|\\d*\\.\\d+f"),
-    INT("[1-9]\\d*"),
+    DOUBLE("\\d*d|\\d*\\.\\d+d?"),
+    FLOAT("\\d*f|\\d*\\.\\d+f"),
+    INT("\\d*"),
     STRING("\".*\""),
     CHAR("'\\?.'"),
     BOOLEAN("true|false"),

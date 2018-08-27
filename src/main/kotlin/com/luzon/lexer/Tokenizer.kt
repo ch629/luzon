@@ -18,10 +18,14 @@ class Tokenizer(text: String) : StringScanner(text) {
         fun fromFile(file: String) = Tokenizer(Files.readAllLines(Paths.get(file)).joinToString("\n"))
     }
 
-    fun findTokens() = generateSequence {
-        while (peek() in skipChars && !isAtEnd()) advance()
-        if (isAtEnd()) null
-        else tokenizerHelper.findNextToken()
+    fun findTokens(): Sequence<Token> {
+        tokenizerHelper.reset()
+
+        return generateSequence {
+            while (peek() in skipChars && !isAtEnd()) advance()
+            if (isAtEnd()) null
+            else tokenizerHelper.findNextToken()
+        }
     }
 
     fun tokensAsString() = findTokens().joinToString(" ")
@@ -79,5 +83,10 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
         val data = tokenDataBuffer.substring(0, foundCurrent - startCurrent)
         scanner.current = foundCurrent
         return (foundToken ?: None).toToken(data)
+    }
+
+    fun reset() {
+        machine.reset()
+        scanner.current = 0
     }
 }

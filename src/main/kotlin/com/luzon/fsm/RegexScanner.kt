@@ -6,7 +6,9 @@ import com.luzon.utils.range
 import com.luzon.utils.toCharList
 import mu.NamedKLogging
 
-class RegexScanner<Output>(regex: String) : MetaScanner<Char, Output>(regex.toCharList(), '\n') {
+class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex, '\n') {
+    constructor(regex: String) : this(regex.toCharList())
+
     override val orPredicate: (Char) -> Boolean
         get() = { it == '|' }
     override val kleeneStarPredicate: (Char) -> Boolean
@@ -39,7 +41,7 @@ class RegexScanner<Output>(regex: String) : MetaScanner<Char, Output>(regex.toCh
         private val anyCharacterPredicate: (Char) -> Boolean = { it != '\n' }
     }
 
-    override fun createScanner(text: String) = RegexScanner<Output>(text)
+    override fun createScanner(text: List<Char>) = RegexScanner<Output>(text)
 
     override fun customCharacters(char: Char) = when (char) {
         '[' -> orBlock()

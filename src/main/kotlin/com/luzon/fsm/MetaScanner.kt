@@ -26,7 +26,7 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
 
     companion object : NamedKLogging("MetaScanner-Logger")
 
-    abstract fun createScanner(text: String): MetaScanner<Alphabet, Output>
+    abstract fun createScanner(text: List<Alphabet>): MetaScanner<Alphabet, Output>
     protected open fun customCharacters(char: Alphabet): StatePair<Alphabet, Output>? = null
     protected open fun unescapedCharacters(char: Alphabet): ((Alphabet) -> Boolean)? = null
     protected open fun escapedCharacters(char: Alphabet): ((Alphabet) -> Boolean)? = null
@@ -189,8 +189,8 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
     }
 
 
-    private fun advanceUntil(predicate: (Alphabet) -> Boolean): String {
-        val sb = StringBuilder()
+    private fun advanceUntil(predicate: (Alphabet) -> Boolean): List<Alphabet> {
+        val characters = mutableListOf<Alphabet>()
 
         while (true) {
             val currentChar = advance()
@@ -200,10 +200,10 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
             if (isAtEnd())
                 logger.errorWithException("advancedUntil hit the end before passing the predicate.")
 
-            sb.append(currentChar)
+            characters.add(currentChar)
         }
 
-        return sb.toString()
+        return characters
     }
 
     private fun hasOr() = !orState.isLeaf()
