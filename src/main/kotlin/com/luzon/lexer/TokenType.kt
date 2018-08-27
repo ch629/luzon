@@ -1,6 +1,7 @@
 package com.luzon.lexer
 
 import com.luzon.fsm.FSMachine
+import com.luzon.fsm.StringScanner
 import com.luzon.utils.toMergedFSM
 
 object TokenMachine {

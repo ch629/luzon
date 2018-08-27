@@ -1,4 +1,4 @@
-package com.luzon.lexer
+package com.luzon.fsm
 
 import com.luzon.utils.toCharList
 

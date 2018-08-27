@@ -3,9 +3,10 @@ package com.luzon.fsm
 import com.luzon.utils.or
 import com.luzon.utils.predicate
 import com.luzon.utils.range
+import com.luzon.utils.toCharList
 import mu.NamedKLogging
 
-class RegexScanner<Output>(regex: String) : MetaScanner<Char, Output>(regex.toCharArray().asList(), '\n') {
+class RegexScanner<Output>(regex: String) : MetaScanner<Char, Output>(regex.toCharList(), '\n') {
     override val orPredicate: (Char) -> Boolean
         get() = { it == '|' }
     override val kleeneStarPredicate: (Char) -> Boolean

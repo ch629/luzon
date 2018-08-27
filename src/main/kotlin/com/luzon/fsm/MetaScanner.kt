@@ -1,6 +1,5 @@
 package com.luzon.fsm
 
-import com.luzon.lexer.Scanner
 import com.luzon.utils.errorWithException
 import com.luzon.utils.or
 import mu.NamedKLogging
@@ -104,7 +103,7 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
         return endState to charEnd
     }
 
-    protected fun isMeta(char: Alphabet): Boolean {
+    private fun isMeta(char: Alphabet): Boolean {
         if (isMetaPredicate == null)
             isMetaPredicate = orPredicate or kleeneStarPredicate or kleenePlusPredicate or optionalPredicate or startGroupPredicate or endGroupPredicate
 
@@ -116,7 +115,7 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
 
     protected infix fun State<Alphabet, Output>.to(other: State<Alphabet, Output>) = StatePair(this, other)
 
-    protected fun metaCharacter(): StatePair<Alphabet, Output> {
+    private fun metaCharacter(): StatePair<Alphabet, Output> {
         afterMeta = true
         val char = advance()
 
@@ -207,5 +206,5 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
         return sb.toString()
     }
 
-    protected fun hasOr() = !orState.isLeaf()
+    private fun hasOr() = !orState.isLeaf()
 }

@@ -1,5 +1,6 @@
 package com.luzon.lexer
 
+import com.luzon.fsm.StringScanner
 import com.luzon.kodein
 import mu.KLogging
 import org.kodein.di.generic.instance
@@ -24,10 +25,6 @@ class Tokenizer(text: String) : StringScanner(text) {
     }
 
     fun tokensAsString() = findTokens().joinToString(" ")
-
-    fun print() {
-        println(tokensAsString())
-    }
 }
 
 class FSMTokenizerHelper(private val scanner: StringScanner) {
