@@ -75,7 +75,7 @@ enum class Keyword(val regex: String? = null) : TokenEnum {
     STRING("String"),
     CHAR("Char"),
     BOOLEAN("Boolean"),
-    IS, AS, IN;
+    IS, AS, IN, PRIVATE;
 
     override fun toString() = "keyword:${id()}"
 }
@@ -92,15 +92,15 @@ enum class Symbol(val regex: String) : TokenEnum {
     DECREMENT("--"), L_PAREN("("), R_PAREN(")"),
     L_BRACE("{"), R_BRACE("}"), L_BRACKET("["),
     R_BRACKET("]"), RANGE(".."), ARROW("->"),
-    DOT("."); //DOT is for dot notation
+    DOT("."), COMMA(",");
 
     override fun toString() = "symbol:${id()}"
 }
 
 enum class Literal(val regex: String) : TokenEnum {
-    DOUBLE("\\d*d|\\d*\\.\\d+d?"),
-    FLOAT("\\d*f|\\d*\\.\\d+f"),
-    INT("\\d*"),
+    DOUBLE("\\d+d|\\d+\\.\\d+d?"),
+    FLOAT("\\d+f|\\d+\\.\\d+f"),
+    INT("\\d+"),
     STRING("\".*\""),
     CHAR("'\\?.'"),
     BOOLEAN("true|false"),
