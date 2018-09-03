@@ -1,7 +1,5 @@
-
-import com.luzon.fsm.FSMachine
+import com.luzon.fsm.FSM
 import com.luzon.fsm.State
-import com.luzon.kodein
 import com.luzon.utils.predicate
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -10,7 +8,6 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
 import org.jetbrains.spek.api.dsl.on
-import org.kodein.di.generic.instance
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -19,7 +16,7 @@ object FSMTest : Spek({
         on("a simple transition") {
             val root = State<Char, Int>()
             root.addTransition('A'.predicate(), State())
-            val machine = FSMachine(root)
+            val machine = FSM(root)
             it("should accept to the next state successfully") {
                 machine.accept('A')
                 machine.isRunning() shouldBe true
@@ -31,7 +28,7 @@ object FSMTest : Spek({
             val otherState = State<Char, Int>()
             otherState.addTransition('A'.predicate(), State())
             root.addEpsilonTransition(otherState)
-            val machine = FSMachine(root)
+            val machine = FSM(root)
 
             it("should end with 1 state") {
                 machine.accept('A')
@@ -229,7 +226,7 @@ object FSMTest : Spek({
         val machine3 = regex("EF")
 
         it("should work with more merged machines") {
-            val merged = FSMachine.merge(machine1, machine2, machine3)
+            val merged = FSM.merge(machine1, machine2, machine3)
 
             merged.accept("AB")
             merged.isAccepting() shouldBe true
@@ -269,10 +266,10 @@ object FSMTest : Spek({
     }
 })
 
-private fun regex(regex: String): FSMachine<Char, Int> = FSMachine.fromRegex(regex)
+private fun regex(regex: String): FSM<Char, Int> = FSM.fromRegex(regex)
 
 //Just converts the old format of "<regex> (<input> <expected output>)+"
-private fun fromTestTxtToJson(): String {
+/*private fun fromTestTxtToJson(): String {
     val fileText = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.txt").toURI()))
     val paramType = Types.newParameterizedType(List::class.java, RegexIOTest::class.java)
     val moshi: Moshi by kodein.instance()
@@ -289,4 +286,4 @@ private fun fromTestTxtToJson(): String {
     }
 
     return adapter.toJson(tests)
-}
+}*/

@@ -2,7 +2,7 @@ package com.luzon.fsm
 
 import com.luzon.utils.merge
 
-class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, updateEpsilons: Boolean = true) {
+class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, updateEpsilons: Boolean = true) {
     constructor(root: State<Alphabet, Output>, updateEpsilons: Boolean = true) : this(mutableListOf(root), updateEpsilons)
 
     private val states = statesList.toMutableList()
@@ -13,15 +13,15 @@ class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, upd
     }
 
     companion object {
-        fun <Output> fromRegex(str: String) = FSMachine(RegexScanner<Output>(str).toFSM())
+        fun <Output> fromRegex(str: String) = FSM(RegexScanner<Output>(str).toFSM())
 
-        fun <Alphabet, Output> merge(vararg machines: FSMachine<Alphabet, Output>): FSMachine<Alphabet, Output> =
+        fun <Alphabet, Output> merge(vararg machines: FSM<Alphabet, Output>): FSM<Alphabet, Output> =
                 machines.reduce { acc, fsMachine ->
                     acc.merge(fsMachine)
                 }
     }
 
-    fun copy() = FSMachine(originalStates, false)
+    fun copy() = FSM(originalStates, false)
 
     private fun updateEpsilons(updateOriginal: Boolean = false): Boolean {
         val epsilons = states.map { it.acceptEpsilons() }.merge().toMutableList()
@@ -36,6 +36,8 @@ class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, upd
         states.addAll(epsilons)
         if (updateOriginal) originalStates.addAll(epsilons)
 
+        onEnter(epsilons)
+
         return epsilons.isNotEmpty()
     }
 
@@ -44,7 +46,13 @@ class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, upd
         states.clear()
         states.addAll(newStates)
 
+        onEnter(newStates)
+
         return updateEpsilons() || newStates.isNotEmpty()
+    }
+
+    private fun onEnter(states: Collection<State<Alphabet, Output>>) {
+        states.forEach { it.onEnter() }
     }
 
     fun isRunning() = states.isNotEmpty()
@@ -56,16 +64,16 @@ class FSMachine<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, upd
     fun getCurrentOutput(): List<Output> = acceptingStates().filter { !it.forceAccept }.map { it.output!! }.distinct()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
-    fun merge(other: FSMachine<Alphabet, Output>) = FSMachine(originalStates + other.originalStates, false)
+    fun merge(other: FSM<Alphabet, Output>) = FSM(originalStates + other.originalStates, false)
 
-    fun mergeWithOutput(thisOutput: Output, other: FSMachine<Alphabet, Output>, otherOutput: Output): FSMachine<Alphabet, Output> {
+    fun mergeWithOutput(thisOutput: Output, other: FSM<Alphabet, Output>, otherOutput: Output): FSM<Alphabet, Output> {
         setOutput(thisOutput)
         other.setOutput(otherOutput)
 
         return merge(other)
     }
 
-    fun setOutput(output: Output): FSMachine<Alphabet, Output> {
+    fun setOutput(output: Output): FSM<Alphabet, Output> {
         states.forEach {
             it.replaceChildOutput(output)
         }

@@ -1,9 +1,7 @@
 package com.luzon.lexer
 
 import com.luzon.fsm.StringScanner
-import com.luzon.kodein
 import mu.KLogging
-import org.kodein.di.generic.instance
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -32,8 +30,7 @@ class Tokenizer(text: String) : StringScanner(text) {
 }
 
 class FSMTokenizerHelper(private val scanner: StringScanner) {
-    private val tokenMachine: TokenMachine by kodein.instance()
-    private val machine = tokenMachine.getFSM()
+    private val machine = TokenMachine.getFSM()
     //TODO: Maybe have a save FSM to file, then I can just read that directly in from the initial Regex, rather than scan regex every time?
 
     companion object : KLogging()
@@ -55,11 +52,11 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
 
         if (errorBuffer.isNotEmpty()) logger.warn("Found invalid characters: $errorBuffer")
 
-        return token ?: None.toToken("")
+        return token ?: Token.None.toToken("")
     }
 
     private fun findToken(): Token? {
-        var foundToken: TokenEnum? = null
+        var foundToken: Token.TokenEnum? = null
         var foundCurrent = scanner.current + 1 //If there isn't one found, the next character will be checked
         val tokenDataBuffer = StringBuffer()
         val startCurrent = scanner.current
@@ -82,7 +79,7 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
 
         val data = tokenDataBuffer.substring(0, foundCurrent - startCurrent)
         scanner.current = foundCurrent
-        return (foundToken ?: None).toToken(data)
+        return (foundToken ?: Token.None).toToken(data)
     }
 
     fun reset() {

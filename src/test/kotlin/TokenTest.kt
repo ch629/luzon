@@ -1,20 +1,14 @@
-
-import com.luzon.fsm.FSMachine
-import com.luzon.kodein
-import com.luzon.lexer.Keyword
-import com.luzon.lexer.Literal
-import com.luzon.lexer.TokenEnum
+import com.luzon.fsm.FSM
+import com.luzon.lexer.Token.*
 import com.luzon.lexer.TokenMachine
 import org.amshove.kluent.shouldBe
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.it
-import org.kodein.di.generic.instance
 
 object TokenTest : Spek({
     given("a token file") {
-        val tokens: TokenMachine by kodein.instance()
-        val fsm = tokens.getFSM()
+        val fsm = TokenMachine.getFSM()
         it("should successfully convert to an FSM") {
             fsm.isRunning() shouldBe true
         }
@@ -31,4 +25,4 @@ object TokenTest : Spek({
     }
 })
 
-private fun FSMachine<Char, TokenEnum>.getOutput() = getCurrentOutput().first()
+private fun FSM<Char, TokenEnum>.getOutput() = getCurrentOutput().first()

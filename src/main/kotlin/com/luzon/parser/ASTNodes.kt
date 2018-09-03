@@ -1,11 +1,12 @@
 package com.luzon.parser
 
-import com.luzon.lexer.Symbol
 import com.luzon.lexer.Token
 
-interface Statement
+interface ASTNode
+
+interface Statement : ASTNode
 interface ClassStatement : Statement
-interface Expression
+interface Expression : ASTNode
 
 data class ClassBlock(val statements: List<ClassStatement>)
 data class FunctionBlock(val statement: List<Statement>)
@@ -47,8 +48,8 @@ data class Class(val name: String, val block: ClassBlock) //TODO: Constructors, 
 data class IfStatement(val expression: Expression, val block: Block, val elseStatement: Else?) : Statement
 data class Else(val block: Block)
 
-data class BinaryExpression(val operator: Symbol, val op1: Expression, val op2: Expression) : Expression
-data class UnaryExpression(val operator: Symbol, val op: Expression) : Expression
+data class BinaryExpression(val operator: Token.Symbol, val op1: Expression, val op2: Expression) : Expression
+data class UnaryExpression(val operator: Token.Symbol, val op: Expression) : Expression
 data class LiteralExpression(val literal: Token) : Expression
 
 data class VariableAccess(val name: String) : Expression

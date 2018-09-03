@@ -1,8 +1,8 @@
 package com.luzon.parser
 
-import com.luzon.lexer.Literal
-import com.luzon.lexer.Symbol
 import com.luzon.lexer.Token
+import com.luzon.lexer.Token.Literal
+import com.luzon.lexer.Token.Symbol
 import java.util.*
 
 //From https://en.wikipedia.org/wiki/Shunting-yard_algorithm

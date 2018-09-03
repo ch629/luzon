@@ -189,7 +189,7 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
     }
 
 
-    private fun advanceUntil(predicate: (Alphabet) -> Boolean): List<Alphabet> {
+    protected fun advanceUntil(predicate: (Alphabet) -> Boolean): List<Alphabet> {
         val characters = mutableListOf<Alphabet>()
 
         while (true) {

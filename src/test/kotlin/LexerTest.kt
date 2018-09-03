@@ -1,4 +1,5 @@
-import com.luzon.lexer.*
+import com.luzon.lexer.Token.*
+import com.luzon.lexer.Tokenizer
 import org.amshove.kluent.shouldEqual
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given

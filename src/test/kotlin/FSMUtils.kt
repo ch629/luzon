@@ -1,8 +1,7 @@
-import com.luzon.fsm.FSMachine
+import com.luzon.fsm.FSM
 
-fun FSMachine<Char, *>.accept(input: String) {
+fun FSM<Char, *>.accept(input: String) {
     input.forEach {
         accept(it)
     }
-
 }
