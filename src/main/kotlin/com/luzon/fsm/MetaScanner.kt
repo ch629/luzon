@@ -32,7 +32,7 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
     protected open fun escapedCharacters(char: Alphabet): ((Alphabet) -> Boolean)? = null
 
     fun toFSM(): State<Alphabet, Output> {
-        while (!isAtEnd()) {
+        while (isNotAtEnd()) {
             var escape = false
             var char = peek()
 

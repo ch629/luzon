@@ -7,17 +7,6 @@ import java.util.*
 
 //From https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 //Orders expression in Reverse Polish Notation with precedence
-
-fun main(args: Array<String>) {
-    println(ShuntingYard.fromTokenSequence(sequenceOf(
-            Literal.INT.toToken("5"),
-            Symbol.PLUS.toToken(),
-            Literal.INT.toToken("1"),
-            Symbol.MULTIPLY.toToken(),
-            Literal.INT.toToken("3")
-    )))
-}
-
 class ShuntingYard {
     private var output = mutableListOf<Token>()
     private val operatorStack = Stack<Token>()
@@ -48,7 +37,7 @@ class ShuntingYard {
             }
             else -> { //Operator
                 var peek = if (operatorStack.isEmpty()) null else operatorStack.peek()
-                while (peek != null && (peek.prec() < oper.prec() || (peek.prec() == oper.prec() && peek.leftAssociative())) && peek.tokenEnum != Symbol.L_PAREN) {
+                while (peek != null && (peek.precedence < oper.precedence || (peek.precedence == oper.precedence && peek.leftAssociative)) && peek.tokenEnum != Symbol.L_PAREN) {
                     //Higher precedence in stack
                     output.add(operatorStack.pop())
                     peek = if (operatorStack.isEmpty()) null else operatorStack.peek()
@@ -68,7 +57,7 @@ class ShuntingYard {
         return this
     }
 
-    override fun toString(): String { //TODO: Get Output (Token List)
+    override fun toString(): String { //TODO: Get Output (AlphabetToken List)
         return output.joinToString(" ")
     }
 
@@ -92,7 +81,8 @@ class ShuntingYard {
         return stack.pop()
     }
 
-    private fun Token.prec() = when (tokenEnum) {
+    private val Token.precedence
+        get() = when (tokenEnum) {
         Symbol.L_PAREN,
         Symbol.R_PAREN -> 0
         Symbol.DIVIDE,
@@ -102,7 +92,8 @@ class ShuntingYard {
         else -> 3
     }
 
-    private fun Token.leftAssociative() = when (tokenEnum) {
+    private val Token.leftAssociative
+        get() = when (tokenEnum) {
         Symbol.DIVIDE,
         Symbol.SUBTRACT -> true
         else -> false

@@ -2,7 +2,7 @@ package com.luzon.fsm
 
 import com.luzon.utils.merge
 
-class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, updateEpsilons: Boolean = true) {
+class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>> = emptyList(), updateEpsilons: Boolean = true) {
     constructor(root: State<Alphabet, Output>, updateEpsilons: Boolean = true) : this(mutableListOf(root), updateEpsilons)
 
     private val states = statesList.toMutableList()
@@ -56,8 +56,10 @@ class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, updateEps
     }
 
     fun isRunning() = states.isNotEmpty()
+    fun isNotRunning() = !isRunning()
 
     fun isAccepting() = states.any { it.isAccepting() }
+    fun isNotAccepting() = !isAccepting()
 
     fun acceptingStates() = states.filter { it.isAccepting() }
 
@@ -73,12 +75,10 @@ class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>>, updateEps
         return merge(other)
     }
 
-    fun setOutput(output: Output): FSM<Alphabet, Output> {
+    fun setOutput(output: Output) = apply {
         states.forEach {
             it.replaceChildOutput(output)
         }
-
-        return this
     }
 
     fun getStateCount() = states.count()

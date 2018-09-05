@@ -8,6 +8,8 @@ interface Statement : ASTNode
 interface ClassStatement : Statement
 interface Expression : ASTNode
 
+object NullNode : ASTNode
+
 data class ClassBlock(val statements: List<ClassStatement>)
 data class FunctionBlock(val statement: List<Statement>)
 data class Block(val statements: List<Statement>)

@@ -75,7 +75,7 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
                 else transitionPredicate or unescapedCharacter
             }
 
-        } while (peek() != ']' && !isAtEnd())
+        } while (peek() != ']' && isNotAtEnd())
 
         advance() //Consume ']'
 

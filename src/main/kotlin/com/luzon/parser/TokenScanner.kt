@@ -2,25 +2,28 @@ package com.luzon.parser
 
 import com.luzon.fsm.FSM
 import com.luzon.fsm.MetaScanner
+import com.luzon.fsm.Scanner
 import com.luzon.fsm.State
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.*
 import com.luzon.lexer.Tokenizer
-import java.util.*
+import com.luzon.utils.replaceWith
 
-class TokenScanner(tokens: List<TokenScannerAlphabet>) : MetaScanner<TokenScannerAlphabet, (List<Token>) -> ASTNode>(tokens, TokenScannerAlphabet.Meta(MetaCharacter.NONE)) {
-    private val helper = TokenScannerHelper()
+typealias ASTCreator = (List<ASTData>) -> ASTNode
+
+class TokenScanner(tokens: List<TokenScannerAlphabet>) : MetaScanner<TokenScannerAlphabet, ASTCreator>(tokens, TokenScannerAlphabet.AlphabetMeta(MetaCharacter.NONE)) {
+    private val resolver = ASTResolver(scanner = this)
 
     companion object {
         fun fromList(values: List<Any>) = fromList(*values.toTypedArray())
 
         fun fromList(vararg values: Any) = TokenScanner(values.map {
             when (it) {
-                is Token -> TokenScannerAlphabet.Token(it)
-                is TokenEnum -> TokenScannerAlphabet.Token(it.toToken())
-                is MetaCharacter -> TokenScannerAlphabet.Meta(metaCharacter = it)
+                is Token -> TokenScannerAlphabet.AlphabetToken(it)
+                is TokenEnum -> TokenScannerAlphabet.AlphabetToken(it.toToken())
+                is MetaCharacter -> TokenScannerAlphabet.AlphabetMeta(metaCharacter = it)
                 is TokenScannerAlphabet -> it
-                else -> TokenScannerAlphabet.Meta(MetaCharacter.NONE)
+                else -> TokenScannerAlphabet.AlphabetMeta(MetaCharacter.NONE)
             }
         })
     }
@@ -40,16 +43,16 @@ class TokenScanner(tokens: List<TokenScannerAlphabet>) : MetaScanner<TokenScanne
     override val escapePredicate: (TokenScannerAlphabet) -> Boolean
         get() = { it == MetaCharacter.ESCAPE }
 
-    override fun customCharacters(char: TokenScannerAlphabet): StatePair<TokenScannerAlphabet, (List<Token>) -> ASTNode>? = when (char) {
-        is TokenScannerAlphabet.NonTerminal -> nonTerminal(char)
+    override fun customCharacters(char: TokenScannerAlphabet) = when (char) {
+        is TokenScannerAlphabet.AlphabetNonTerminal -> nonTerminal(char)
         else -> super.customCharacters(char) //null?
     }
 
-    private fun nonTerminal(nonTerminal: TokenScannerAlphabet.NonTerminal): StatePair<TokenScannerAlphabet, (List<Token>) -> ASTNode> {
-        val newState = State<TokenScannerAlphabet, (List<Token>) -> ASTNode>()
+    private fun nonTerminal(nonTerminal: TokenScannerAlphabet.AlphabetNonTerminal): StatePair<TokenScannerAlphabet, ASTCreator> {
+        val newState = State<TokenScannerAlphabet, ASTCreator>()
 
         newState.onEnter += {
-            helper.nonTerminal(nonTerminal.name)
+            resolver.nonTerminal(nonTerminal.name)
         }
 
         return StatePair(newState, newState)
@@ -61,40 +64,35 @@ class TokenScanner(tokens: List<TokenScannerAlphabet>) : MetaScanner<TokenScanne
 sealed class TokenScannerAlphabet {
     override fun equals(other: Any?) = when (other) {
         null -> false
-        is MetaCharacter -> this is Meta && metaCharacter == other
-        is Meta -> this is Meta && metaCharacter == other.metaCharacter
-        is TokenEnum -> this is Token && token.tokenEnum == other
+        is MetaCharacter -> this is AlphabetMeta && metaCharacter == other
+        is AlphabetMeta -> this is AlphabetMeta && metaCharacter == other.metaCharacter
+        is TokenEnum -> this is AlphabetToken && token.tokenEnum == other
         else -> false
     }
 
     override fun hashCode() = javaClass.hashCode()
 
-    class Meta(val metaCharacter: MetaCharacter) : TokenScannerAlphabet()
-    class Token(val token: com.luzon.lexer.Token) : TokenScannerAlphabet()
-    class NonTerminal(val name: String) : TokenScannerAlphabet()
+    class AlphabetMeta(val metaCharacter: MetaCharacter) : TokenScannerAlphabet()
+    class AlphabetToken(val token: Token) : TokenScannerAlphabet()
+    class AlphabetNonTerminal(val name: String) : TokenScannerAlphabet()
 }
 
 //TODO: Potentially use this in a pair-like type for all MetaScanners, and just convert '|' into OR
 enum class MetaCharacter {
-    OR,
-    KLEENE_STAR,
-    KLEENE_PLUS,
-    OPTIONAL,
-    START_GROUP,
-    END_GROUP,
-    ESCAPE,
-    NONE
+    OR, KLEENE_STAR, KLEENE_PLUS,
+    OPTIONAL, START_GROUP, END_GROUP,
+    ESCAPE, NONE
 }
 
 object NonTerminalHandler {
-    private val nonTerminals = hashMapOf<String, State<TokenScannerAlphabet, (List<Token>) -> ASTNode>>()
+    private val nonTerminals = hashMapOf<String, State<TokenScannerAlphabet, ASTCreator>>()
 
     fun addNonTerminal(name: String, scannerContainers: List<TokenScannerAlphabet>) {
         val newStates = TokenScanner(scannerContainers).toFSM()
 
         if (nonTerminals.containsKey(name)) nonTerminals[name]!!.addEpsilonTransition(newStates)
         else {
-            val root = State<TokenScannerAlphabet, (List<Token>) -> ASTNode>()
+            val root = State<TokenScannerAlphabet, ASTCreator>()
             root.addEpsilonTransition(newStates)
             nonTerminals[name] = root
         }
@@ -103,13 +101,60 @@ object NonTerminalHandler {
     fun getFSM(name: String) = FSM(nonTerminals[name] ?: State())
 }
 
-class TokenScannerHelper {
-    private val stateStack = Stack<FSM<TokenScannerAlphabet, (List<Token>) -> ASTNode>>()
-    private var currentMachine: FSM<TokenScannerAlphabet, (List<Token>) -> ASTNode>? = null
+sealed class ASTData {
+    class DataToken(val token: Token) : ASTData()
+    class DataAST(val ast: ASTNode) : ASTData() {
+        constructor(name: String, scanner: Scanner<TokenScannerAlphabet>) : this(ASTResolver(name, scanner).resolve())
+    }
+}
+
+private fun Token.toASTData() = ASTData.DataToken(this)
+private fun TokenScannerAlphabet.AlphabetToken.toASTData() = token.toASTData()
+private fun Token.toAlphabetToken() = TokenScannerAlphabet.AlphabetToken(this)
+
+class ASTResolver(private val fsm: FSM<TokenScannerAlphabet, ASTCreator>, private val scanner: Scanner<TokenScannerAlphabet>) {
+    constructor(nonTerminal: String = "root", scanner: Scanner<TokenScannerAlphabet>) : this(NonTerminalHandler.getFSM(nonTerminal), scanner)
+
+    private val data = mutableListOf<ASTData>()
 
     fun nonTerminal(name: String) {
-        stateStack.push(currentMachine)
-        currentMachine = NonTerminalHandler.getFSM(name)
+        data.add(ASTData.DataAST(name, scanner))
+    }
+
+    fun resolve(): ASTNode {
+        var node: ASTNode?
+        val dataBackup = data.toList()
+
+        do {
+            data.replaceWith(dataBackup)
+
+            fsm.reset()
+            node = resolveSingular()
+
+            if (node == null) TODO("Log Error")
+        } while (node == null && scanner.isNotAtEnd())
+
+        return node ?: NullNode
+    }
+
+    private fun resolveSingular(): ASTNode? {
+        var foundCreator: ASTCreator? = null
+        var foundCurrent = scanner.current + 1
+
+        while (fsm.isRunning() && scanner.isNotAtEnd()) {
+            val char = scanner.advance()
+            fsm.accept(char)
+
+            if (char is TokenScannerAlphabet.AlphabetToken) data.add(char.toASTData())
+
+            if (fsm.isAccepting()) {
+                foundCreator = fsm.getCurrentOutput().first()
+                foundCurrent = scanner.current
+            }
+        }
+
+        scanner.current = foundCurrent
+        return foundCreator?.invoke(data.toList())
     }
 }
 
@@ -141,7 +186,7 @@ fun main(args: Array<String>) {
     val tokens = tokenizer.findTokens()
 
     tokens.forEach {
-        machine.accept(TokenScannerAlphabet.Token(token = it))
+        machine.accept(it.toAlphabetToken())
     }
 
     println(machine.isAccepting())
