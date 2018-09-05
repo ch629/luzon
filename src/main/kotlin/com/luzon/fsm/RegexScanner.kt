@@ -84,3 +84,11 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
         return endState to end
     }
 }
+
+//TODO: Maybe put this into a class to make regex more efficient with caching?
+private val regexCache = hashMapOf<String, FSM<Char, Unit>>()
+
+internal fun regex(regex: String): FSM<Char, Unit> {
+    if (!regexCache.containsKey(regex)) regexCache[regex] = FSM.fromRegex(regex)
+    return regexCache[regex]!!.copy()
+}

@@ -5,14 +5,14 @@ import com.luzon.fsm.MetaScanner
 import com.luzon.fsm.Scanner
 import com.luzon.fsm.State
 import com.luzon.lexer.Token
-import com.luzon.lexer.Token.*
-import com.luzon.lexer.Tokenizer
+import com.luzon.lexer.Token.TokenEnum
 import com.luzon.utils.replaceWith
 
 typealias ASTCreator = (List<ASTData>) -> ASTNode
 
 class TokenScanner(tokens: List<TokenScannerAlphabet>) : MetaScanner<TokenScannerAlphabet, ASTCreator>(tokens, TokenScannerAlphabet.AlphabetMeta(MetaCharacter.NONE)) {
-    private val resolver = ASTResolver(scanner = this)
+    //    var resolver: ASTResolver? = null
+    var onNonTerminal: ((String) -> Unit)? = null
 
     companion object {
         fun fromList(values: List<Any>) = fromList(*values.toTypedArray())
@@ -52,7 +52,7 @@ class TokenScanner(tokens: List<TokenScannerAlphabet>) : MetaScanner<TokenScanne
         val newState = State<TokenScannerAlphabet, ASTCreator>()
 
         newState.onEnter += {
-            resolver.nonTerminal(nonTerminal.name)
+            onNonTerminal?.invoke(nonTerminal.name)
         }
 
         return StatePair(newState, newState)
@@ -67,6 +67,7 @@ sealed class TokenScannerAlphabet {
         is MetaCharacter -> this is AlphabetMeta && metaCharacter == other
         is AlphabetMeta -> this is AlphabetMeta && metaCharacter == other.metaCharacter
         is TokenEnum -> this is AlphabetToken && token.tokenEnum == other
+        is AlphabetToken -> this is AlphabetToken && token.tokenEnum == other.token.tokenEnum
         else -> false
     }
 
@@ -87,8 +88,8 @@ enum class MetaCharacter {
 object NonTerminalHandler {
     private val nonTerminals = hashMapOf<String, State<TokenScannerAlphabet, ASTCreator>>()
 
-    fun addNonTerminal(name: String, scannerContainers: List<TokenScannerAlphabet>) {
-        val newStates = TokenScanner(scannerContainers).toFSM()
+    fun addNonTerminal(name: String, vararg scannerContainers: TokenScannerAlphabet) {
+        val newStates = TokenScanner(scannerContainers.toList()).toFSM()
 
         if (nonTerminals.containsKey(name)) nonTerminals[name]!!.addEpsilonTransition(newStates)
         else {
@@ -131,7 +132,7 @@ class ASTResolver(private val fsm: FSM<TokenScannerAlphabet, ASTCreator>, privat
             fsm.reset()
             node = resolveSingular()
 
-            if (node == null) TODO("Log Error")
+            if (node == null) TODO("Log Error") //Unexpected token ... at ...
         } while (node == null && scanner.isNotAtEnd())
 
         return node ?: NullNode
@@ -158,9 +159,29 @@ class ASTResolver(private val fsm: FSM<TokenScannerAlphabet, ASTCreator>, privat
     }
 }
 
+private fun Token.Literal.toAlphabet() = TokenScannerAlphabet.AlphabetToken(toToken())
+private fun Token.Symbol.toAlphabet() = TokenScannerAlphabet.AlphabetToken(toToken())
+private fun String.toAlphabet() = TokenScannerAlphabet.AlphabetNonTerminal(this)
+
+fun main(args: Array<String>) {
+    NonTerminalHandler.addNonTerminal("var_decl",
+            Token.Literal.IDENTIFIER.toAlphabet(),
+            Token.Symbol.TYPE.toAlphabet(),
+            Token.Literal.IDENTIFIER.toAlphabet()
+    ) //name: type
+
+    val input = listOf<TokenScannerAlphabet>()
+
+    val scanner = TokenScanner(input)
+    val resolver = ASTResolver("var_decl", scanner)
+    scanner.onNonTerminal = resolver::nonTerminal //TODO: This wont work.
+}
+
+//TODO: A good way to deal with this problem would be to figure out potential ASTNodes after accepting a token, then start building the node through each accept case, or if too many potential nodes, cache the previous data then start building
+
 //TODO: Maybe define all nodes in terms of Tokens and MetaCharacters, then convert a string input into
 //TODO: Need some sort of way to make these recursive, so I can define something like a argument list; which can be used within a function call
-fun main(args: Array<String>) {
+/*fun main(args: Array<String>) {
     val scanner = TokenScanner.fromList(
             Keyword.FOR,
             Symbol.L_PAREN,
@@ -190,4 +211,4 @@ fun main(args: Array<String>) {
     }
 
     println(machine.isAccepting())
-}
+}*/
