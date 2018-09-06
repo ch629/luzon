@@ -5,7 +5,7 @@ import com.luzon.utils.merge
 class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>> = emptyList(), updateEpsilons: Boolean = true) {
     constructor(root: State<Alphabet, Output>, updateEpsilons: Boolean = true) : this(mutableListOf(root), updateEpsilons)
 
-    private val states = statesList.toMutableList()
+    val states = statesList.toMutableList()
     private val originalStates = statesList.toMutableList()
 
     init {

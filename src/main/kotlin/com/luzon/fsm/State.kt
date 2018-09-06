@@ -21,7 +21,8 @@ class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boole
         onEnter.forEach { it() }
     }
 
-    fun mergeTransitions() { //TODO: Test
+    fun mergeTransitions() = apply {
+        //TODO: Test
         val groupedTransitions = transitions.groupBy { it.state }
         val newEpsilonTransitions = epsilonTransitions.distinct()
 
@@ -36,15 +37,15 @@ class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boole
     }
 
     //TODO: DSL?
-    fun addTransition(predicate: (Alphabet) -> Boolean, state: State<Alphabet, Output>) {
+    fun addTransition(predicate: (Alphabet) -> Boolean, state: State<Alphabet, Output>) = apply {
         transitions.add(Transition(predicate, state))
     }
 
-    fun addEpsilonTransition(state: State<Alphabet, Output>) {
+    fun addEpsilonTransition(state: State<Alphabet, Output>) = apply {
         if (state != this && !epsilonTransitions.contains(state)) epsilonTransitions.add(state)
     }
 
-    fun addEpsilonTransition(vararg states: State<Alphabet, Output>) {
+    fun addEpsilonTransition(vararg states: State<Alphabet, Output>) = apply {
         states.forEach { addEpsilonTransition(it) }
     }
 
@@ -55,7 +56,8 @@ class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boole
         it.output = output
     }
 
-    fun transferTo(other: State<Alphabet, Output>) { //Transfers all the transitional data to another state
+    fun transferTo(other: State<Alphabet, Output>) = apply {
+        //Transfers all the transitional data to another state
         other.epsilonTransitions.addAll(epsilonTransitions)
         other.transitions.addAll(transitions)
         other.output = output
@@ -74,7 +76,7 @@ class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boole
         return newState
     }
 
-    fun replaceWith(other: State<Alphabet, Output>) {
+    fun replaceWith(other: State<Alphabet, Output>) = apply {
         epsilonTransitions.clear()
         transitions.clear()
 
@@ -104,8 +106,12 @@ class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boole
         return cachedStates
     }
 
-    fun removeAccept() {
+    fun removeAccept() = apply {
         forceAccept = false
         output = null
+    }
+
+    fun addFSMStates(fsm: FSM<Alphabet, Output>) {
+        fsm.states.forEach { addEpsilonTransition(it) }
     }
 }

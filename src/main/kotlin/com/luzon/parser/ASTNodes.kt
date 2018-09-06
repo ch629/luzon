@@ -1,5 +1,7 @@
 package com.luzon.parser
 
+import com.luzon.fsm.FSM
+import com.luzon.fsm.State
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.*
 
@@ -27,14 +29,16 @@ private fun consistsOf(vararg tokens: TokenEnum) {
 }
 
 class ASTDSL {
-    //TODO: This should probably create an FSM
-    private val tokens = mutableListOf<MutableList<Token.TokenEnum>>()
-    private var current = 0
     //TODO: Other ASTNodes
+    private var currentState = State<TokenEnum, Boolean>()
+    private val root = State<TokenEnum, Boolean>().addEpsilonTransition(currentState)
+    private var followedByPointer: State<TokenEnum, Boolean>? = null
 
-    operator fun Token.TokenEnum.unaryPlus() {
-        if (tokens.size <= current) tokens.add(mutableListOf())
-        tokens[current].add(this)
+    operator fun TokenEnum.unaryPlus() {
+        val newState = State<TokenEnum, Boolean>()
+        currentState.addTransition({ it == this }, newState)
+        currentState = newState
+
     }
 
     operator fun String.unaryPlus() {
@@ -46,23 +50,34 @@ class ASTDSL {
         TODO("Or use this as the non-terminal?")
     }
 
-    val or get() = current++
+    val or get() = or()
     val self get() = self()
 
     fun self() {
         TODO("Adds a non-terminal of itself -> Needed within expr")
     }
 
+    fun or() {
+
+    }
+
+    fun or(vararg tokens: TokenEnum) {
+        val newState = State<TokenEnum, Boolean>()
+        tokens.forEach { token -> currentState.addTransition({ it == token }, newState) }
+        currentState = newState
+    }
+
     fun toASTNode(): ASTNode {
         TODO()
     }
 
-    fun or(vararg tokens: TokenEnum) {
-        TODO()
-    }
+    fun toFSM() = FSM(root)
 
     //Groups the next part after this current section (val | var) (identifier type identifier | identifier equal <expr> | identifier type identifier equal <expr>)
-    fun followedBy(block: ASTDSL.() -> Unit) = ASTDSL().apply(block) //TODO: Add this to the FSM
+    fun followedBy(block: ASTDSL.() -> Unit) {
+        val dsl = ASTDSL().apply(block)
+        currentState.addEpsilonTransition(dsl.root)
+    }
 }
 
 private fun consistsOf(block: ASTDSL.() -> Unit) = ASTDSL().apply(block).toASTNode()
