@@ -36,8 +36,6 @@ class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>> = emptyLis
         states.addAll(epsilons)
         if (updateOriginal) originalStates.addAll(epsilons)
 
-        onEnter(epsilons)
-
         return epsilons.isNotEmpty()
     }
 
@@ -46,14 +44,10 @@ class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>> = emptyLis
         states.clear()
         states.addAll(newStates)
 
-        onEnter(newStates)
-
         return updateEpsilons() || newStates.isNotEmpty()
     }
 
-    private fun onEnter(states: Collection<State<Alphabet, Output>>) {
-        states.forEach { it.onEnter() }
-    }
+    fun accept(vararg values: Alphabet) = values.firstOrNull { !accept(it) } == null
 
     fun isRunning() = states.isNotEmpty()
     fun isNotRunning() = !isRunning()

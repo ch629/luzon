@@ -7,7 +7,7 @@ import java.util.*
 
 //From https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 //Orders expression in Reverse Polish Notation with precedence
-class ShuntingYard {
+class ShuntingYard { //TODO: This might need to work on an Expression class from the AST (Potentially recreate the token stream, apply this to it then turn back into an AST)
     private var output = mutableListOf<Token>()
     private val operatorStack = Stack<Token>()
 
@@ -83,19 +83,19 @@ class ShuntingYard {
 
     private val Token.precedence
         get() = when (tokenEnum) {
-        Symbol.L_PAREN,
-        Symbol.R_PAREN -> 0
-        Symbol.DIVIDE,
-        Symbol.MULTIPLY -> 1
-        Symbol.PLUS,
-        Symbol.SUBTRACT -> 2
-        else -> 3
-    }
+            Symbol.L_PAREN,
+            Symbol.R_PAREN -> 0
+            Symbol.DIVIDE,
+            Symbol.MULTIPLY -> 1
+            Symbol.PLUS,
+            Symbol.SUBTRACT -> 2
+            else -> 3
+        }
 
     private val Token.leftAssociative
         get() = when (tokenEnum) {
-        Symbol.DIVIDE,
-        Symbol.SUBTRACT -> true
-        else -> false
-    }
+            Symbol.DIVIDE,
+            Symbol.SUBTRACT -> true
+            else -> false
+        }
 }

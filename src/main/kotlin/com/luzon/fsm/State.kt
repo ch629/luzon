@@ -6,7 +6,6 @@ import java.util.*
 class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boolean = false) {
     private val transitions = mutableListOf<Transition<Alphabet, Output>>()
     private val epsilonTransitions = mutableListOf<State<Alphabet, Output>>()
-    val onEnter = mutableListOf<() -> Unit>()
 
     private data class Transition<Alphabet, Output>(val predicate: (Alphabet) -> Boolean,
                                                     val state: State<Alphabet, Output>) {
@@ -17,12 +16,8 @@ class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boole
     fun accept(value: Alphabet) = transitions.filter { it.accepts(value) }.map { it.state }
     fun isLeaf() = transitions.isEmpty() && epsilonTransitions.isEmpty()
 
-    fun onEnter() {
-        onEnter.forEach { it() }
-    }
-
+    //TODO: Test
     fun mergeTransitions() = apply {
-        //TODO: Test
         val groupedTransitions = transitions.groupBy { it.state }
         val newEpsilonTransitions = epsilonTransitions.distinct()
 

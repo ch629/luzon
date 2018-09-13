@@ -3,6 +3,8 @@ buildscript {
     ext.junitVersion = "5.1.0"
     ext.spekVersion = "1.1.5"
     ext.moshiVersion = "1.6.0"
+    ext.okioVersion = "2.0.0"
+    ext.arrowVersion = "0.7.3"
 
     dependencies {
         classpath "org.junit.platform:junit-platform-gradle-plugin:1.0.0"
@@ -37,13 +39,15 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+    
+    compile "com.squareup.okio:okio:$okioVersion"
+    compile "io.arrow-kt:arrow-core:$arrowVersion"
 
     testCompile "com.squareup.moshi:moshi:$moshiVersion"
     testCompile "com.squareup.moshi:moshi-kotlin:$moshiVersion"
 
     compile "org.kodein.di:kodein-di-generic-jvm:5.2.0"
 
-//    compile "org.slf4j:slf4j-simple:1.8.0-beta2"
     compile "ch.qos.logback:logback-classic:1.3.0-alpha4"
     compile "io.github.microutils:kotlin-logging:1.5.9"
 

@@ -11,7 +11,7 @@ internal fun <K, T> Collection<FSM<K, T>>.toMergedFSM() = FSM.merge(*toTypedArra
 
 internal fun String.toCharList() = toCharArray().toList()
 
-internal fun <T> MutableCollection<T>.replaceWith(other: Collection<T>) = apply {
+internal fun <T> MutableCollection<T>.replaceWith(other: Collection<T>): Boolean {
     clear()
-    addAll(other)
+    return addAll(other)
 }
