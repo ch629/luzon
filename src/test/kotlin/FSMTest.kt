@@ -1,5 +1,6 @@
 
 import com.luzon.fsm.FSM
+import com.luzon.fsm.State
 import com.luzon.utils.predicate
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -14,8 +15,8 @@ import java.nio.file.Paths
 object FSMTest : Spek({
     given("a finite state machine") {
         on("a simple transition") {
-            val root = GenericState<Char, Int>()
-            root.addTransition('A'.predicate(), GenericState())
+            val root = State<Char, Int>()
+            root.addTransition('A'.predicate(), State())
             val machine = FSM(root)
             it("should accept to the next state successfully") {
                 machine.accept('A')
@@ -24,9 +25,9 @@ object FSMTest : Spek({
         }
 
         on("an epsilon transition") {
-            val root = GenericState<Char, Int>()
-            val otherState = GenericState<Char, Int>()
-            otherState.addTransition('A'.predicate(), GenericState())
+            val root = State<Char, Int>()
+            val otherState = State<Char, Int>()
+            otherState.addTransition('A'.predicate(), State())
             root.addEpsilonTransition(otherState)
             val machine = FSM(root)
 
@@ -38,8 +39,8 @@ object FSMTest : Spek({
 
         on("a state") {
             it("finds leaf states correctly") {
-                val root = GenericState<Char, Int>()
-                for (i in 1..5) root.addEpsilonTransition(GenericState())
+                val root = State<Char, Int>()
+                for (i in 1..5) root.addEpsilonTransition(State())
                 root.findLeaves().size shouldBe 5
             }
         }
