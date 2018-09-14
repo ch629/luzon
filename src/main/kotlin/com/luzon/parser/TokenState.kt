@@ -10,6 +10,31 @@ import java.util.*
 //TODO: Create a DSL for generating the parser ASTNode classes.
 //TODO: Create FSM & States
 
+data class Transition<T>(val predicate: Predicate<T>, val stateTo: TokenState)
+typealias TerminalTransition = Transition<Token>
+typealias NonTerminalTransition = Transition<ASTNode>
+
+class TokenState(private val node: ASTNode, private val first: Boolean = false) {
+    private val terminalTransitions = mutableListOf<TerminalTransition>()
+    private val nonTerminalTransitions = mutableListOf<NonTerminalTransition>()
+
+    fun acceptTerminals(token: Token) =
+            terminalTransitions.asSequence().filter { it.predicate(token) }.map { it.stateTo }.distinct().toList()
+
+    fun acceptNonTerminals(node: ASTNode) =
+            nonTerminalTransitions.asSequence().filter { it.predicate(node) }.map { it.stateTo }.distinct().toList()
+
+    // We should only need the waiting transitions if it's this is the first state of the FSM to avoid recursively
+    // pushing this non-terminal onto the FSM stack
+    fun getWaitingTransitions() =
+            if (first) nonTerminalTransitions.asSequence().filter { it.predicate(node) }.toList() else emptyList()
+}
+
+class TokenFSM {
+    val states = mutableListOf<TokenState>()
+    val waiting = mutableListOf<NonTerminalTransition>()
+}
+
 private fun <T> Stack<T>.reduce(amount: Int, vararg filters: Predicate<T>) = reduceStack(this, amount, *filters)
 private fun <T> reduceStack(dataStack: Stack<T>, amount: Int, vararg filters: Predicate<T>): Stack<T> {
     val newStack = Stack<T>()

@@ -1,8 +1,9 @@
 package com.luzon.fsm
 
 import com.luzon.utils.Predicate
+import com.luzon.utils.equalPredicate
 import com.luzon.utils.errorWithException
-import com.luzon.utils.or
+import com.luzon.utils.orPredicate
 import mu.NamedKLogging
 
 abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValue: Alphabet) : Scanner<Alphabet>(text, endValue) {
@@ -90,8 +91,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
                 else if (escape && escapedCharacter != null) escapedCharacter
                 else {
                     isRange = false
-                    val pred: Predicate<Alphabet> = { it == char }
-                    pred
+                    char.equalPredicate()
                 }
 
         endState.addTransition(predicate, charEnd)
@@ -106,7 +106,10 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
 
     private fun isMeta(char: Alphabet): Boolean {
         if (isMetaPredicate == null)
-            isMetaPredicate = orPredicate or kleeneStarPredicate or kleenePlusPredicate or optionalPredicate or startGroupPredicate or endGroupPredicate
+            isMetaPredicate =
+                    orPredicate(orPredicate, kleeneStarPredicate,
+                            kleenePlusPredicate, optionalPredicate,
+                            startGroupPredicate, endGroupPredicate)
 
         return isMetaPredicate!!(char)
     }
@@ -189,8 +192,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
         return metaScope to newEndState
     }
 
-
-    protected fun advanceUntil(predicate: Predicate<Alphabet>): List<Alphabet> {
+    private fun advanceUntil(predicate: Predicate<Alphabet>): List<Alphabet> {
         val characters = mutableListOf<Alphabet>()
 
         while (true) {

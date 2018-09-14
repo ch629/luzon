@@ -35,6 +35,7 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
 
     companion object : KLogging()
 
+    //TODO: Better error logging. (Line, character, log all once the tokenizer has finished) Using Either?
     fun findNextToken(): Token {
         val errorBuffer = StringBuffer()
         var token: Token?
@@ -46,7 +47,7 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
             token = findToken()
 
             if (token == null)
-                errorBuffer.append(char).append(" starting at character ").append(current) //TODO: Better error logging. (Line, character, log all once the tokenizer has finished)
+                errorBuffer.append(char).append(" starting at character ").append(current)
         } while (token == null && scanner.isNotAtEnd()) //Keep trying to find tokens if it finds an invalid character
 
         if (errorBuffer.isNotEmpty()) logger.warn("Found invalid characters: $errorBuffer")
@@ -64,16 +65,11 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
             val c = scanner.advance()
             machine.accept(c)
             tokenDataBuffer.append(c)
-            val acceptingStates = machine.acceptingStates()
 
-            if (acceptingStates.isNotEmpty()) {
-                val newToken = acceptingStates.filter { it.output != null }.map { it.output }.first()
-//                val newToken = machine.getCurrentOutput().first() //TODO: This?
-
-                if (newToken != null) {
-                    foundToken = newToken
-                    foundCurrent = scanner.current
-                }
+            val newToken = machine.getCurrentOutput().firstOrNull()
+            if (newToken != null) {
+                foundToken = newToken
+                foundCurrent = scanner.current
             }
         }
 

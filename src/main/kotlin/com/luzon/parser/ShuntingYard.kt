@@ -3,15 +3,24 @@ package com.luzon.parser
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol
+import com.luzon.utils.peekOrNull
 import java.util.*
 
-//From https://en.wikipedia.org/wiki/Shunting-yard_algorithm
-//Orders expression in Reverse Polish Notation with precedence
-class ShuntingYard { //TODO: This might need to work on an Expression class from the AST (Potentially recreate the token stream, apply this to it then turn back into an AST)
+// From https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+// Orders expression in Reverse Polish Notation with precedence
+
+// TODO: Convert this to work with an AST
+// One solution would be to traverse the tree and recreate the token stream with some
+// ASTNodes (Identifier, Function Call, etc) then put it through the Shunting Yard then back
+// through the parser to create the AST
+class ShuntingYard {
     private var output = mutableListOf<Token>()
     private val operatorStack = Stack<Token>()
 
     companion object {
+        // Probably removed once this is converted to AST, as I need to work with function calls which would be read as
+        // IDENTIFIER, L_PAREN, R_PAREN without any parameters, and with could include other INTs which would confuse
+        // the ShuntingYard -> Potentially make an internal class to handle these appropriately.
         fun fromTokenSequence(seq: Sequence<Token>): ShuntingYard {
             val yard = ShuntingYard()
             seq.forEach {
@@ -23,62 +32,57 @@ class ShuntingYard { //TODO: This might need to work on an Expression class from
 
             return yard.done()
         }
+
+        // Convert into a Stream of singular values, operators, functions etc.
+        // Put into the ShuntingYard
+        fun fromAST(expr: Expression): ShuntingYard {
+            TODO()
+        }
     }
 
-    fun addOperator(oper: Token) {
-        when (oper.tokenEnum) {
-            Symbol.L_PAREN -> operatorStack.push(oper)
+    fun addOperator(operator: Token) {
+        when (operator.tokenEnum) {
+            Symbol.L_PAREN -> operatorStack.push(operator)
             Symbol.R_PAREN -> {
-                while (operatorStack.peek().tokenEnum != Symbol.L_PAREN) //TODO: Check that a L_PAREN exists, otherwise error with invalid expression
+                while (operatorStack.peek().tokenEnum != Symbol.L_PAREN)
                     output.add(operatorStack.pop())
                 if (operatorStack.peek().tokenEnum == Symbol.L_PAREN)
                     operatorStack.pop() //Pop the L_PAREN
-                else TODO("Error, unmatched parenthesis in expression")
+                else throw Exception("Expression didn't have matching parenthesis") //TODO: Use Either to log this error to the user?
             }
-            else -> { //Operator
-                var peek = if (operatorStack.isEmpty()) null else operatorStack.peek()
-                while (peek != null && (peek.precedence < oper.precedence || (peek.precedence == oper.precedence && peek.leftAssociative)) && peek.tokenEnum != Symbol.L_PAREN) {
-                    //Higher precedence in stack
+            else -> { // Operator
+                var peek = operatorStack.peekOrNull()
+                while (peek != null && shouldAddOutput(operator, peek)) { // Higher precedence in stack
                     output.add(operatorStack.pop())
-                    peek = if (operatorStack.isEmpty()) null else operatorStack.peek()
+                    peek = operatorStack.peekOrNull()
                 }
-                operatorStack.push(oper)
+                operatorStack.push(operator)
             }
         }
     }
+
+    // Just to make it more legible
+    private fun shouldAddOutput(operator: Token, peekToken: Token) =
+            (peekToken.precedence < operator.precedence
+                    || (peekToken.precedence == operator.precedence && peekToken.leftAssociative))
+                    && peekToken.tokenEnum != Symbol.L_PAREN
+
 
     fun addLiteral(token: Token) {
-        output.add(token) //TODO: Function calls would be interpreted as IDENTIFIER L_PAREN R_PAREN? This might have to be ran after a single AST pass?
+        output.add(token)
     }
 
-    fun done(): ShuntingYard {
+    fun done(): ShuntingYard = apply {
         while (operatorStack.isNotEmpty())
             output.add(operatorStack.pop())
-        return this
     }
 
-    override fun toString(): String { //TODO: Get Output (AlphabetToken List)
-        return output.joinToString(" ")
-    }
+    override fun toString() = output.joinToString(" ")
 
-    fun getOutput(): List<Token> = output.toList()
+    fun getOutput() = output.toList()
 
     fun toAST(): Expression {
-        val stack = Stack<Expression>()
-
-        output.forEach {
-            //TODO: Replace this with a while stack is not empty
-            if (it.tokenEnum is Literal)  //TODO: Or Identifier/Function Call
-                stack.push(LiteralExpression(it))
-            else { //TODO: stack.size >= 2
-                val op1 = stack.pop()
-                val op2 = stack.pop() //TODO: Depends on unary or binary operation
-
-                if (it.tokenEnum is Symbol) stack.push(BinaryExpression(it.tokenEnum, op1, op2))
-            }
-        }
-
-        return stack.pop()
+        TODO("Run the output though the Parser")
     }
 
     private val Token.precedence

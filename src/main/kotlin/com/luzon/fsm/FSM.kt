@@ -57,7 +57,11 @@ class FSM<Alphabet : Any, Output>(statesList: List<State<Alphabet, Output>> = em
 
     fun acceptingStates() = states.filter { it.isAccepting() }
 
-    fun getCurrentOutput(): List<Output> = acceptingStates().filter { !it.forceAccept }.map { it.output!! }.distinct()
+    fun getCurrentOutput(): List<Output> =
+            acceptingStates().asSequence()
+                    .filter { !it.forceAccept }
+                    .map { it.output!! }
+                    .distinct().toList()
 
     //TODO: Temporary solution (Not very efficient, can have many duplicate states with transitions)
     fun merge(other: FSM<Alphabet, Output>) = FSM(originalStates + other.originalStates, false)

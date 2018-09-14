@@ -15,7 +15,7 @@ class State<Alphabet : Any, Output>(var output: Output? = null, var forceAccept:
     }
 
     fun acceptEpsilons() = epsilonTransitions
-    fun accept(value: Alphabet) = transitions.filter { it.accepts(value) }.map { it.state }
+    fun accept(value: Alphabet) = transitions.asSequence().filter { it.accepts(value) }.map { it.state }.toList()
     fun isLeaf() = transitions.isEmpty() && epsilonTransitions.isEmpty()
 
     //TODO: Test
@@ -33,7 +33,6 @@ class State<Alphabet : Any, Output>(var output: Output? = null, var forceAccept:
         transitions.addAll(newTransitions)
     }
 
-    //TODO: DSL?
     fun addTransition(predicate: Predicate<Alphabet>, state: State<Alphabet, Output>) = apply {
         transitions.add(Transition(predicate, state))
     }

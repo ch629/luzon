@@ -80,9 +80,9 @@ class VariableDeclaration : Statement {
 }
 
 data class Parameter(val name: String, val type: String) : ASTNode
-data class FunctionDeclaration(val name: String, val parameters: List<Parameter>, val block: FunctionBlock) : ClassStatement //TODO: Default parameter values?
+data class FunctionDeclaration(val name: String, val parameters: List<Parameter>, val block: FunctionBlock) : ClassStatement
 
-data class Class(val name: String, val block: ClassBlock) : ASTNode //TODO: Constructors, Inheritance
+data class Class(val name: String, val block: ClassBlock) : ASTNode
 
 data class IfStatement(val expression: Expression, val block: Block, val elseStatement: Else?) : Statement
 data class Else(val block: Block) : ASTNode
@@ -95,29 +95,4 @@ data class VariableAccess(val name: String) : Expression
 
 enum class VariableDeclarationType {
     VAR, VAL
-}
-
-sealed class Color
-object Blue : Color()
-object Orange : Color()
-
-fun main(args: Array<String>) {
-    val color: Color = Blue
-
-    Test.accept(color)
-}
-
-object Test { //Visitor Pattern
-    fun accept(color: Color): Unit = when (color) {
-        is Blue -> accept(color)
-        is Orange -> accept(color)
-    }
-
-    fun accept(blue: Blue) {
-        println("BLUE")
-    }
-
-    fun accept(orange: Orange) {
-        println("ORANGE")
-    }
 }
