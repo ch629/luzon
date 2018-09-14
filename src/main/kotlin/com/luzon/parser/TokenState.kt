@@ -39,7 +39,7 @@ class TokenState {
 }
 
 //TODO: Look at these top classes and try to update using tryConstructorArguments.
-class TokenFSM(val name: String, val output: ASTNode = NullNode) { //TODO: I may also need to store which ASTNode this is creating as the output?
+class TokenFSM(val name: String, val output: KClass<*>? = null) {
     val states = mutableListOf<TokenState>()
     val originalStates = states.toList()
     val waitingTransitions = mutableListOf<(String) -> TokenState?>() //TODO: Null TokenState object?
@@ -214,21 +214,25 @@ fun KClass<*>.constructorsToFSM(): FSM<KClass<*>, KFunction<KClass<*>>> {
     return FSM(root)
 }
 
-inline fun <reified T : Any> tryConstructorArguments(vararg args: Any): T? { //TODO: Use Either here? -> Rather than nullable
-    val fsm = T::class.constructorsToFSM()
+private val constructorFSMCache = hashMapOf<KClass<*>, FSM<KClass<*>, KFunction<KClass<*>>>>()
+fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: Any): T? { //TODO: Use Either here? -> Rather than nullable
+    if (!constructorFSMCache.containsKey(clazz)) constructorFSMCache[clazz] = clazz.constructorsToFSM()
+    val fsm = constructorFSMCache[clazz]!!.copy()
 
     args.forEach { fsm.accept(it::class) }
 
     return (fsm.getCurrentOutput().firstOrNull() as KFunction<T>?)?.call(*args)
 }
 
+inline fun <reified T : Any> tryConstructorArgs(vararg args: Any) = tryConstructorArguments(T::class, *args)
+
 fun main(args: Array<String>) {
     //i: Int
-    val decl = tryConstructorArguments<VariableDeclaration>("i", "Int")!!
+    val decl = tryConstructorArgs<VariableDeclaration>("i", "Int")!!
     println("VariableDeclaration: ${decl.name}: ${decl.type!!}")
 
     //b = 5
-    val decl2 = tryConstructorArguments<VariableDeclaration>("b", LiteralExpression(Token.Literal.INT.toToken("5")))!!
+    val decl2 = tryConstructorArgs<VariableDeclaration>("b", LiteralExpression(Token.Literal.INT.toToken("5")))!!
     println("VariableDeclaration: ${decl2.name}")
 
     getConstructorParameters(VariableDeclaration::class).forEach { conParams ->
