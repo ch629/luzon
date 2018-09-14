@@ -7,7 +7,7 @@ internal fun <T> Collection<Collection<T>>.merge(): Collection<T> = fold(mutable
     acc
 }
 
-internal fun <K, T> Collection<FSM<K, T>>.toMergedFSM() = FSM.merge(*toTypedArray())
+internal fun <K : Any, T> Collection<FSM<K, T>>.toMergedFSM() = FSM.merge(*toTypedArray())
 
 internal fun String.toCharList() = toCharArray().toList()
 

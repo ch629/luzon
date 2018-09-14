@@ -1,16 +1,13 @@
 package com.luzon.utils
 
-internal fun <T> predicate(value: T): (T) -> Boolean = { it == value }
-internal fun rangePredicate(start: Char, end: Char): (Char) -> Boolean = { it in start..end }
+typealias Predicate<T> = (T) -> Boolean
 
-internal fun <T> orPredicate(vararg predicates: (T) -> Boolean): (T) -> Boolean {
-    var predicate: (T) -> Boolean = { false }
+internal fun <T : Any> T.equalPredicate(): Predicate<T> = { it == this }
+internal fun rangePredicate(start: Char, end: Char): Predicate<Char> = { it in start..end }
 
-    predicates.forEach { predicate = predicate or it }
-
-    return predicate
+internal fun <T> orPredicate(vararg predicates: Predicate<T>) = predicates.reduce { acc, predicate ->
+    acc or predicate
 }
 
-internal infix fun <T> ((T) -> Boolean).or(other: (T) -> Boolean): (T) -> Boolean = { this(it) || other(it) }
+internal infix fun <T> Predicate<T>.or(other: Predicate<T>): Predicate<T> = { this(it) || other(it) }
 internal infix fun Char.range(other: Char) = rangePredicate(this, other)
-internal fun Char.predicate() = predicate(this)

@@ -1,7 +1,7 @@
 
 import com.luzon.fsm.FSM
 import com.luzon.fsm.State
-import com.luzon.utils.predicate
+import com.luzon.utils.equalPredicate
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import org.amshove.kluent.shouldBe
@@ -16,7 +16,7 @@ object FSMTest : Spek({
     given("a finite state machine") {
         on("a simple transition") {
             val root = State<Char, Int>()
-            root.addTransition('A'.predicate(), State())
+            root.addTransition('A'.equalPredicate(), State())
             val machine = FSM(root)
             it("should accept to the next state successfully") {
                 machine.accept('A')
@@ -27,7 +27,7 @@ object FSMTest : Spek({
         on("an epsilon transition") {
             val root = State<Char, Int>()
             val otherState = State<Char, Int>()
-            otherState.addTransition('A'.predicate(), State())
+            otherState.addTransition('A'.equalPredicate(), State())
             root.addEpsilonTransition(otherState)
             val machine = FSM(root)
 

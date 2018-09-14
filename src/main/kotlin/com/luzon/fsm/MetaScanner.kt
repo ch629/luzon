@@ -1,10 +1,11 @@
 package com.luzon.fsm
 
+import com.luzon.utils.Predicate
 import com.luzon.utils.errorWithException
 import com.luzon.utils.or
 import mu.NamedKLogging
 
-abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alphabet) : Scanner<Alphabet>(text, endValue) {
+abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValue: Alphabet) : Scanner<Alphabet>(text, endValue) {
     private val root = State<Alphabet, Output>()
     protected var endState = root
     protected var metaScope = root
@@ -15,21 +16,21 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
     private var afterOr = false
     private var afterMeta = false
 
-    protected abstract val orPredicate: (Alphabet) -> Boolean
-    protected abstract val kleeneStarPredicate: (Alphabet) -> Boolean
-    protected abstract val kleenePlusPredicate: (Alphabet) -> Boolean
-    protected abstract val optionalPredicate: (Alphabet) -> Boolean
-    protected abstract val startGroupPredicate: (Alphabet) -> Boolean
-    protected abstract val endGroupPredicate: (Alphabet) -> Boolean
-    protected abstract val escapePredicate: (Alphabet) -> Boolean
-    private var isMetaPredicate: ((Alphabet) -> Boolean)? = null
+    protected abstract val orPredicate: Predicate<Alphabet>
+    protected abstract val kleeneStarPredicate: Predicate<Alphabet>
+    protected abstract val kleenePlusPredicate: Predicate<Alphabet>
+    protected abstract val optionalPredicate: Predicate<Alphabet>
+    protected abstract val startGroupPredicate: Predicate<Alphabet>
+    protected abstract val endGroupPredicate: Predicate<Alphabet>
+    protected abstract val escapePredicate: Predicate<Alphabet>
+    private var isMetaPredicate: Predicate<Alphabet>? = null
 
     companion object : NamedKLogging("MetaScanner-Logger")
 
     abstract fun createScanner(text: List<Alphabet>): MetaScanner<Alphabet, Output>
     protected open fun customCharacters(char: Alphabet): StatePair<Alphabet, Output>? = null
-    protected open fun unescapedCharacters(char: Alphabet): ((Alphabet) -> Boolean)? = null
-    protected open fun escapedCharacters(char: Alphabet): ((Alphabet) -> Boolean)? = null
+    protected open fun unescapedCharacters(char: Alphabet): Predicate<Alphabet>? = null
+    protected open fun escapedCharacters(char: Alphabet): Predicate<Alphabet>? = null
 
     fun toFSM(): State<Alphabet, Output> {
         while (isNotAtEnd()) {
@@ -84,12 +85,12 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
         val unescapedCharacter = unescapedCharacters(char)
         val escapedCharacter = escapedCharacters(char)
 
-        val predicate: (Alphabet) -> Boolean =
+        val predicate: Predicate<Alphabet> =
                 if (!escape && unescapedCharacter != null) unescapedCharacter
                 else if (escape && escapedCharacter != null) escapedCharacter
                 else {
                     isRange = false
-                    val pred: (Alphabet) -> Boolean = { it == char }
+                    val pred: Predicate<Alphabet> = { it == char }
                     pred
                 }
 
@@ -110,8 +111,8 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
         return isMetaPredicate!!(char)
     }
 
-    protected data class StatePair<Alphabet, Output>(val start: State<Alphabet, Output>,
-                                                     val end: State<Alphabet, Output>)
+    protected data class StatePair<Alphabet : Any, Output>(val start: State<Alphabet, Output>,
+                                                           val end: State<Alphabet, Output>)
 
     protected infix fun State<Alphabet, Output>.to(other: State<Alphabet, Output>) = StatePair(this, other)
 
@@ -189,7 +190,7 @@ abstract class MetaScanner<Alphabet, Output>(text: List<Alphabet>, endValue: Alp
     }
 
 
-    protected fun advanceUntil(predicate: (Alphabet) -> Boolean): List<Alphabet> {
+    protected fun advanceUntil(predicate: Predicate<Alphabet>): List<Alphabet> {
         val characters = mutableListOf<Alphabet>()
 
         while (true) {

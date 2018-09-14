@@ -1,28 +1,25 @@
 package com.luzon.fsm
 
-import com.luzon.utils.or
-import com.luzon.utils.predicate
-import com.luzon.utils.range
-import com.luzon.utils.toCharList
+import com.luzon.utils.*
 import mu.NamedKLogging
 
 class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex, '\n') {
     constructor(regex: String) : this(regex.toCharList())
 
-    override val orPredicate: (Char) -> Boolean
-        get() = { it == '|' }
-    override val kleeneStarPredicate: (Char) -> Boolean
-        get() = { it == '*' }
-    override val kleenePlusPredicate: (Char) -> Boolean
-        get() = { it == '+' }
-    override val optionalPredicate: (Char) -> Boolean
-        get() = { it == '?' }
-    override val startGroupPredicate: (Char) -> Boolean
-        get() = { it == '(' }
-    override val endGroupPredicate: (Char) -> Boolean
-        get() = { it == ')' }
-    override val escapePredicate: (Char) -> Boolean
-        get() = { it == '\\' }
+    override val orPredicate: Predicate<Char>
+        get() = '|'.equalPredicate()
+    override val kleeneStarPredicate: Predicate<Char>
+        get() = '*'.equalPredicate()
+    override val kleenePlusPredicate: Predicate<Char>
+        get() = '+'.equalPredicate()
+    override val optionalPredicate: Predicate<Char>
+        get() = '?'.equalPredicate()
+    override val startGroupPredicate: Predicate<Char>
+        get() = '('.equalPredicate()
+    override val endGroupPredicate: Predicate<Char>
+        get() = ')'.equalPredicate()
+    override val escapePredicate: Predicate<Char>
+        get() = '\\'.equalPredicate()
 
     override fun escapedCharacters(char: Char) = when (char) {
         'd' -> numericalPredicate
@@ -38,7 +35,7 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
     companion object : NamedKLogging("Regex-Logger") {
         private val numericalPredicate = '0' range '9'
         private val alphaNumericPredicate = numericalPredicate or ('A' range 'Z') or ('a' range 'z')
-        private val anyCharacterPredicate: (Char) -> Boolean = { it != '\n' }
+        private val anyCharacterPredicate: Predicate<Char> = { it != '\n' }
     }
 
     override fun createScanner(text: List<Char>) = RegexScanner<Output>(text)
@@ -51,7 +48,7 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
     //[ABC]
     private fun orBlock(): StatePair<Char, Output> {
         val end = State<Char, Output>(forceAccept = true)
-        var transitionPredicate: (Char) -> Boolean = { false }
+        var transitionPredicate: Predicate<Char> = { false }
 
         advance() //Consume '['
 
@@ -71,7 +68,7 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
                 val escapedCharacter = escapedCharacters(char)
 
                 if (escape && escapedCharacter != null) transitionPredicate or escapedCharacter
-                else if (unescapedCharacter == null) transitionPredicate or char.predicate()
+                else if (unescapedCharacter == null) transitionPredicate or char.equalPredicate()
                 else transitionPredicate or unescapedCharacter
             }
 

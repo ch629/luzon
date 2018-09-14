@@ -2,7 +2,7 @@ package com.luzon.fsm
 
 import com.luzon.utils.merge
 
-class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>> = emptyList(), updateEpsilons: Boolean = true) {
+class FSM<Alphabet : Any, Output>(statesList: List<State<Alphabet, Output>> = emptyList(), updateEpsilons: Boolean = true) {
     constructor(root: State<Alphabet, Output>, updateEpsilons: Boolean = true) : this(mutableListOf(root), updateEpsilons)
 
     val states = statesList.toMutableList()
@@ -15,7 +15,7 @@ class FSM<Alphabet, Output>(statesList: List<State<Alphabet, Output>> = emptyLis
     companion object {
         fun <Output> fromRegex(str: String) = FSM(RegexScanner<Output>(str).toFSM())
 
-        fun <Alphabet, Output> merge(vararg machines: FSM<Alphabet, Output>): FSM<Alphabet, Output> =
+        fun <Alphabet : Any, Output> merge(vararg machines: FSM<Alphabet, Output>): FSM<Alphabet, Output> =
                 machines.reduce { acc, fsMachine ->
                     acc.merge(fsMachine)
                 }

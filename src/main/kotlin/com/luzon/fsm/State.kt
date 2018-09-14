@@ -1,14 +1,16 @@
 package com.luzon.fsm
 
+import com.luzon.utils.Predicate
+import com.luzon.utils.equalPredicate
 import com.luzon.utils.orPredicate
 import java.util.*
 
-class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boolean = false) {
+class State<Alphabet : Any, Output>(var output: Output? = null, var forceAccept: Boolean = false) {
     private val transitions = mutableListOf<Transition<Alphabet, Output>>()
     private val epsilonTransitions = mutableListOf<State<Alphabet, Output>>()
 
-    private data class Transition<Alphabet, Output>(val predicate: (Alphabet) -> Boolean,
-                                                    val state: State<Alphabet, Output>) {
+    private data class Transition<Alphabet : Any, Output>(val predicate: Predicate<Alphabet>,
+                                                          val state: State<Alphabet, Output>) {
         fun accepts(value: Alphabet) = predicate(value)
     }
 
@@ -32,9 +34,11 @@ class State<Alphabet, Output>(var output: Output? = null, var forceAccept: Boole
     }
 
     //TODO: DSL?
-    fun addTransition(predicate: (Alphabet) -> Boolean, state: State<Alphabet, Output>) = apply {
+    fun addTransition(predicate: Predicate<Alphabet>, state: State<Alphabet, Output>) = apply {
         transitions.add(Transition(predicate, state))
     }
+
+    fun addTransition(equalsValue: Alphabet, state: State<Alphabet, Output>) = addTransition(equalsValue.equalPredicate(), state)
 
     fun addEpsilonTransition(state: State<Alphabet, Output>) = apply {
         if (state != this && !epsilonTransitions.contains(state)) epsilonTransitions.add(state)
