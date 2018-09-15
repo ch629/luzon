@@ -4,8 +4,20 @@ import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.Token.TokenEnum
 
+sealed class FSMAlphabet {
+    data class AlphabetTokenEnum(val tokenEnum: TokenEnum) : FSMAlphabet()
+    data class AlphabetParserDSL(val dsl: ParserDSL) : FSMAlphabet()
+
+    override fun toString(): String {
+        return when (this) {
+            is AlphabetTokenEnum -> tokenEnum.id()!!.toUpperCase()
+            is AlphabetParserDSL -> dsl.name
+        }
+    }
+}
+
 class ParserDSL(val name: String) {
-    val tokenDefinitions = hashMapOf<String, List<TokenEnum>>()
+    private val definitions = hashMapOf<String, State>()
 
     private fun defDsl(init: ParserDefDSL.() -> Unit): ParserDefDSL {
         val def = ParserDefDSL(this)
@@ -13,20 +25,32 @@ class ParserDSL(val name: String) {
         return def
     }
 
+    // TODO: How to deal with two definitions with the same name?
+    // Potentially turn the States into real state machine states with multiple transitions,
+    // so I can just use an or between the two definitions?
     fun def(name: String, init: ParserDefDSL.() -> Unit) {
         val def = defDsl(init)
-        tokenDefinitions[this.name + name] = def.tokens
+        definitions[name + this.name] = State.fromAlphabet(*def.tokens.toTypedArray())
     }
 
     fun def(dsl: ParserDSL) {
-
+        definitions[dsl.name] = State.fromDSL(dsl)
     }
 
     fun defOr(init: ParserDefDSL.() -> Unit) {
         val def = defDsl(init)
 
-        def.tokens.forEach {
-            tokenDefinitions[this.name + it.id()!!.capitalize()] = listOf(it)
+        addDefinitionOr(def.tokens)
+    }
+
+    private fun addDefinitionOr(characters: List<FSMAlphabet>) {
+        characters.forEach { character ->
+            when (character) {
+                is FSMAlphabet.AlphabetParserDSL ->
+                    definitions[character.dsl.name.decapitalize()] = State.fromDSL(character.dsl)
+                is FSMAlphabet.AlphabetTokenEnum ->
+                    definitions[name + character.tokenEnum.id()!!.capitalize()] = State.fromTokens(character.tokenEnum)
+            }
         }
     }
 
@@ -35,8 +59,13 @@ class ParserDSL(val name: String) {
         append(name)
         append(" ::= ")
 
-        val values = tokenDefinitions.map { (name, tokenList) ->
-            name to tokenList.joinToString { it.id()!!.toUpperCase() }
+        val values = definitions.map { (name, tokenStates) ->
+            name to tokenStates.traverse().joinToString(" ") { (character, _) ->
+                when (character) {
+                    is FSMAlphabet.AlphabetParserDSL -> character.dsl.name.decapitalize()
+                    is FSMAlphabet.AlphabetTokenEnum -> character.tokenEnum.id()!!.toUpperCase()
+                }
+            }
         }
 
         val longest = values.maxBy { it.second.length }?.second?.length ?: 0
@@ -58,16 +87,90 @@ class ParserDSL(val name: String) {
 }
 
 class ParserDefDSL(private val forParser: ParserDSL) {
-    var tokens = emptyList<TokenEnum>()
-        private set
+    private var rootState = State()
+    private var pointer = rootState
+
+    val tokens get() = rootState.traverse().map { it.first }
 
     operator fun TokenEnum.unaryPlus() {
-        tokens += this
+        val newState = State()
+        pointer.setTransition(this, newState)
+        pointer = newState
     }
 
-    operator fun ParserDSL.unaryPlus() {}
+    operator fun ParserDSL.unaryPlus() {
+        val newState = State()
+        pointer.setTransition(this, newState)
+        pointer = newState
+    }
 
     val self: ParserDSL get() = forParser
+}
+
+private class State(private var transitionValue: FSMAlphabet? = null, private var transitionState: State? = null) {
+    companion object {
+        fun fromTokens(vararg tokens: TokenEnum): State {
+            val root = State()
+            var pointer = root
+
+            tokens.forEach {
+                val newState = State()
+                pointer.setTransition(it, newState)
+                pointer = newState
+            }
+
+            return root
+        }
+
+        fun fromTokens(tokens: List<TokenEnum>) = fromTokens(*tokens.toTypedArray())
+
+        fun fromDSL(dsl: ParserDSL): State {
+            val root = State()
+            root.setTransition(dsl, State())
+            return root
+        }
+
+        fun fromAlphabet(vararg characters: FSMAlphabet): State {
+            val root = State()
+            var pointer = root
+
+            characters.forEach {
+                val newState = State()
+                when (it) {
+                    is FSMAlphabet.AlphabetTokenEnum -> pointer.setTransition(it.tokenEnum, newState)
+                    is FSMAlphabet.AlphabetParserDSL -> pointer.setTransition(it.dsl, newState)
+                }
+
+                pointer = newState
+            }
+
+            return root
+        }
+    }
+
+    fun setTransition(token: TokenEnum, state: State) {
+        transitionValue = FSMAlphabet.AlphabetTokenEnum(token)
+        transitionState = state
+    }
+
+    fun setTransition(dsl: ParserDSL, state: State) {
+        transitionValue = FSMAlphabet.AlphabetParserDSL(dsl)
+        transitionState = state
+    }
+
+    fun next() = transitionValue?.to(transitionState!!)
+
+    fun traverse(): List<Pair<FSMAlphabet, State>> {
+        val list = mutableListOf<Pair<FSMAlphabet, State>>()
+        var next = next()
+
+        while (next != null) {
+            list.add(next)
+            next = next.second.next()
+        }
+
+        return list
+    }
 }
 
 fun parser(name: String, init: ParserDSL.() -> Unit): ParserDSL {
@@ -88,7 +191,7 @@ val literal = parser("Literal") {
 }
 
 fun main(args: Array<String>) {
-    println(literal.toString())
+    println(accessor.toString())
 }
 
 val funCall = parser("FunCall") {}
@@ -96,7 +199,7 @@ val arrayAccess = parser("ArrayAccess") {}
 
 val accessor = parser("Accessor") {
     def("Identifier") { +Literal.IDENTIFIER }
-    def(literal) // TODO: for non-terminals we can probably just use the literal.name
+    def(literal)
     def(funCall)
 
     def("Dot") {
@@ -112,9 +215,7 @@ val accessor = parser("Accessor") {
 }
 
 val expr = parser("Expr") {
-    def("Literal") {
-        +accessor
-    }
+    def(accessor)
 
     def("Plus") {
         +self
@@ -150,7 +251,3 @@ val expr = parser("Expr") {
 //          | NOT <expr>             #NotExpr
 //          | <expr> INCREMENT       #IncrementExpr
 //          | INCREMENT <expr>       #IncrementExpr
-
-// TODO: Two of the same (Should work with just reduceSkip(2) { it.tokenEnum != Token.Symbol.INCREMENT }
-// -> This would be a problem if they were slightly different, rather than just the reverse of each other
-
