@@ -77,6 +77,8 @@ class VariableDeclaration : Statement {
         this.type = type
         this.assign = assign
     }
+
+    constructor(name: Token, type: Token) : this(name.data, type.data) //TODO: For temporary testing.
 }
 
 data class Parameter(val name: String, val type: String) : ASTNode

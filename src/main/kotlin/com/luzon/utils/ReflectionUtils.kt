@@ -36,6 +36,7 @@ internal fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: An
 }
 
 internal inline fun <reified T : Any> tryConstructorArgs(vararg args: Any) = tryConstructorArguments(T::class, *args)
+internal inline fun <reified T : Any> tryConstructorArgsList(list: List<Any>) = tryConstructorArgs<T>(*list.toTypedArray())
 
 internal fun <T : Any> KClass<T>.getConstructorParameters() = constructors.map { con ->
     con.parameters.map { param ->
