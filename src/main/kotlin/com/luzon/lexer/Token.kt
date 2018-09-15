@@ -18,7 +18,7 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
         fun regex() = when (this) {
             is Literal -> regex
             is Comment -> regex
-            is Keyword -> regex?.replaceMetaCharacters() ?: generateID()
+            is Keyword -> if (capitalize) generateID().capitalize() else generateID()
             is Symbol -> regex.replaceMetaCharacters()
             else -> ""
         }
@@ -35,15 +35,15 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
         override fun toString() = "none"
     }
 
-    enum class Keyword(val regex: String? = null) : TokenEnum {
+    enum class Keyword(val capitalize: Boolean = false) : TokenEnum {
         FOR, WHILE, IF, ELSE, WHEN, BREAK,
         VAR, VAL, FUN, CLASS, ABSTRACT, ENUM,
-        DOUBLE("Double"),
-        FLOAT("Float"),
-        INT("Int"),
-        STRING("String"),
-        CHAR("Char"),
-        BOOLEAN("Boolean"),
+        DOUBLE(true),
+        FLOAT(true),
+        INT(true),
+        STRING(true),
+        CHAR(true),
+        BOOLEAN(true),
         IS, AS, IN, PRIVATE;
 
         override fun toString() = "keyword:${id()}"

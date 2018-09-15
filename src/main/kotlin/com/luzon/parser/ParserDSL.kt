@@ -1,21 +1,73 @@
 package com.luzon.parser
 
-import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
+import com.luzon.lexer.Token.TokenEnum
 
 class ParserDSL(val name: String) {
-    fun def(init: ParserDefDSL.() -> Unit) {}
-    fun def(name: String, init: ParserDefDSL.() -> Unit) {}
-    fun def(dsl: ParserDSL) {}
-    fun defOr(init: ParserDefDSL.() -> Unit) {}
+    val tokenDefinitions = hashMapOf<String, List<TokenEnum>>()
+
+    private fun defDsl(init: ParserDefDSL.() -> Unit): ParserDefDSL {
+        val def = ParserDefDSL(this)
+        def.init()
+        return def
+    }
+
+    fun def(name: String, init: ParserDefDSL.() -> Unit) {
+        val def = defDsl(init)
+        tokenDefinitions[this.name + name] = def.tokens
+    }
+
+    fun def(dsl: ParserDSL) {
+
+    }
+
+    fun defOr(init: ParserDefDSL.() -> Unit) {
+        val def = defDsl(init)
+
+        def.tokens.forEach {
+            tokenDefinitions[this.name + it.id()!!.capitalize()] = listOf(it)
+        }
+    }
+
+    override fun toString(): String = StringBuffer().apply {
+        val indent = " ".repeat(name.length + 3)
+        append(name)
+        append(" ::= ")
+
+        val values = tokenDefinitions.map { (name, tokenList) ->
+            name to tokenList.joinToString { it.id()!!.toUpperCase() }
+        }
+
+        val longest = values.maxBy { it.second.length }?.second?.length ?: 0
+
+        values.forEachIndexed { index, (name, tokenString) ->
+            if (index > 0) {
+                append(indent)
+                append("| ")
+            }
+
+            append(tokenString)
+            val spaces = Math.max(0, longest - tokenString.length)
+            append(" ".repeat(spaces))
+            append(" #")
+            append(name)
+            appendln()
+        }
+    }.toString()
 }
 
-class ParserDefDSL {
-    operator fun Token.TokenEnum.unaryPlus() {}
+class ParserDefDSL(private val forParser: ParserDSL) {
+    var tokens = emptyList<TokenEnum>()
+        private set
+
+    operator fun TokenEnum.unaryPlus() {
+        tokens += this
+    }
+
     operator fun ParserDSL.unaryPlus() {}
 
-    val self: ParserDSL get() = TODO()
+    val self: ParserDSL get() = forParser
 }
 
 fun parser(name: String, init: ParserDSL.() -> Unit): ParserDSL {
@@ -24,15 +76,9 @@ fun parser(name: String, init: ParserDSL.() -> Unit): ParserDSL {
     return parserDSL
 }
 
-fun parserDef(name: String, init: ParserDefDSL.() -> Unit): ParserDSL {
-    val parserDSL = ParserDSL(name)
-    parserDSL.def(init)
-    return parserDSL
-}
-
 val literal = parser("Literal") {
     defOr {
-        +Literal.INT // TODO: Auto name these to LiteralInt? -> parser.name + TokenEnum.name?
+        +Literal.INT
         +Literal.DOUBLE
         +Literal.FLOAT
         +Literal.BOOLEAN
@@ -41,11 +87,14 @@ val literal = parser("Literal") {
     }
 }
 
+fun main(args: Array<String>) {
+    println(literal.toString())
+}
+
 val funCall = parser("FunCall") {}
 val arrayAccess = parser("ArrayAccess") {}
 
 val accessor = parser("Accessor") {
-    // TODO: def appends the name to the parser name? i.e. AccessIdentifier or the other way around IdentifierAccess(Makes more sense for Expr)
     def("Identifier") { +Literal.IDENTIFIER }
     def(literal) // TODO: for non-terminals we can probably just use the literal.name
     def(funCall)
@@ -63,33 +112,33 @@ val accessor = parser("Accessor") {
 }
 
 val expr = parser("Expr") {
-    def("LiteralExpr") {
+    def("Literal") {
         +accessor
     }
 
-    def("PlusExpr") {
+    def("Plus") {
         +self
         +PLUS
         +self
     }
 
-    def("SubExpr") {
+    def("Sub") {
         +self
         +SUBTRACT
         +self
     }
 
-    def("NotExpr") {
+    def("Not") {
         +NOT
         +self
     }
 
-    def("IncrementExpr") {
+    def("Increment") {
         +self
         +INCREMENT
     }
 
-    def("IncrementExpr") {
+    def("Increment") {
         +INCREMENT
         +self
     }
