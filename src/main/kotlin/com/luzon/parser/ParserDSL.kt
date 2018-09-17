@@ -5,6 +5,7 @@ import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.Token.TokenEnum
 import com.luzon.parser.generator.ParserClass
 import com.luzon.parser.generator.ParserParameter
+import com.luzon.parser.generator.ParserParameterList
 import com.luzon.utils.merge
 
 sealed class FSMAlphabet {
@@ -65,7 +66,6 @@ class ParserDSL(val name: String) {
 
     fun toParserGeneratorClass(): ParserClass {
         val primaryClass = ParserClass.ParserSealedClass(name.capitalize())
-
         val subClassNames = mutableSetOf<String>()
 
         // Sealed Class
@@ -75,33 +75,44 @@ class ParserDSL(val name: String) {
             rootState.traverse().forEach { definitions ->
                 if (!subClassNames.contains(className)) {
                     subClassNames.add(className)
-                    val parameters = mutableListOf<ParserParameter>()
-                    val paramCount = hashMapOf<String, Int>()
-
-                    // Parameters
-                    definitions.forEach { (param, _) ->
-                        val paramType = param.name()
-                        if (param is FSMAlphabet.AlphabetParserDSL || (param is FSMAlphabet.AlphabetTokenEnum && param.tokenEnum is Literal)) { // Ignore terminals
-                            var paramName = paramType
-
-                            if (definitions.asSequence().filter { it.first.name() == paramName }.count() > 1) { // Contains multiple of the same type
-                                if (paramCount.containsKey(paramType))
-                                    paramCount[paramType] = paramCount[paramType]!! + 1
-                                else paramCount[paramType] = 1
-
-                                paramName += paramCount[paramType]!! // Temp
-                            }
-
-                            parameters.add(ParserParameter(paramName, paramType.capitalize()))
-                        }
-                    }
-
-                    primaryClass.createSubDataClass(className, *parameters.toTypedArray())
+                    primaryClass.createSubDataClass(className, getParameters(definitions.map { it.first }))
                 }
             }
         }
 
         return primaryClass
+    }
+
+    private fun getParameters(parameterAlphabet: List<FSMAlphabet>): ParserParameterList {
+        val paramTypeAllCount = parameterAlphabet.groupBy { it }.mapValues { it.value.size }
+        val paramTypeCount = hashMapOf<FSMAlphabet, Int>()
+
+        return ParserParameterList(parameterAlphabet.asSequence().filter {
+            (it is FSMAlphabet.AlphabetParserDSL || (it is FSMAlphabet.AlphabetTokenEnum && it.tokenEnum is Literal))
+        }.map {
+            paramTypeCount[it] = (paramTypeCount[it] ?: 0) + 1
+            alphabetToParameter(it, paramTypeCount[it]!!, paramTypeAllCount[it]!!)
+        }.toList())
+    }
+
+    private fun alphabetToParameter(alphabet: FSMAlphabet, count: Int, allCount: Int = 1): ParserParameter {
+        // TODO: How to define a non-literal tokens for use?
+        // TODO: Naming non-literal parameter names & types?
+        // TODO: Multiple parameters could still be named the same, if multiple types have multiple
+
+        val paramName = if (alphabet is FSMAlphabet.AlphabetTokenEnum) alphabet.tokenEnum.id()!!
+        else when (allCount) {
+            1 -> alphabet.name()
+            2 -> listOf("left", "right")[count - 1]
+            3 -> listOf("x", "y", "z")[count - 1]
+            else -> alphabet.name() + count
+        }
+
+        val paramType = (if (alphabet is FSMAlphabet.AlphabetTokenEnum) {
+            alphabet.tokenEnum.id()!!
+        } else alphabet.name()).capitalize()
+
+        return ParserParameter(paramName, paramType)
     }
 
     override fun toString(): String = StringBuffer().apply {
