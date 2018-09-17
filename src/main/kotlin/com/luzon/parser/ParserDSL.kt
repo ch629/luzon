@@ -3,20 +3,22 @@ package com.luzon.parser
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.Token.TokenEnum
+import com.luzon.parser.generator.ParserClass
+import com.luzon.parser.generator.ParserParameter
 import com.luzon.utils.merge
 
 sealed class FSMAlphabet {
     data class AlphabetTokenEnum(val tokenEnum: TokenEnum) : FSMAlphabet()
     data class AlphabetParserDSL(val dsl: ParserDSL) : FSMAlphabet()
 
-    override fun toString() = when (this) {
+    fun name() = when (this) {
         is AlphabetTokenEnum -> tokenEnum.id()!!.toUpperCase()
         is AlphabetParserDSL -> dsl.name
     }
 
-    fun name() = when (this) {
-        is AlphabetParserDSL -> dsl.name.decapitalize()
+    fun stringName() = when (this) {
         is AlphabetTokenEnum -> tokenEnum.id()!!.toUpperCase()
+        is AlphabetParserDSL -> "<${dsl.name}>"
     }
 }
 
@@ -30,13 +32,18 @@ class ParserDSL(val name: String) {
         else definitions[name] = state
     }
 
+    private fun addDefinition(parserName: String, defName: String, state: State) {
+        addDefinition(parserName.capitalize() + defName.capitalize(), state)
+    }
+
     fun def(name: String, init: ParserDefDSL.() -> Unit) {
         val def = defDsl(init)
-        addDefinition(name + this.name, State.fromAlphabetList(def.tokens))
+        addDefinition(name, this.name, State.fromAlphabetList(def.tokens))
     }
 
     fun def(dsl: ParserDSL) {
-        State.fromDSL(dsl).apply { addDefinition(dsl.name, this) }
+        val state = State.fromDSL(dsl)
+        addDefinition(dsl.name, name, state)
     }
 
     fun defOr(init: ParserDefDSL.() -> Unit) {
@@ -47,25 +54,68 @@ class ParserDSL(val name: String) {
         characters.forEach { character ->
             when (character) {
                 is FSMAlphabet.AlphabetParserDSL ->
-                    addDefinition(character.dsl.name.decapitalize(),
+                    addDefinition(character.dsl.name,
                             State.fromDSL(character.dsl))
                 is FSMAlphabet.AlphabetTokenEnum ->
-                    addDefinition(name + character.tokenEnum.id()!!.capitalize(),
+                    addDefinition(name, character.tokenEnum.id()!!,
                             State.fromTokens(character.tokenEnum))
             }
         }
     }
 
+    fun toParserGeneratorClass(): ParserClass {
+        val primaryClass = ParserClass.ParserSealedClass(name.capitalize())
+
+        val subClassNames = mutableSetOf<String>()
+
+        // Sealed Class
+        definitions.forEach { (className, rootState) ->
+
+            // Sub Class
+            rootState.traverse().forEach { definitions ->
+                if (!subClassNames.contains(className)) {
+                    subClassNames.add(className)
+                    val parameters = mutableListOf<ParserParameter>()
+                    val paramCount = hashMapOf<String, Int>()
+
+                    // Parameters
+                    definitions.forEach { (param, _) ->
+                        val paramType = param.name()
+                        if (param is FSMAlphabet.AlphabetParserDSL || (param is FSMAlphabet.AlphabetTokenEnum && param.tokenEnum is Literal)) { // Ignore terminals
+                            var paramName = paramType
+
+                            if (definitions.asSequence().filter { it.first.name() == paramName }.count() > 1) { // Contains multiple of the same type
+                                if (paramCount.containsKey(paramType))
+                                    paramCount[paramType] = paramCount[paramType]!! + 1
+                                else paramCount[paramType] = 1
+
+                                paramName += paramCount[paramType]!! // Temp
+                            }
+
+                            parameters.add(ParserParameter(paramName, paramType.capitalize()))
+                        }
+                    }
+
+                    primaryClass.createSubDataClass(className, *parameters.toTypedArray())
+                }
+            }
+        }
+
+        return primaryClass
+    }
+
     override fun toString(): String = StringBuffer().apply {
-        val indent = " ".repeat(name.length + 3)
+        val indent = " ".repeat(name.length + 5)
         appendln()
+        append("<")
         append(name)
+        append(">")
         append(" ::= ")
 
         val values = definitions.map { (name, tokenStates) ->
             tokenStates.traverse().map {
                 name to it.joinToString(" ") { (character, _) ->
-                    character.name()
+                    character.stringName()
                 }
             }
         }.merge()
@@ -176,7 +226,7 @@ private class State(private val transitions: MutableList<ParserTransition> = mut
 
 fun parser(name: String, init: ParserDSL.() -> Unit) = ParserDSL(name).apply(init)
 
-val literal = parser("Literal") {
+val literal = parser("literal") {
     defOr {
         +Literal.INT
         +Literal.DOUBLE
@@ -188,55 +238,57 @@ val literal = parser("Literal") {
 }
 
 fun main(args: Array<String>) {
-    println(expr.toString())
+//    println(expr.toString())
+    println(accessor.toParserGeneratorClass())
+    println(expr.toParserGeneratorClass())
 }
 
-val funCall = parser("FunCall") {}
-val arrayAccess = parser("ArrayAccess") {}
+val funCall = parser("funCall") {}
+val arrayAccess = parser("arrayAccess") {}
 
-val accessor = parser("Accessor") {
-    def("Identifier") { +Literal.IDENTIFIER }
+val accessor = parser("accessor") {
+    def("identifier") { +Literal.IDENTIFIER }
     def(literal)
     def(funCall)
 
-    def("Dot") {
+    def("dot") {
         +self
         +DOT
         +self
     }
 
-    def("Array") {
+    def("array") {
         +self
         +arrayAccess
     }
 }
 
-val expr = parser("Expr") {
+val expr = parser("expr") {
     def(accessor)
 
-    def("Plus") {
+    def("plus") {
         +self
         +PLUS
         +self
     }
 
-    def("Sub") {
+    def("sub") {
         +self
         +SUBTRACT
         +self
     }
 
-    def("Not") {
+    def("not") {
         +NOT
         +self
     }
 
-    def("Increment") {
+    def("increment") {
         +self
         +INCREMENT
     }
 
-    def("Increment") {
+    def("increment") {
         +INCREMENT
         +self
     }
