@@ -21,6 +21,11 @@ sealed class FSMAlphabet {
         is AlphabetTokenEnum -> tokenEnum.id()!!.toUpperCase()
         is AlphabetParserDSL -> "<${dsl.name}>"
     }
+
+    fun paramTypeName() =
+            (if (this is FSMAlphabet.AlphabetTokenEnum) tokenEnum.id()!! else name()).capitalize()
+
+    fun isLiteral() = this is FSMAlphabet.AlphabetTokenEnum && tokenEnum is Literal
 }
 
 class ParserDSL(val name: String) {
@@ -47,6 +52,10 @@ class ParserDSL(val name: String) {
         addDefinition(dsl.name, name, state)
     }
 
+    fun def(token: TokenEnum) {
+        addDefinition(FSMAlphabet.AlphabetTokenEnum(token).paramTypeName(), State.fromTokens(token))
+    }
+
     fun defOr(init: ParserDefDSL.() -> Unit) {
         defDsl(init).apply { tokens.forEach { addDefinitionOr(it) } }
     }
@@ -55,11 +64,9 @@ class ParserDSL(val name: String) {
         characters.forEach { character ->
             when (character) {
                 is FSMAlphabet.AlphabetParserDSL ->
-                    addDefinition(character.dsl.name,
-                            State.fromDSL(character.dsl))
+                    addDefinition(character.paramTypeName(), State.fromDSL(character.dsl))
                 is FSMAlphabet.AlphabetTokenEnum ->
-                    addDefinition(name, character.tokenEnum.id()!!,
-                            State.fromTokens(character.tokenEnum))
+                    addDefinition(name, character.paramTypeName(), State.fromTokens(character.tokenEnum))
             }
         }
     }
@@ -87,32 +94,28 @@ class ParserDSL(val name: String) {
         val paramTypeAllCount = parameterAlphabet.groupBy { it }.mapValues { it.value.size }
         val paramTypeCount = hashMapOf<FSMAlphabet, Int>()
 
-        return ParserParameterList(parameterAlphabet.asSequence().filter {
-            (it is FSMAlphabet.AlphabetParserDSL || (it is FSMAlphabet.AlphabetTokenEnum && it.tokenEnum is Literal))
-        }.map {
-            paramTypeCount[it] = (paramTypeCount[it] ?: 0) + 1
-            alphabetToParameter(it, paramTypeCount[it]!!, paramTypeAllCount[it]!!)
-        }.toList())
+        return ParserParameterList(parameterAlphabet.asSequence()
+                .filter { it is FSMAlphabet.AlphabetParserDSL || it.isLiteral() }
+                .map {
+                    paramTypeCount[it] = (paramTypeCount[it] ?: 0) + 1
+                    alphabetToParameter(it, paramTypeCount[it]!!, paramTypeAllCount[it]!!)
+                }.toList())
     }
 
     private fun alphabetToParameter(alphabet: FSMAlphabet, count: Int, allCount: Int = 1): ParserParameter {
         // TODO: How to define a non-literal tokens for use?
         // TODO: Naming non-literal parameter names & types?
-        // TODO: Multiple parameters could still be named the same, if multiple types have multiple
 
-        val paramName = if (alphabet is FSMAlphabet.AlphabetTokenEnum) alphabet.tokenEnum.id()!!
-        else when (allCount) {
-            1 -> alphabet.name()
-            2 -> listOf("left", "right")[count - 1]
+        var paramName = alphabet.name().toLowerCase()
+
+        paramName = when (allCount) {
+            1 -> paramName
+            2 -> listOf("left", "right")[count - 1] + paramName.capitalize() // leftExpr, rightExpr?
             3 -> listOf("x", "y", "z")[count - 1]
-            else -> alphabet.name() + count
+            else -> paramName + count
         }
 
-        val paramType = (if (alphabet is FSMAlphabet.AlphabetTokenEnum) {
-            alphabet.tokenEnum.id()!!
-        } else alphabet.name()).capitalize()
-
-        return ParserParameter(paramName, paramType)
+        return ParserParameter(paramName, alphabet.paramTypeName())
     }
 
     override fun toString(): String = StringBuffer().apply {
@@ -153,7 +156,7 @@ class ParserDefDSL(private val forParser: ParserDSL) {
     private var rootState = State()
     private var pointer = rootState
 
-    val tokens get() = rootState.traverse().map { it.map { it.first } }
+    val tokens get() = rootState.traverse().map { list -> list.map { it.first } }
 
     operator fun TokenEnum.unaryPlus() {
         val newState = State()
@@ -249,6 +252,7 @@ val literal = parser("literal") {
 }
 
 fun main(args: Array<String>) {
+//    println(accessor.toString())
 //    println(expr.toString())
     println(accessor.toParserGeneratorClass())
     println(expr.toParserGeneratorClass())
@@ -258,7 +262,7 @@ val funCall = parser("funCall") {}
 val arrayAccess = parser("arrayAccess") {}
 
 val accessor = parser("accessor") {
-    def("identifier") { +Literal.IDENTIFIER }
+    def(Literal.IDENTIFIER)
     def(literal)
     def(funCall)
 
