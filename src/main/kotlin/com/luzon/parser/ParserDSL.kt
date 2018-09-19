@@ -1,7 +1,6 @@
 package com.luzon.parser
 
 import com.luzon.lexer.Token.Literal
-import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.Token.TokenEnum
 import com.luzon.parser.generator.ParserClass
 import com.luzon.parser.generator.ParserParameter
@@ -28,6 +27,7 @@ sealed class FSMAlphabet {
     fun isLiteral() = this is FSMAlphabet.AlphabetTokenEnum && tokenEnum is Literal
 }
 
+// TODO: I need some sort of way to add a DSL to this lazily, so it only loads the part it needs when it needs it
 class ParserDSL(val name: String) {
     private val definitions = hashMapOf<String, State>()
 
@@ -70,6 +70,8 @@ class ParserDSL(val name: String) {
             }
         }
     }
+
+    //region Generator & EBNF Creation
 
     fun toParserGeneratorClass(): ParserClass {
         val primaryClass = ParserClass.ParserSealedClass(name.capitalize())
@@ -150,6 +152,8 @@ class ParserDSL(val name: String) {
             appendln()
         }
     }.toString()
+
+    //endregion
 }
 
 class ParserDefDSL(private val forParser: ParserDSL) {
@@ -170,9 +174,16 @@ class ParserDefDSL(private val forParser: ParserDSL) {
         pointer = newState
     }
 
+    fun opt(token: TokenEnum) {}
+    fun opt(dsl: ParserDSL) {}
+
     val self: ParserDSL get() = forParser
 }
 
+//private data class OptionalAlphabet()
+
+// TODO: Some of this may need to be lazy loaded, as non-terminals could potentially have cyclic dependencies
+// Lazy loading the DSL for a transition would fix this
 private data class ParserTransition(val value: FSMAlphabet, val state: State)
 private class State(private val transitions: MutableList<ParserTransition> = mutableListOf()) {
     companion object {
@@ -239,79 +250,11 @@ private class State(private val transitions: MutableList<ParserTransition> = mut
 }
 
 fun parser(name: String, init: ParserDSL.() -> Unit) = ParserDSL(name).apply(init)
-
-val literal = parser("literal") {
-    defOr {
-        +Literal.INT
-        +Literal.DOUBLE
-        +Literal.FLOAT
-        +Literal.BOOLEAN
-        +Literal.STRING
-        +Literal.CHAR
-    }
-}
+fun parserOr(name: String, init: ParserDefDSL.() -> Unit) = ParserDSL(name).apply { defOr(init) }
 
 fun main(args: Array<String>) {
-//    println(accessor.toString())
+//    println(literal.toString())
 //    println(expr.toString())
     println(accessor.toParserGeneratorClass())
     println(expr.toParserGeneratorClass())
 }
-
-val funCall = parser("funCall") {}
-val arrayAccess = parser("arrayAccess") {}
-
-val accessor = parser("accessor") {
-    def(Literal.IDENTIFIER)
-    def(literal)
-    def(funCall)
-
-    def("dot") {
-        +self
-        +DOT
-        +self
-    }
-
-    def("array") {
-        +self
-        +arrayAccess
-    }
-}
-
-val expr = parser("expr") {
-    def(accessor)
-
-    def("plus") {
-        +self
-        +PLUS
-        +self
-    }
-
-    def("sub") {
-        +self
-        +SUBTRACT
-        +self
-    }
-
-    def("not") {
-        +NOT
-        +self
-    }
-
-    def("increment") {
-        +self
-        +INCREMENT
-    }
-
-    def("increment") {
-        +INCREMENT
-        +self
-    }
-}
-
-// <expr> ::= <accessor>             #LiteralExpr
-//          | <expr> PLUS <expr>     #PlusExpr
-//          | <expr> SUBTRACT <expr> #SubExpr
-//          | NOT <expr>             #NotExpr
-//          | <expr> INCREMENT       #IncrementExpr
-//          | INCREMENT <expr>       #IncrementExpr
