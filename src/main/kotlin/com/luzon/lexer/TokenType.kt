@@ -4,6 +4,7 @@ import com.luzon.fsm.OutputFSM
 import com.luzon.lexer.Token.*
 import com.luzon.utils.toMergedFSM
 
+@Suppress("UNCHECKED_CAST")
 enum class TokenType {
     KEYWORD, SYMBOL, LITERAL, COMMENT;
 
@@ -15,6 +16,6 @@ enum class TokenType {
             COMMENT -> Comment.values().map { it.toFSM() }.toMergedFSM() as OutputFSM<Char, TokenEnum>
         }
 
-        return machine ?: OutputFSM<Char, TokenEnum>()
+        return machine ?: OutputFSM()
     }
 }

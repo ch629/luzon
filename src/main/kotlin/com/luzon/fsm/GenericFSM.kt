@@ -52,7 +52,7 @@ open class NormalFSM<Alphabet>(protected val states: MutableList<State<Alphabet>
         if (updateEpsilons) updateEpsilons(true)
     }
 
-    override fun merge(fsMachine: FSM<Alphabet>): FSM<Alphabet> {
+    override fun merge(fsMachine: FSM<Alphabet>): NormalFSM<Alphabet> {
         val states = mutableListOf<State<Alphabet>>()
         states.addAll(this.states)
         if (fsMachine is NormalFSM<Alphabet>) states.addAll(fsMachine.states)
@@ -116,7 +116,7 @@ open class NormalState<Alphabet>(override var accepting: Boolean = false) : Stat
         accepting = false
     }
 
-    override fun transferToNext(): State<Alphabet> {
+    override fun transferToNext(): NormalState<Alphabet> {
         val newState = NormalState<Alphabet>(accepting)
         newState.transitions.addAll(transitions)
         newState.epsilonTransitions.addAll(epsilonTransitions)
@@ -138,20 +138,22 @@ open class NormalState<Alphabet>(override var accepting: Boolean = false) : Stat
         }
     }
 
-    protected fun findAllChildren(): Set<State<Alphabet>> {
-        val cachedStates = mutableSetOf<State<Alphabet>>()
-        val stateStack = Stack<State<Alphabet>>()
+    protected fun findAllChildren(): Set<NormalState<Alphabet>> {
+        val cachedStates = mutableSetOf<NormalState<Alphabet>>()
+        val stateStack = Stack<NormalState<Alphabet>>()
         cachedStates.add(this)
         stateStack.push(this)
 
         while (stateStack.isNotEmpty()) {
             val currentState = stateStack.pop() as NormalState<Alphabet>
             currentState.transitions.forEach { (_, state) ->
-                if (cachedStates.add(state)) stateStack.push(state)
+                val normalState = state as NormalState<Alphabet>
+                if (cachedStates.add(normalState)) stateStack.push(normalState)
             }
 
             currentState.epsilonTransitions.forEach { state ->
-                if (cachedStates.add(state)) stateStack.push(state)
+                val normalState = state as NormalState<Alphabet>
+                if (cachedStates.add(normalState)) stateStack.push(normalState)
             }
         }
 
@@ -165,6 +167,7 @@ data class Transition<Alphabet>(val predicate: Predicate<Alphabet>, val state: S
     fun accept(character: Alphabet): State<Alphabet>? = if (predicate(character)) state else null
 }
 
+@Suppress("UNCHECKED_CAST")
 open class OutputFSM<Alphabet, Output : Any>(states: MutableList<State<Alphabet>> = mutableListOf(),
                                              updateEpsilons: Boolean = true) :
         NormalFSM<Alphabet>(states, updateEpsilons) {
@@ -179,34 +182,28 @@ open class OutputFSM<Alphabet, Output : Any>(states: MutableList<State<Alphabet>
     val currentOutput: List<Output>
         get() = states.asSequence()
                 .filter { it is OutputState<Alphabet, *> && it.isOutputting }
-                .mapNotNull { (it as OutputState<Alphabet, Output>).output }
-                .toList()
-
-    /*val currentOutput: List<Output>
-        get() = acceptStates.asSequence()
                 .mapNotNull { (it as? OutputState<Alphabet, Output>)?.output }
-                .toList()*/
+                .toList()
 
     fun replaceChildOutputs(output: Output) = apply {
         // TODO: This is being called but not calling replaceChildOutputs
         states.forEach {
             (it as? OutputState<Alphabet, Output>)?.replaceChildOutput(output)
-//            (it as? OutputState<Alphabet, Output>)?.output = output
-//            it.accepting = false
         }
     }
 
     override fun copy() = OutputFSM<Alphabet, Output>(originalStates, false)
 
-    override fun merge(fsMachine: FSM<Alphabet>): FSM<Alphabet> {
+    override fun merge(fsMachine: FSM<Alphabet>): OutputFSM<Alphabet, Output> {
         val states = mutableListOf<State<Alphabet>>()
         states.addAll(this.states)
         if (fsMachine is OutputFSM<Alphabet, *>) states.addAll(fsMachine.states)
 
-        return OutputFSM<Alphabet, Output>(states)
+        return OutputFSM(states)
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 open class OutputState<Alphabet, Output>(accepting: Boolean = false,
                                          var output: Output? = null) : NormalState<Alphabet>(accepting) {
     val isOutputting get() = output != null
@@ -230,7 +227,7 @@ open class OutputState<Alphabet, Output>(accepting: Boolean = false,
         }
     }
 
-    override fun transferToNext(): State<Alphabet> {
+    override fun transferToNext(): OutputState<Alphabet, Output> {
         val newState = OutputState<Alphabet, Output>(accepting, output)
         newState.transitions.addAll(transitions)
         newState.epsilonTransitions.addAll(epsilonTransitions)
