@@ -251,10 +251,3 @@ private class State(private val transitions: MutableList<ParserTransition> = mut
 
 fun parser(name: String, init: ParserDSL.() -> Unit) = ParserDSL(name).apply(init)
 fun parserOr(name: String, init: ParserDefDSL.() -> Unit) = ParserDSL(name).apply { defOr(init) }
-
-fun main(args: Array<String>) {
-//    println(literal.toString())
-//    println(expr.toString())
-    println(accessor.toParserGeneratorClass())
-    println(expr.toParserGeneratorClass())
-}

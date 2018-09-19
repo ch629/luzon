@@ -2,8 +2,10 @@ package com.luzon.parser
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal.*
-import com.luzon.lexer.Tokenizer
-import com.luzon.utils.*
+import com.luzon.utils.Predicate
+import com.luzon.utils.merge
+import com.luzon.utils.popOrNull
+import com.luzon.utils.replaceWith
 import java.util.*
 import kotlin.reflect.KFunction
 
@@ -111,36 +113,3 @@ private fun makeString(string: String) = string.substring(1, string.length - 1)
 // Unless or'd -> then we generally want to turn that into a non-terminal within itself. (VAR | VAL)
 // I might not want to use the tryConstructorArgs though, as I could make an FSM from the DSL which outputs
 // a KFunction creating the class.
-
-fun main(args: Array<String>) {
-    //i: Int
-    val decl = tryConstructorArgs<VariableDeclaration>("i", "Int")!!
-    println("VariableDeclaration: ${decl.name}: ${decl.type!!}")
-
-    //b = 5
-    val decl2 = tryConstructorArgs<VariableDeclaration>("b", LiteralExpression(Token.Literal.INT.toToken("5")))!!
-    println("VariableDeclaration: ${decl2.name}")
-
-    //i: Int
-    val stack = Stack<Any>()
-    stack.push("i")
-    stack.push(":")
-    stack.push("Int")
-
-    val tokens = Tokenizer("val i: Int").findTokens()
-    val s = Stack<Token>()
-    tokens.forEach {
-        println("Pushing: ${it.tokenEnum}")
-        s.push(it)
-    }
-
-    val reduced = reduceStack(s, 4) {
-        it.tokenEnum is Token.Literal || it.tokenEnum == Token.Keyword.INT
-    }
-
-    val four = tryConstructorArgsList<VariableDeclaration>(reduced)!!
-    println("Four: ${four.name}: ${four.type!!}")
-
-    val three = tryConstructorArgsList<VariableDeclaration>(reduceFilterSkip(stack, 2) { it == ":" })!!
-    println("Three: ${three.name}: ${three.type!!}")
-}

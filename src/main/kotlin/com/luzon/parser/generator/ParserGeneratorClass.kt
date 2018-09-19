@@ -28,14 +28,6 @@ private fun Any.asNullableParameter(name: String, defaultValue: String? = null):
 private fun Any.asNullableDefaultParameter(name: String) =
         ParserParameter(name, "${this::class.simpleName!!}?", toString())
 
-fun main(args: Array<String>) {
-    val exprClass = ParserClass.ParserSealedClass("Expr")
-    exprClass.createSubDataClass("PlusExpr", exprClass.asParameter("left"), exprClass.asParameter("right"))
-
-    println(exprClass)
-}
-
-
 sealed class ParserClass(val name: String, val parameterList: ParserParameterList? = null, val superClass: String? = null) {
     class ParserSealedClass(name: String, parameterList: ParserParameterList? = null, superClass: String? = null) :
             ParserClass(name, parameterList, superClass) {
