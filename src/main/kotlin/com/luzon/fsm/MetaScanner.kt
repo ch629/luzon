@@ -7,13 +7,13 @@ import com.luzon.utils.orPredicate
 import mu.NamedKLogging
 
 abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValue: Alphabet) : Scanner<Alphabet>(text, endValue) {
-    private val root = State<Alphabet, Output>()
+    private val root = OutputState<Alphabet, Output>()
     protected var endState = root
     protected var metaScope = root
     private var orScope = root
     private var scopeChange = false
-    private var orState = State<Alphabet, Output>()
-    private val orEndState = State<Alphabet, Output>()
+    private var orState = OutputState<Alphabet, Output>()
+    private val orEndState = OutputState<Alphabet, Output>()
     private var afterOr = false
     private var afterMeta = false
 
@@ -33,7 +33,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
     protected open fun unescapedCharacters(char: Alphabet): Predicate<Alphabet>? = null
     protected open fun escapedCharacters(char: Alphabet): Predicate<Alphabet>? = null
 
-    fun toFSM(): State<Alphabet, Output> {
+    fun toFSM(): OutputState<Alphabet, Output> {
         while (isNotAtEnd()) {
             var escape = false
             var char = peek()
@@ -73,13 +73,13 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
             endState = orEndState
         }
 
-        endState.forceAccept = true
+        endState.accepting = true
 
         return root
     }
 
     private fun char(escape: Boolean = false): StatePair<Alphabet, Output> {
-        val charEnd = State<Alphabet, Output>(forceAccept = true)
+        val charEnd = OutputState<Alphabet, Output>(accepting = true)
         val char = advance()
         var isRange = true
 
@@ -114,10 +114,10 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
         return isMetaPredicate!!(char)
     }
 
-    protected data class StatePair<Alphabet : Any, Output>(val start: State<Alphabet, Output>,
-                                                           val end: State<Alphabet, Output>)
+    protected data class StatePair<Alphabet : Any, Output>(val start: OutputState<Alphabet, Output>,
+                                                           val end: OutputState<Alphabet, Output>)
 
-    protected infix fun State<Alphabet, Output>.to(other: State<Alphabet, Output>) = StatePair(this, other)
+    protected infix fun OutputState<Alphabet, Output>.to(other: OutputState<Alphabet, Output>) = StatePair(this, other)
 
     private fun metaCharacter(): StatePair<Alphabet, Output> {
         afterMeta = true
@@ -145,7 +145,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
 
     //A|B|C
     private fun or(): StatePair<Alphabet, Output> {
-        val extraState = State<Alphabet, Output>()
+        val extraState = OutputState<Alphabet, Output>()
         scopeChange = true
         afterOr = true
 
@@ -164,7 +164,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
 
     //A*
     private fun kleeneStar(): StatePair<Alphabet, Output> {
-        val newEndState = State<Alphabet, Output>(forceAccept = true)
+        val newEndState = OutputState<Alphabet, Output>(accepting = true)
 
         endState.addEpsilonTransition(metaScope)
         metaScope.addEpsilonTransition(newEndState)
@@ -174,7 +174,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
 
     //A+
     private fun kleenePlus(): StatePair<Alphabet, Output> {
-        val newEndState = State<Alphabet, Output>(forceAccept = true)
+        val newEndState = OutputState<Alphabet, Output>(accepting = true)
 
         endState.addEpsilonTransition(metaScope)
         endState.addEpsilonTransition(newEndState)
@@ -184,7 +184,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
 
     //A?
     private fun optional(): StatePair<Alphabet, Output> {
-        val newEndState = State<Alphabet, Output>(forceAccept = true)
+        val newEndState = OutputState<Alphabet, Output>(accepting = true)
 
         metaScope.addEpsilonTransition(newEndState)
         endState.addEpsilonTransition(newEndState)
@@ -209,5 +209,5 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
         return characters
     }
 
-    private fun hasOr() = !orState.isLeaf()
+    private fun hasOr() = !orState.leaf
 }

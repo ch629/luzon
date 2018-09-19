@@ -1,6 +1,8 @@
 
 import com.luzon.fsm.FSM
-import com.luzon.fsm.State
+import com.luzon.fsm.NormalFSM
+import com.luzon.fsm.NormalState
+import com.luzon.fsm.OutputFSM
 import com.luzon.utils.equalPredicate
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -15,33 +17,33 @@ import java.nio.file.Paths
 object FSMTest : Spek({
     given("a finite state machine") {
         on("a simple transition") {
-            val root = State<Char, Int>()
-            root.addTransition('A'.equalPredicate(), State())
-            val machine = FSM(root)
+            val root = NormalState<Char>()
+            root.addTransition('A'.equalPredicate(), NormalState())
+            val machine = NormalFSM(root)
             it("should accept to the next state successfully") {
                 machine.accept('A')
-                machine.isRunning() shouldBe true
+                machine.isRunning shouldBe true
             }
         }
 
         on("an epsilon transition") {
-            val root = State<Char, Int>()
-            val otherState = State<Char, Int>()
-            otherState.addTransition('A'.equalPredicate(), State())
+            val root = NormalState<Char>()
+            val otherState = NormalState<Char>()
+            otherState.addTransition('A'.equalPredicate(), NormalState())
             root.addEpsilonTransition(otherState)
-            val machine = FSM(root)
+            val machine = NormalFSM(root)
 
             it("should end with 1 state") {
                 machine.accept('A')
-                machine.getStateCount() shouldBe 1
+                machine.stateCount shouldBe 1
             }
         }
 
         on("a state") {
             it("finds leaf states correctly") {
-                val root = State<Char, Int>()
-                for (i in 1..5) root.addEpsilonTransition(State())
-                root.findLeaves().size shouldBe 5
+                val root = NormalState<Char>()
+                for (i in 1..5) root.addEpsilonTransition(NormalState())
+                root.leaves.size shouldBe 5
             }
         }
     }
@@ -52,13 +54,13 @@ object FSMTest : Spek({
 
             it("should accept correct values for ABCD") {
                 machine.accept("ABCD")
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("should not accept invalid values for ABCD") {
                 machine.reset()
                 machine.accept("AD")
-                machine.isAccepting() shouldBe false
+                machine.isAccepting shouldBe false
             }
         }
 
@@ -69,7 +71,7 @@ object FSMTest : Spek({
                 "ABDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".forEach {
                     machine.reset()
                     machine.accept(it)
-                    machine.isAccepting() shouldBe true
+                    machine.isAccepting shouldBe true
                 }
             }
 
@@ -77,7 +79,7 @@ object FSMTest : Spek({
                 "C0123456789".forEach {
                     machine.reset()
                     machine.accept(it)
-                    machine.isRunning() shouldBe false
+                    machine.isRunning shouldBe false
                 }
             }
         }
@@ -87,13 +89,13 @@ object FSMTest : Spek({
 
             it("should accept correct values for (ABCD)") {
                 machine.accept("ABCD")
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("should not accept invalid values for (ABCD)") {
                 machine.reset()
                 machine.accept('D')
-                machine.isRunning() shouldBe false
+                machine.isRunning shouldBe false
             }
         }
 
@@ -103,13 +105,13 @@ object FSMTest : Spek({
 
                 machine.accept("AAAAA")
 
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("should accept no input") {
                 val machine = regex("A*")
 
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("should accept multiple AB's for AB*") {
@@ -119,7 +121,7 @@ object FSMTest : Spek({
                     machine.accept(it)
                 }
 
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
         }
 
@@ -129,13 +131,13 @@ object FSMTest : Spek({
             it("should accept multiple A's for A+") {
                 for (i in 1..5) machine.accept('A')
 
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("it should not accept no input") {
                 machine.reset()
 
-                machine.isAccepting() shouldBe false
+                machine.isAccepting shouldBe false
             }
         }
 
@@ -145,13 +147,13 @@ object FSMTest : Spek({
             it("should accept a single A for A?") {
                 machine.accept('A')
 
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("should accept for no input") {
                 machine.reset()
 
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
         }
 
@@ -160,24 +162,24 @@ object FSMTest : Spek({
                 val machine = regex("A|B")
 
                 machine.accept('A')
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
 
                 machine.reset()
 
                 machine.accept('B')
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("should accept either AB or CD for AB|CD") {
                 val machine = regex("AB|CD")
 
                 machine.accept("AB")
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
 
                 machine.reset()
 
                 machine.accept("CD")
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
         }
 
@@ -185,7 +187,7 @@ object FSMTest : Spek({
             val machine = regex("(AB|CD)*")
 
             it("should pass with no inputs") {
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("should pass with multiple ABs") {
@@ -193,7 +195,7 @@ object FSMTest : Spek({
 
                 "AB".repeat(5).forEach { machine.accept(it) }
 
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
 
             it("should pass with ABCD") {
@@ -201,7 +203,7 @@ object FSMTest : Spek({
 
                 "ABCD".forEach { machine.accept(it) }
 
-                machine.isAccepting() shouldBe true
+                machine.isAccepting shouldBe true
             }
         }
     }
@@ -214,14 +216,14 @@ object FSMTest : Spek({
             val merged = machine1.merge(machine2)
 
             merged.accept("AB")
-            merged.isAccepting() shouldBe true
+            merged.isAccepting shouldBe true
 
             merged.reset()
             merged.accept("CD")
-            merged.isAccepting() shouldBe true
+            merged.isAccepting shouldBe true
 
             merged.accept("A")
-            merged.isAccepting() shouldBe false
+            merged.isAccepting shouldBe false
         }
 
         val machine3 = regex("EF")
@@ -230,18 +232,18 @@ object FSMTest : Spek({
             val merged = FSM.merge(machine1, machine2, machine3)
 
             merged.accept("AB")
-            merged.isAccepting() shouldBe true
+            merged.isAccepting shouldBe true
 
             merged.reset()
             merged.accept("CD")
-            merged.isAccepting() shouldBe true
+            merged.isAccepting shouldBe true
 
             merged.reset()
             merged.accept("EF")
-            merged.isAccepting() shouldBe true
+            merged.isAccepting shouldBe true
 
             merged.accept("A")
-            merged.isAccepting() shouldBe false
+            merged.isAccepting shouldBe false
         }
     }
 
@@ -259,7 +261,7 @@ object FSMTest : Spek({
                     it("should receive $result for isAccepting with the input $test") {
                         machine.reset()
                         if (!emptyInput) machine.accept(test)
-                        machine.isAccepting() shouldBe result
+                        machine.isAccepting shouldBe result
                     }
                 }
             }
@@ -267,24 +269,4 @@ object FSMTest : Spek({
     }
 })
 
-private fun regex(regex: String): FSM<Char, Int> = FSM.fromRegex(regex)
-
-//Just converts the old format of "<regex> (<input> <expected output>)+"
-/*private fun fromTestTxtToJson(): String {
-    val fileText = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.txt").toURI()))
-    val paramType = Types.newParameterizedType(List::class.java, RegexIOTest::class.java)
-    val moshi: Moshi by kodein.instance()
-    val adapter = moshi.adapter<List<RegexIOTest>>(paramType)
-
-    val tests = fileText.map { line ->
-        val split = line.split(" ")
-        val regex = split[0]
-        val tests = split.subList(1, split.size).zipWithNext().map {
-            (if (it.first == "<none>") "" else it.first) to it.second.toBoolean()
-        }.toMap()
-
-        RegexIOTest(regex, tests)
-    }
-
-    return adapter.toJson(tests)
-}*/
+private fun regex(regex: String): OutputFSM<Char, Int> = FSM.fromRegex(regex)

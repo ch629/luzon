@@ -28,14 +28,14 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
         fun toToken(data: String) = Token(this, data)
         fun toToken() = toToken("")
 
-        fun toFSM() = FSM.fromRegex<TokenEnum>(regex()).setOutput(this)
+        fun toFSM() = FSM.fromRegex<TokenEnum>(regex()).replaceChildOutputs(this)
     }
 
-    object None : TokenEnum {
+    object None : Token.TokenEnum {
         override fun toString() = "none"
     }
 
-    enum class Keyword(val capitalize: Boolean = false) : TokenEnum {
+    enum class Keyword(val capitalize: Boolean = false) : Token.TokenEnum {
         FOR, WHILE, IF, ELSE, WHEN, BREAK,
         VAR, VAL, FUN, CLASS, ABSTRACT, ENUM,
         DOUBLE(true),
@@ -49,7 +49,7 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
         override fun toString() = "keyword:${id()}"
     }
 
-    enum class Symbol(val regex: String) : TokenEnum {
+    enum class Symbol(val regex: String) : Token.TokenEnum {
         EQUAL("="), EQUAL_EQUAL("=="), NOT("!"),
         NOT_EQUAL("!="), GREATER(">"), LESS("<"),
         GREATER_EQUAL(">="), LESS_EQUAL("<="),
@@ -66,7 +66,7 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
         override fun toString() = "symbol:${id()}"
     }
 
-    enum class Literal(val regex: String) : TokenEnum {
+    enum class Literal(val regex: String) : Token.TokenEnum {
         DOUBLE("\\d+d|\\d+\\.\\d+d?"),
         FLOAT("\\d+f|\\d+\\.\\d+f"),
         INT("\\d+"),
@@ -78,7 +78,7 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
         override fun toString() = "literal:${id()}"
     }
 
-    enum class Comment(val regex: String) : TokenEnum {
+    enum class Comment(val regex: String) : Token.TokenEnum {
         COMMENT_SINGLE("//.*\n"),
         COMMENT_MULTI("/\\*[.\n]*\\*/");
 

@@ -47,7 +47,7 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
 
     //[ABC]
     private fun orBlock(): StatePair<Char, Output> {
-        val end = State<Char, Output>(forceAccept = true)
+        val end = OutputState<Char, Output>(accepting = true)
         var transitionPredicate: Predicate<Char> = { false }
 
         advance() //Consume '['
@@ -82,16 +82,16 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
     }
 }
 
-private val regexCache = hashMapOf<String, FSM<Char, Unit>>()
+private val regexCache = hashMapOf<String, OutputFSM<Char, Unit>>()
 // Just a regular RegEx parser
 internal fun regex(regex: String): RegexMatcher {
     if (!regexCache.containsKey(regex)) regexCache[regex] = FSM.fromRegex(regex)
     return RegexMatcher(regexCache[regex]!!.copy())
 }
 
-class RegexMatcher(private val fsm: FSM<Char, Unit>) {
+class RegexMatcher(private val fsm: FSM<Char>) {
     fun matches(input: String): Boolean {
         input.forEach { fsm.accept(it) }
-        return fsm.isAccepting()
+        return fsm.isAccepting
     }
 }

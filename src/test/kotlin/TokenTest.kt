@@ -1,5 +1,5 @@
-import com.luzon.fsm.FSM
-import com.luzon.lexer.Token.*
+import com.luzon.lexer.Token.Keyword
+import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.TokenMachine
 import org.amshove.kluent.shouldBe
 import org.jetbrains.spek.api.Spek
@@ -10,19 +10,17 @@ object TokenTest : Spek({
     given("a token file") {
         val fsm = TokenMachine.getFSM()
         it("should successfully convert to an FSM") {
-            fsm.isRunning() shouldBe true
+            fsm.isRunning shouldBe true
         }
 
         it("should successfully recognize Float as a Keyword.FLOAT, and additions to that as a Literal.IDENTIFIER") {
             fsm.accept("Float")
-            fsm.isAccepting() shouldBe true
-            fsm.getOutput() shouldBe Keyword.FLOAT
+            fsm.isAccepting shouldBe true
+            fsm.currentOutput.firstOrNull() shouldBe Keyword.FLOAT
 
             fsm.accept('T')
-            fsm.isAccepting() shouldBe true
-            fsm.getOutput() shouldBe Literal.IDENTIFIER
+            fsm.isAccepting shouldBe true
+            fsm.currentOutput.firstOrNull() shouldBe Literal.IDENTIFIER
         }
     }
 })
-
-private fun FSM<Char, TokenEnum>.getOutput() = getCurrentOutput().first()

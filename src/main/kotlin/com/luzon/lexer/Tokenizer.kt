@@ -61,12 +61,12 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
         val tokenDataBuffer = StringBuffer()
         val startCurrent = scanner.current
 
-        while (machine.isRunning() && scanner.isNotAtEnd()) {
+        while (machine.isRunning && scanner.isNotAtEnd()) {
             val c = scanner.advance()
             machine.accept(c)
             tokenDataBuffer.append(c)
 
-            val newToken = machine.getCurrentOutput().firstOrNull()
+            val newToken = machine.currentOutput.firstOrNull()
             if (newToken != null) {
                 foundToken = newToken
                 foundCurrent = scanner.current

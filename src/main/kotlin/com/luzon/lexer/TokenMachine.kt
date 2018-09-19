@@ -1,6 +1,7 @@
 package com.luzon.lexer
 
 import com.luzon.fsm.FSM
+import com.luzon.fsm.OutputFSM
 
 object TokenMachine {
     private val fsm by lazy {
@@ -9,7 +10,7 @@ object TokenMachine {
                 TokenType.KEYWORD.toFSM(),
                 TokenType.SYMBOL.toFSM(),
                 TokenType.COMMENT.toFSM()
-        )
+        ) as OutputFSM<Char, Token.TokenEnum>
     }
 
     fun getFSM() = fsm.copy()
