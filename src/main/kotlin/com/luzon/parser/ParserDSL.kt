@@ -3,7 +3,7 @@ package com.luzon.parser
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.TokenEnum
 import com.luzon.parser.generator.ParserClass
-import com.luzon.parser.generator.ParserParameter
+import com.luzon.parser.generator.ParserClassParameter
 import com.luzon.parser.generator.ParserParameterList
 import com.luzon.utils.merge
 
@@ -73,7 +73,7 @@ class ParserDSL(val name: String) {
 
     //region Generator & EBNF Creation
 
-    fun toParserGeneratorClass(): ParserClass {
+    fun toParserGeneratorClass(): ParserClass.ParserSealedClass {
         val primaryClass = ParserClass.ParserSealedClass(name.capitalize())
         val subClassNames = mutableSetOf<String>()
 
@@ -104,7 +104,7 @@ class ParserDSL(val name: String) {
                 }.toList())
     }
 
-    private fun alphabetToParameter(alphabet: FSMAlphabet, count: Int, allCount: Int = 1): ParserParameter {
+    private fun alphabetToParameter(alphabet: FSMAlphabet, count: Int, allCount: Int = 1): ParserClassParameter {
         // TODO: How to define a non-literal tokens for use?
         // TODO: Naming non-literal parameter names & types?
 
@@ -117,7 +117,7 @@ class ParserDSL(val name: String) {
             else -> paramName + count
         }
 
-        return ParserParameter(paramName, alphabet.paramTypeName())
+        return ParserClassParameter(paramName, alphabet.paramTypeName())
     }
 
     override fun toString(): String = StringBuffer().apply {

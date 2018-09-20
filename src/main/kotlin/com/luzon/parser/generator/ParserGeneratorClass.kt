@@ -1,5 +1,6 @@
 package com.luzon.parser.generator
 
+import com.luzon.parser.literal
 import kotlin.reflect.KClass
 
 // Primary Class (sealed class): Expr
@@ -11,22 +12,82 @@ import kotlin.reflect.KClass
 // Accessor should exist from the Accessor definition
 
 private fun KClass<*>.asParameter(name: String, defaultValue: String? = null) =
-        ParserParameter(name, simpleName!!, defaultValue)
+        ParserClassParameter(name, simpleName!!, defaultValue)
 
-private fun Any.asParameter(name: String, defaultValue: String? = null): ParserParameter =
-        ParserParameter(name, this::class.simpleName!!, defaultValue)
+private fun Any.asParameter(name: String, defaultValue: String? = null): ParserClassParameter =
+        ParserClassParameter(name, this::class.simpleName!!, defaultValue)
 
 private fun Any.asDefaultParameter(name: String) =
-        ParserParameter(name, this::class.simpleName!!, toString())
+        ParserClassParameter(name, this::class.simpleName!!, toString())
 
 private fun KClass<*>.asNullableParameter(name: String, defaultValue: String? = null) =
-        ParserParameter(name, "${simpleName!!}?", defaultValue)
+        ParserClassParameter(name, "${simpleName!!}?", defaultValue)
 
-private fun Any.asNullableParameter(name: String, defaultValue: String? = null): ParserParameter =
-        ParserParameter(name, "${this::class.simpleName!!}?", defaultValue)
+private fun Any.asNullableParameter(name: String, defaultValue: String? = null): ParserClassParameter =
+        ParserClassParameter(name, "${this::class.simpleName!!}?", defaultValue)
 
 private fun Any.asNullableDefaultParameter(name: String) =
-        ParserParameter(name, "${this::class.simpleName!!}?", toString())
+        ParserClassParameter(name, "${this::class.simpleName!!}?", toString())
+
+class ParserInterface(val name: String, val interfaceFunctions: List<ParserInterfaceFunction>, val superClass: String? = null) {
+    override fun toString() = StringBuffer().apply {
+        val indent = " ".repeat(4)
+        append("interface ")
+        append(name)
+
+        if (superClass != null) {
+            append(" : ")
+            append(superClass)
+        }
+
+        appendln(" {")
+
+        interfaceFunctions.forEach {
+            append(indent)
+            appendln(it.toString())
+        }
+
+        appendln("}")
+    }.toString()
+}
+
+class ParserInterfaceFunction(val name: String, val parameterList: ParserFunctionParameterList? = null, val returnType: String? = null) {
+    constructor(name: String, vararg paramList: ParserFunctionParameter, returnType: String? = null) :
+            this(name, ParserFunctionParameterList(*paramList), returnType)
+
+    override fun toString() = StringBuffer().apply {
+        append("fun ")
+        append(name)
+        append("(")
+        if (parameterList != null)
+            append(parameterList.toString())
+        append(")")
+
+        if (returnType != null) {
+            append(": ")
+            append(returnType)
+        }
+    }.toString()
+}
+
+class ParserFunctionParameter(val name: String, val type: String, val defaultValue: String? = null) {
+    override fun toString() = StringBuffer().apply {
+        append(name)
+        append(": ")
+        append(type)
+
+        if (defaultValue != null) {
+            append(" = ")
+            append(defaultValue)
+        }
+    }.toString()
+}
+
+class ParserFunctionParameterList(val parameters: List<ParserFunctionParameter>) {
+    constructor(vararg params: ParserFunctionParameter) : this(params.toList())
+
+    override fun toString() = parameters.joinToString(", ")
+}
 
 sealed class ParserClass(val name: String, val parameterList: ParserParameterList? = null, val superClass: String? = null) {
     class ParserSealedClass(name: String, parameterList: ParserParameterList? = null, superClass: String? = null) :
@@ -34,7 +95,7 @@ sealed class ParserClass(val name: String, val parameterList: ParserParameterLis
         override val prefix: String
             get() = "sealed"
 
-        private val subClasses = mutableListOf<ParserClass>()
+        val subClasses = mutableListOf<ParserClass>()
 
         private fun createSubClass(clazz: ParserClass) {
             subClasses.add(clazz)
@@ -50,10 +111,10 @@ sealed class ParserClass(val name: String, val parameterList: ParserParameterLis
                     createSubClass(this)
                 }
 
-        fun createSubClass(name: String, vararg parameters: ParserParameter) =
+        fun createSubClass(name: String, vararg parameters: ParserClassParameter) =
                 createSubClass(name, ParserParameterList(parameters.toList()))
 
-        fun createSubDataClass(name: String, vararg parameters: ParserParameter) =
+        fun createSubDataClass(name: String, vararg parameters: ParserClassParameter) =
                 createSubDataClass(name, ParserParameterList(parameters.toList()))
 
         override fun toString() = StringBuffer().apply {
@@ -82,21 +143,33 @@ sealed class ParserClass(val name: String, val parameterList: ParserParameterLis
     open val prefix: String? = null
 
     override fun toString() =
-            "${if (prefix != null) "$prefix " else ""}class $name${if (parameterList != null) "($parameterList)" else ""}${if (superClass != null) ": $superClass()" else ""}"
+            "${if (prefix != null) "$prefix " else ""}class $name${if (parameterList != null) "($parameterList)" else ""}${if (superClass != null) " : $superClass()" else ""}"
 
     fun asParameter(name: String, defaultValue: String? = null) =
-            ParserParameter(name, this.name, defaultValue)
+            ParserClassParameter(name, this.name, defaultValue)
 
     fun asNullableParameter(name: String, defaultValue: String? = null) =
-            ParserParameter(name, "${this.name}?", defaultValue)
+            ParserClassParameter(name, "${this.name}?", defaultValue)
 }
 
-data class ParserParameterList(val parameters: List<ParserParameter>) {
-    constructor(vararg params: ParserParameter) : this(params.toList())
+data class ParserParameterList(val parameters: List<ParserClassParameter>) {
+    constructor(vararg params: ParserClassParameter) : this(params.toList())
 
     override fun toString() = parameters.joinToString(", ")
 }
 
-data class ParserParameter(val name: String, val type: String, val defaultValue: String? = null) {
+data class ParserClassParameter(val name: String, val type: String, val defaultValue: String? = null) {
     override fun toString() = "val $name: $type${if (defaultValue != null) " = $defaultValue" else ""}"
+}
+
+fun generateVisitorFromSealedClass(clazz: ParserClass.ParserSealedClass) =
+        ParserInterface("${clazz.name}Visitor", clazz.subClasses.map {
+            ParserInterfaceFunction("visit",
+                    ParserFunctionParameter(clazz.name.decapitalize(), it.name))
+        })
+
+fun main(args: Array<String>) {
+    val exprClass = literal.toParserGeneratorClass()
+    println(exprClass)
+    println(generateVisitorFromSealedClass(exprClass))
 }
