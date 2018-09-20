@@ -3,8 +3,9 @@ package com.luzon.parser
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.TokenEnum
 import com.luzon.parser.generator.ParserClass
+import com.luzon.parser.generator.ParserClassFunction
 import com.luzon.parser.generator.ParserClassParameter
-import com.luzon.parser.generator.ParserParameterList
+import com.luzon.parser.generator.ParserFunctionParameter
 import com.luzon.utils.merge
 
 sealed class FSMAlphabet {
@@ -74,7 +75,8 @@ class ParserDSL(val name: String) {
     //region Generator & EBNF Creation
 
     fun toParserGeneratorClass(): ParserClass.ParserSealedClass {
-        val primaryClass = ParserClass.ParserSealedClass(name.capitalize())
+        val sealedClassName = name.capitalize()
+        val primaryClass = ParserClass.ParserSealedClass(sealedClassName, superClass = "${sealedClassName}Visitable")
         val subClassNames = mutableSetOf<String>()
 
         // Sealed Class
@@ -84,7 +86,11 @@ class ParserDSL(val name: String) {
             rootState.traverse().forEach { definitions ->
                 if (!subClassNames.contains(className)) {
                     subClassNames.add(className)
-                    primaryClass.createSubDataClass(className, getParameters(definitions.map { it.first }))
+                    val function =
+                            ParserClassFunction("<T> accept", "override",
+                                    listOf(ParserFunctionParameter("visitor", "${sealedClassName}Visitor<T>")),
+                                    equalsValue = "visitor.visit(this)")
+                    primaryClass.createSubDataClass(className, getParameters(definitions.map { it.first }), listOf(function))
                 }
             }
         }
@@ -92,16 +98,16 @@ class ParserDSL(val name: String) {
         return primaryClass
     }
 
-    private fun getParameters(parameterAlphabet: List<FSMAlphabet>): ParserParameterList {
+    private fun getParameters(parameterAlphabet: List<FSMAlphabet>): List<ParserClassParameter> {
         val paramTypeAllCount = parameterAlphabet.groupBy { it }.mapValues { it.value.size }
         val paramTypeCount = hashMapOf<FSMAlphabet, Int>()
 
-        return ParserParameterList(parameterAlphabet.asSequence()
+        return parameterAlphabet.asSequence()
                 .filter { it is FSMAlphabet.AlphabetParserDSL || it.isLiteral() }
                 .map {
                     paramTypeCount[it] = (paramTypeCount[it] ?: 0) + 1
                     alphabetToParameter(it, paramTypeCount[it]!!, paramTypeAllCount[it]!!)
-                }.toList())
+                }.toList()
     }
 
     private fun alphabetToParameter(alphabet: FSMAlphabet, count: Int, allCount: Int = 1): ParserClassParameter {
@@ -185,6 +191,7 @@ class ParserDefDSL(private val forParser: ParserDSL) {
 // TODO: Some of this may need to be lazy loaded, as non-terminals could potentially have cyclic dependencies
 // Lazy loading the DSL for a transition would fix this
 private data class ParserTransition(val value: FSMAlphabet, val state: State)
+
 private class State(private val transitions: MutableList<ParserTransition> = mutableListOf()) {
     companion object {
         fun fromTokens(vararg tokens: TokenEnum) = State().apply {
