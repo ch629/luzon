@@ -2,6 +2,9 @@ package com.luzon.parser.generator
 
 import com.luzon.parser.ParserDSL
 import com.luzon.parser.literal
+import okio.buffer
+import okio.sink
+import java.io.File
 
 private val indent = " ".repeat(4)
 
@@ -9,7 +12,6 @@ class ParserInterface(val name: String,
                       val interfaceFunctions: MutableList<ParserInterfaceFunction> = mutableListOf(),
                       val superClass: String? = null) {
     override fun toString() = StringBuffer().apply {
-        val indent = " ".repeat(4)
         append("interface $name")
 
         if (superClass != null)
@@ -218,6 +220,20 @@ fun generateClassWithVisitor(clazz: ParserClass.ParserSealedClass): TrioClass {
     }
 
     return TrioClass(clazz, visitorInterface, visitableInterface)
+}
+
+// TODO: Imports, Package header
+fun TrioClass.toFile(path: String) {
+    val file = File(path)
+    if (file.exists())
+        file.delete()
+
+    file.parentFile.mkdirs()
+    file.createNewFile()
+
+    val bufferedSink = file.sink().buffer()
+    bufferedSink.writeUtf8(this.toString())
+    bufferedSink.flush()
 }
 
 fun main(args: Array<String>) {
