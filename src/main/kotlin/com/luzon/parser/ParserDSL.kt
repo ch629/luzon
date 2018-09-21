@@ -86,11 +86,11 @@ class ParserDSL(val name: String) {
             rootState.traverse().forEach { definitions ->
                 if (!subClassNames.contains(className)) {
                     subClassNames.add(className)
-                    val function =
-                            ParserClassFunction("<T> accept", "override",
-                                    listOf(ParserFunctionParameter("visitor", "${sealedClassName}Visitor<T>")),
-                                    equalsValue = "visitor.visit(this)")
-                    primaryClass.createSubDataClass(className, getParameters(definitions.map { it.first }), listOf(function))
+                    val functionParam = ParserFunctionParameter("visitor", "${sealedClassName}Visitor<T>")
+                    val function = ParserClassFunction("<T> accept", "override",
+                            listOf(functionParam), equalsValue = "visitor.visit(this)")
+                    val subClass = primaryClass.createSubDataClass(className, getParameters(definitions.map { it.first }))
+                    subClass.addFunction(function)
                 }
             }
         }
@@ -111,9 +111,6 @@ class ParserDSL(val name: String) {
     }
 
     private fun alphabetToParameter(alphabet: FSMAlphabet, count: Int, allCount: Int = 1): ParserClassParameter {
-        // TODO: How to define a non-literal tokens for use?
-        // TODO: Naming non-literal parameter names & types?
-
         var paramName = alphabet.name().toLowerCase()
 
         paramName = when (allCount) {
