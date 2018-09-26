@@ -1,241 +1,176 @@
 package com.luzon.parser.generator
 
 import com.luzon.parser.ParserDSL
-import com.luzon.parser.literal
+import com.luzon.parser.expr
 import okio.buffer
 import okio.sink
 import java.io.File
 
-private val indent = " ".repeat(4)
+private val indent = " ".repeat(4) // 4 Spaces
 
-class ParserInterface(val name: String,
-                      val interfaceFunctions: MutableList<ParserInterfaceFunction> = mutableListOf(),
-                      val superClass: String? = null) {
+class Interface(val name: String, val typeParameter: String = "", val functions: List<Function>) {
     override fun toString() = StringBuffer().apply {
         append("interface $name")
 
-        if (superClass != null)
-            append(" : $superClass")
+        if (typeParameter.isNotBlank())
+            append("<$typeParameter>")
 
         appendln(" {")
 
-        interfaceFunctions.forEach {
-            appendln("$indent$it")
-        }
+        append(indent)
+        appendln(functions.joinToString("\n").indentNewLines())
+
+        appendln("}")
+    }.toString()
+}
+
+class SealedClass(val name: String,
+                  private val superClass: String,
+                  var innerClasses: List<DataClass> = emptyList()) {
+
+    override fun toString() = StringBuffer().apply {
+        appendln("sealed class $name : $superClass {")
+
+        append(indent)
+        appendln(innerClasses.joinToString("\n\n").indentNewLines())
 
         appendln("}")
     }.toString()
 
-    fun addFunction(function: ParserInterfaceFunction) {
-        interfaceFunctions.add(function)
-    }
+    fun createSubClass(name: String, visitorName: String, parameters: List<ClassParameter>): DataClass {
+        val dataClass = DataClass(
+                name = name,
+                parameters = parameters,
+                superClass = this.name,
+                functions = listOf(dataClassFunction(visitorName))
+        )
 
-    fun addFunction(name: String, prefix: String? = null,
-                    parameterList: List<ParserFunctionParameter>? = null,
-                    returnType: String? = null) {
-        addFunction(ParserInterfaceFunction(name, prefix, parameterList, returnType))
-    }
-
-
-    fun addFunction(name: String, prefix: String? = null,
-                    parameterList: ParserFunctionParameter,
-                    returnType: String? = null) {
-        addFunction(name, prefix, listOf(parameterList), returnType)
+        innerClasses += dataClass
+        return dataClass
     }
 }
 
-open class ParserInterfaceFunction(val name: String, val prefix: String? = null,
-                                   val parameterList: List<ParserFunctionParameter>? = null,
-                                   val returnType: String? = null) {
-    constructor(name: String, prefix: String? = null, vararg paramList: ParserFunctionParameter, returnType: String? = null) :
-            this(name, prefix, paramList.toList(), returnType)
-
+class DataClass(val name: String,
+                private val parameters: List<ClassParameter>,
+                private val superClass: String,
+                private val functions: List<Function>) {
     override fun toString() = StringBuffer().apply {
-        if (prefix != null)
+        appendln("data class $name(${parameters.joinToString(", ")}) : $superClass() {")
+
+        append(indent)
+        appendln(functions.joinToString("\n").indentNewLines())
+
+        append("}")
+    }.toString()
+}
+
+data class Function(val prefix: String = "",
+                    val typeParameter: String = "",
+                    val name: String,
+                    val parameter: FunctionParameter,
+                    val returnType: String = "",
+                    val equals: String = "") {
+    override fun toString() = StringBuffer().apply {
+        if (prefix.isNotBlank())
             append("$prefix ")
 
-        append("fun $name(")
-        if (parameterList != null) append(parameterList.joinToString(", "))
-        append(")")
+        append("fun ")
 
-        if (returnType != null)
+        if (typeParameter.isNotBlank())
+            append("<$typeParameter> ")
+
+        append("$name($parameter)")
+
+        if (returnType.isNotBlank())
             append(": $returnType")
+
+        if (equals.isNotBlank())
+            append(" = $equals")
     }.toString()
 }
 
-class ParserClassFunction(name: String, prefix: String? = null,
-                          parameterList: List<ParserFunctionParameter>? = null,
-                          returnType: String? = null,
-                          val equalsValue: String? = null,
-                          val block: String? = null) :
-        ParserInterfaceFunction(name, prefix, parameterList, returnType) {
-    override fun toString() = StringBuffer().apply {
-        append(super.toString())
-
-        if (equalsValue != null)
-            append(" = $equalsValue")
-
-        if (block != null) {
-            appendln(" {")
-            appendln("$indent$block")
-            append("}")
-        }
-    }.toString()
+open class FunctionParameter(private val name: String, private val type: String) {
+    override fun toString() = "$name: $type"
 }
 
-class ParserFunctionParameter(val name: String, val type: String, val defaultValue: String? = null) {
-    override fun toString() = StringBuffer().apply {
-        append("$name: $type")
-
-        if (defaultValue != null)
-            append(" = $defaultValue")
-    }.toString()
+class ClassParameter(name: String, type: String) : FunctionParameter(name, type) {
+    override fun toString() = "val ${super.toString()}"
 }
 
-sealed class ParserClass(val name: String,
-                         val parameterList: List<ParserClassParameter>? = null,
-                         val superClass: String? = null,
-                         val functions: MutableList<ParserClassFunction> = mutableListOf()) {
-    class ParserSealedClass(name: String, parameterList: List<ParserClassParameter>? = null,
-                            superClass: String? = null) :
-            ParserClass(name, parameterList, superClass) {
-        override val prefix: String
-            get() = "sealed"
+private fun visitorFunction(typeName: String, type: String) = Function(
+        name = "visit",
+        parameter = FunctionParameter(typeName, type),
+        returnType = "T"
+)
 
-        val subClasses = mutableListOf<ParserClass>()
+private fun visitableFunction(type: String) = Function(
+        typeParameter = "T",
+        name = "accept",
+        parameter = FunctionParameter("visitor", "$type<T>"),
+        returnType = "T"
+)
 
-        private fun createSubClass(clazz: ParserClass) {
-            subClasses.add(clazz)
-        }
+private fun dataClassFunction(typeName: String) = Function(
+        prefix = "override",
+        typeParameter = "T",
+        name = "accept",
+        parameter = FunctionParameter("visitor", "$typeName<T>"),
+        equals = "visitor.visit(this)"
+)
 
-        fun createSubClass(name: String, parameterList: List<ParserClassParameter>) =
-                ParserNormalClass(name, parameterList, this.name).apply {
-                    createSubClass(this)
-                }
+private fun visitorInterface(name: String, parameterName: String, parameterTypes: List<String>) = Interface(
+        name = "${name}Visitor",
+        typeParameter = "T",
+        functions = parameterTypes.map { visitorFunction(parameterName, it) }
+)
 
-        fun createSubDataClass(name: String, parameterList: List<ParserClassParameter>,
-                               functions: MutableList<ParserClassFunction> = mutableListOf()) =
-                ParserDataClass(name, parameterList, "${this.name}()", functions).apply {
-                    createSubClass(this)
-                }
+private fun visitableInterface(name: String, visitorType: String) = Interface(
+        name = "${name}Visitable",
+        functions = listOf(visitableFunction("${visitorType}Visitor"))
+)
 
-        override fun toString() = StringBuffer().apply {
-            append(super.toString())
-            if (subClasses.isEmpty()) return@apply
-            appendln(" {")
+private fun String.indentNewLines() = replace("\n", "\n$indent")
 
-            append("$indent${subClasses.joinToString("\n$indent")}")
-
-            appendln("}")
-        }.toString()
-    }
-
-    class ParserDataClass(name: String, parameterList: List<ParserClassParameter>, superClass: String? = null,
-                          functions: MutableList<ParserClassFunction> = mutableListOf()) :
-            ParserClass(name, parameterList, superClass, functions) {
-        override val prefix: String
-            get() = "data"
-    }
-
-    class ParserNormalClass(name: String, parameterList: List<ParserClassParameter>, superClass: String? = null,
-                            functions: MutableList<ParserClassFunction> = mutableListOf()) :
-            ParserClass(name, parameterList, superClass, functions)
-
-    open val prefix: String? = null
-
-    override fun toString() = StringBuffer().apply {
-        if (prefix != null)
-            append("$prefix ")
-
-        append("class $name")
-
-        if (parameterList != null && parameterList.isNotEmpty())
-            append("(${parameterList.joinToString(", ")})")
-
-        if (superClass != null)
-            append(" : $superClass")
-
-        if (functions.isNotEmpty()) {
-            appendln(" {")
-
-            functions.forEach {
-                append(indent.repeat(2))
-                appendln(it.toString())
-            }
-
-            append(indent)
-            appendln("}")
-        }
-    }.toString()
-
-    fun addFunction(function: ParserClassFunction) {
-        functions.add(function)
-    }
-
-    fun addFunction(name: String, prefix: String? = null,
-                    parameterList: List<ParserFunctionParameter>? = null,
-                    returnType: String? = null,
-                    equalsValue: String? = null,
-                    block: String? = null) =
-            ParserClassFunction(name, prefix, parameterList, returnType, equalsValue, block).apply {
-                addFunction(this)
-            }
-
-}
-
-data class ParserClassParameter(val name: String, val type: String, val defaultValue: String? = null) {
-    override fun toString() = StringBuffer().apply {
-        append("val $name: $type")
-
-        if (defaultValue != null)
-            append(" = $defaultValue")
-    }.toString()
-}
-
-fun generateVisitorFromSealedClass(clazz: ParserClass.ParserSealedClass) =
-        ParserInterface("${clazz.name}Visitor<T>").apply {
-            clazz.subClasses.forEach {
-                val param = ParserFunctionParameter(clazz.name.decapitalize(), "${clazz.name}.${it.name}")
-                addFunction("visit", null, param, returnType = "T")
-            }
-        }
-
-data class TrioClass(val sealedClass: ParserClass.ParserSealedClass, val visitorInterface: ParserInterface,
-                     val visitableInterface: ParserInterface) {
+data class TrioClass(val sealedClass: SealedClass, val visitorInterface: Interface,
+                     val visitableInterface: Interface) {
     override fun toString() = StringBuffer().apply {
         appendln(visitorInterface.toString())
         appendln(visitableInterface.toString())
         append(sealedClass.toString())
     }.toString()
+
+    fun toFile(path: String) {
+        val file = File(path)
+        if (file.exists())
+            file.delete()
+
+        file.parentFile.mkdirs()
+        file.createNewFile()
+
+        val bufferedSink = file.sink().buffer()
+        bufferedSink.writeUtf8(this.toString())
+        bufferedSink.flush()
+    }
 }
 
-fun generateClassWithVisitor(parserDSL: ParserDSL): TrioClass =
-        generateClassWithVisitor(parserDSL.toParserGeneratorClass())
+private fun generateVisitorFromSealedClass(clazz: SealedClass) = visitorInterface(
+        name = clazz.name,
+        parameterName = clazz.name.decapitalize(),
+        parameterTypes = clazz.innerClasses.map { "${clazz.name}.${it.name}" }
+)
 
-fun generateClassWithVisitor(clazz: ParserClass.ParserSealedClass): TrioClass {
+private fun generateVisitableFromSealedClass(clazz: SealedClass) = visitableInterface(clazz.name, clazz.name)
+
+fun generateClassWithVisitor(parserDSL: ParserDSL): TrioClass =
+        generateClassWithVisitor(parserDSL.toNewParserGeneratorClass())
+
+fun generateClassWithVisitor(clazz: SealedClass): TrioClass {
     val visitorInterface = generateVisitorFromSealedClass(clazz)
-    val visitableInterface = ParserInterface("${clazz.name}Visitable").apply {
-        val param = ParserFunctionParameter("visitor", "${clazz.name}Visitor<T>")
-        addFunction("<T> accept", null, param, "T")
-    }
+    val visitableInterface = generateVisitableFromSealedClass(clazz)
 
     return TrioClass(clazz, visitorInterface, visitableInterface)
 }
 
-// TODO: Imports, Package header
-fun TrioClass.toFile(path: String) {
-    val file = File(path)
-    if (file.exists())
-        file.delete()
-
-    file.parentFile.mkdirs()
-    file.createNewFile()
-
-    val bufferedSink = file.sink().buffer()
-    bufferedSink.writeUtf8(this.toString())
-    bufferedSink.flush()
-}
-
 fun main(args: Array<String>) {
-    println(generateClassWithVisitor(literal))
+    println(generateClassWithVisitor(expr))
 }

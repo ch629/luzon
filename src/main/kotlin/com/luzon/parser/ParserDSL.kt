@@ -2,10 +2,8 @@ package com.luzon.parser
 
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.TokenEnum
-import com.luzon.parser.generator.ParserClass
-import com.luzon.parser.generator.ParserClassFunction
-import com.luzon.parser.generator.ParserClassParameter
-import com.luzon.parser.generator.ParserFunctionParameter
+import com.luzon.parser.generator.ClassParameter
+import com.luzon.parser.generator.SealedClass
 import com.luzon.utils.merge
 
 sealed class FSMAlphabet {
@@ -74,9 +72,34 @@ class ParserDSL(val name: String) {
 
     //region Generator & EBNF Creation
 
-    fun toParserGeneratorClass(): ParserClass.ParserSealedClass {
+    fun toNewParserGeneratorClass(): SealedClass {
+        fun getNewParameters(parameterAlphabet: List<FSMAlphabet>): List<ClassParameter> { // TODO:
+            fun alphabetToNewParameter(alphabet: FSMAlphabet, count: Int, allCount: Int = 1): ClassParameter {
+                var paramName = alphabet.name().toLowerCase()
+
+                paramName = when (allCount) {
+                    1 -> paramName
+                    2 -> listOf("left", "right")[count - 1] + paramName.capitalize() // leftExpr, rightExpr?
+                    3 -> listOf("x", "y", "z")[count - 1]
+                    else -> paramName + count
+                }
+
+                return ClassParameter(paramName, alphabet.paramTypeName())
+            }
+
+            val paramTypeAllCount = parameterAlphabet.groupBy { it }.mapValues { it.value.size }
+            val paramTypeCount = hashMapOf<FSMAlphabet, Int>()
+
+            return parameterAlphabet.asSequence()
+                    .filter { it is FSMAlphabet.AlphabetParserDSL || it.isLiteral() }
+                    .map {
+                        paramTypeCount[it] = (paramTypeCount[it] ?: 0) + 1
+                        alphabetToNewParameter(it, paramTypeCount[it]!!, paramTypeAllCount[it]!!)
+                    }.toList()
+        }
+
         val sealedClassName = name.capitalize()
-        val primaryClass = ParserClass.ParserSealedClass(sealedClassName, superClass = "${sealedClassName}Visitable")
+        val primaryClass = SealedClass(sealedClassName, superClass = "${sealedClassName}Visitable")
         val subClassNames = mutableSetOf<String>()
 
         // Sealed Class
@@ -86,11 +109,10 @@ class ParserDSL(val name: String) {
             rootState.traverse().forEach { definitions ->
                 if (!subClassNames.contains(className)) {
                     subClassNames.add(className)
-                    val functionParam = ParserFunctionParameter("visitor", "${sealedClassName}Visitor<T>")
-                    val function = ParserClassFunction("<T> accept", "override",
-                            listOf(functionParam), equalsValue = "visitor.visit(this)")
-                    val subClass = primaryClass.createSubDataClass(className, getParameters(definitions.map { it.first }))
-                    subClass.addFunction(function)
+                    primaryClass.createSubClass(
+                            name = className,
+                            visitorName = "${sealedClassName}Visitor",
+                            parameters = getNewParameters(definitions.map { it.first }))
                 }
             }
         }
@@ -98,30 +120,6 @@ class ParserDSL(val name: String) {
         return primaryClass
     }
 
-    private fun getParameters(parameterAlphabet: List<FSMAlphabet>): List<ParserClassParameter> {
-        val paramTypeAllCount = parameterAlphabet.groupBy { it }.mapValues { it.value.size }
-        val paramTypeCount = hashMapOf<FSMAlphabet, Int>()
-
-        return parameterAlphabet.asSequence()
-                .filter { it is FSMAlphabet.AlphabetParserDSL || it.isLiteral() }
-                .map {
-                    paramTypeCount[it] = (paramTypeCount[it] ?: 0) + 1
-                    alphabetToParameter(it, paramTypeCount[it]!!, paramTypeAllCount[it]!!)
-                }.toList()
-    }
-
-    private fun alphabetToParameter(alphabet: FSMAlphabet, count: Int, allCount: Int = 1): ParserClassParameter {
-        var paramName = alphabet.name().toLowerCase()
-
-        paramName = when (allCount) {
-            1 -> paramName
-            2 -> listOf("left", "right")[count - 1] + paramName.capitalize() // leftExpr, rightExpr?
-            3 -> listOf("x", "y", "z")[count - 1]
-            else -> paramName + count
-        }
-
-        return ParserClassParameter(paramName, alphabet.paramTypeName())
-    }
 
     override fun toString(): String = StringBuffer().apply {
         val indent = " ".repeat(name.length + 5)
@@ -179,6 +177,7 @@ class ParserDefDSL(private val forParser: ParserDSL) {
 
     fun opt(token: TokenEnum) {}
     fun opt(dsl: ParserDSL) {}
+    fun opt(dsl: ParserDefDSL.() -> Unit) {}
 
     val self: ParserDSL get() = forParser
 }
