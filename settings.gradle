@@ -1,2 +1,4 @@
 rootProject.name = 'luzon'
 
+include "ParserGenerator"
+include "Core"

@@ -4,27 +4,27 @@ import com.luzon.lexer.Token
 
 // Call this a wrapper?
 sealed class ParserAlphabetWrapper { // TODO: Make this private and only used internally
-    data class TokenEnum(val tokenEnum: Token.TokenEnum) : ParserAlphabetWrapper()
-    data class ParserDSL(val dsl: NewParserDSL) : ParserAlphabetWrapper()
-
     fun name() = when (this) {
-        is TokenEnum -> tokenEnum.id()!!.toUpperCase()
-        is ParserDSL -> dsl.name
+        is AlphabetToken -> tokenEnum.id()!!.toUpperCase()
+        is AlphabetDSL -> dsl.name
     }
 
     fun stringName() = when (this) {
-        is TokenEnum -> tokenEnum.id()!!.toUpperCase()
-        is ParserDSL -> "<${dsl.name}>"
+        is AlphabetToken -> tokenEnum.id()!!.toUpperCase()
+        is AlphabetDSL -> "<${dsl.name}>"
     }
 
     fun paramTypeName() =
-            (if (this is ParserAlphabetWrapper.TokenEnum) tokenEnum.id()!! else name()).capitalize()
+            (if (this is AlphabetToken) tokenEnum.id()!! else name()).capitalize()
 
-    fun isLiteral() = this is ParserAlphabetWrapper.TokenEnum && tokenEnum is Token.Literal
+    fun isLiteral() = this is AlphabetToken && tokenEnum is Token.Literal
 }
 
+private data class AlphabetToken(val tokenEnum: Token.TokenEnum) : ParserAlphabetWrapper()
+private data class AlphabetDSL(val dsl: NewParserDSL) : ParserAlphabetWrapper()
+
 class NewParserDSL(val name: String) {
-    val definitions = hashMapOf<String, MutableList<List<ParserAlphabetWrapper>>>()
+    private val definitions = hashMapOf<String, MutableList<List<ParserAlphabetWrapper>>>()
 
     private fun defDsl(init: NewParserDefDSL.() -> Unit) = NewParserDefDSL(this).apply(init)
 
@@ -42,11 +42,11 @@ class NewParserDSL(val name: String) {
     }
 
     private fun addDefinition(dsl: NewParserDSL) {
-        addDefinition(dsl.name, ParserAlphabetWrapper.ParserDSL(dsl))
+        addDefinition(dsl.name, AlphabetDSL(dsl))
     }
 
     private fun addDefinition(name: String, vararg tokenEnums: Token.TokenEnum) {
-        addDefinition(name, tokenEnums.map { ParserAlphabetWrapper.TokenEnum(it) })
+        addDefinition(name, tokenEnums.map { AlphabetToken(it) })
     }
 
     fun def(dsl: NewParserDSL) {
@@ -70,10 +70,22 @@ class NewParserDefDSL(private val forParser: NewParserDSL) {
     val tokens = mutableListOf<ParserAlphabetWrapper>()
 
     operator fun Token.TokenEnum.unaryPlus() {
-        tokens.add(ParserAlphabetWrapper.TokenEnum(this))
+        tokens.add(AlphabetToken(this))
     }
 
     operator fun NewParserDSL.unaryPlus() {
-        tokens.add(ParserAlphabetWrapper.ParserDSL(this))
+        tokens.add(AlphabetDSL(this))
     }
+}
+
+class DSLSection(val name: String, val optional: Boolean = false) {
+    private val sectionDefinitions = mutableListOf<DSLSection>()
+    private val baseDefinition = mutableListOf<ParserAlphabetWrapper>()
+
+
+}
+
+// Empty name = default definition (no name)
+class Definition(val name: String = "") {
+    // Order of types (including optionals and grouped)
 }

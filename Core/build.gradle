@@ -1,0 +1,11 @@
+group 'com.luzon'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+dependencies {
+    compile "org.kodein.di:kodein-di-generic-jvm:5.2.0"
+    
+    testCompile "com.squareup.moshi:moshi:$moshiVersion"
+    testCompile "com.squareup.moshi:moshi-kotlin:$moshiVersion"
+}
