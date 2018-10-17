@@ -60,7 +60,7 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
         MOD_ASSIGN("%="), TYPE(":"), INCREMENT("++"),
         DECREMENT("--"), L_PAREN("("), R_PAREN(")"),
         L_BRACE("{"), R_BRACE("}"), L_BRACKET("["),
-        R_BRACKET("]"), RANGE(""), ARROW("->"),
+        R_BRACKET("]"), RANGE(".."), ARROW("->"),
         DOT("."), COMMA(",");
 
         override fun toString() = "symbol:${id()}"
