@@ -6,7 +6,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.isSubclassOf
 
-internal fun KClass<*>.constructorsToFSM(): OutputFSM<KClass<*>, KFunction<KClass<*>>> {
+fun KClass<*>.constructorsToFSM(): OutputFSM<KClass<*>, KFunction<KClass<*>>> {
     val root = OutputState<KClass<*>, KFunction<KClass<*>>>()
     var pointer = root
 
@@ -26,7 +26,7 @@ internal fun KClass<*>.constructorsToFSM(): OutputFSM<KClass<*>, KFunction<KClas
 }
 
 private val constructorFSMCache = hashMapOf<KClass<*>, OutputFSM<KClass<*>, KFunction<KClass<*>>>>()
-internal fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: Any): T? { //TODO: Use Either here? -> Rather than nullable
+fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: Any): T? { //TODO: Use Either here? -> Rather than nullable
     if (!constructorFSMCache.containsKey(clazz)) constructorFSMCache[clazz] = clazz.constructorsToFSM()
     val fsm = constructorFSMCache[clazz]!!.copy()
 
@@ -35,13 +35,13 @@ internal fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: An
     return (fsm.currentOutput.firstOrNull() as KFunction<T>?)?.call(*args)
 }
 
-internal inline fun <reified T : Any> tryConstructorArgs(vararg args: Any) = tryConstructorArguments(T::class, *args)
-internal inline fun <reified T : Any> tryConstructorArgsList(list: List<Any>) = tryConstructorArgs<T>(*list.toTypedArray())
+inline fun <reified T : Any> tryConstructorArgs(vararg args: Any) = tryConstructorArguments(T::class, *args)
+inline fun <reified T : Any> tryConstructorArgsList(list: List<Any>) = tryConstructorArgs<T>(*list.toTypedArray())
 
-internal fun <T : Any> KClass<T>.getConstructorParameters() = constructors.map { con ->
+fun <T : Any> KClass<T>.getConstructorParameters() = constructors.map { con ->
     con.parameters.map { param ->
         param.type.classifier as KClass<*>
     }
 }
 
-internal inline fun <reified T : Any> getConstructorParameters() = T::class.getConstructorParameters()
+inline fun <reified T : Any> getConstructorParameters() = T::class.getConstructorParameters()

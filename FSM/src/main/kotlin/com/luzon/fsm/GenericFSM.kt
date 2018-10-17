@@ -5,6 +5,8 @@ import com.luzon.utils.merge
 import com.luzon.utils.replaceWith
 import java.util.*
 
+fun <K : Any, T : Any> Collection<OutputFSM<K, T>>.toMergedFSM() = FSM.merge(*toTypedArray())
+
 interface FSM<Alphabet> {
     fun accept(character: Alphabet): Boolean
     fun merge(fsMachine: FSM<Alphabet>): FSM<Alphabet>

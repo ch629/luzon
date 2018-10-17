@@ -2,8 +2,10 @@ package com.luzon.utils
 
 import java.util.*
 
-internal fun <T> Stack<T>.peekOrNull() = if (isEmpty()) null else peek()
-internal fun <T> Stack<T>.popOrNull() = if (isEmpty()) null else pop()
+typealias Predicate<T> = (T) -> Boolean
+
+fun <T> Stack<T>.peekOrNull() = if (isEmpty()) null else peek()
+fun <T> Stack<T>.popOrNull() = if (isEmpty()) null else pop()
 
 
 private class IfTest {

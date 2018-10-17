@@ -1,3 +1,4 @@
+import com.luzon.fsm.FSM
 import com.luzon.lexer.Token.Keyword
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.TokenMachine
@@ -24,3 +25,10 @@ object TokenTest : Spek({
         }
     }
 })
+
+
+private fun FSM<Char>.accept(input: String) {
+    input.forEach {
+        accept(it)
+    }
+}

@@ -1,0 +1,6 @@
+dependencies {
+    compile project(":Utils")
+
+    testCompile "com.squareup.moshi:moshi:$moshiVersion"
+    testCompile "com.squareup.moshi:moshi-kotlin:$moshiVersion"
+}
