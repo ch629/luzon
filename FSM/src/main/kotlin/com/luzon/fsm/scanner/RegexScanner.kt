@@ -1,9 +1,12 @@
-package com.luzon.fsm
+package com.luzon.fsm.scanner
 
+import com.luzon.fsm.IFsm
+import com.luzon.fsm.OutputFSM
+import com.luzon.fsm.OutputState
 import com.luzon.utils.*
 import mu.NamedKLogging
 
-class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex, '\n') {
+class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
     constructor(regex: String) : this(regex.toCharList())
 
     override val orPredicate: Predicate<Char>
@@ -38,7 +41,7 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
         private val anyCharacterPredicate: Predicate<Char> = { it != '\n' }
     }
 
-    override fun createScanner(text: List<Char>) = RegexScanner<Output>(text)
+    override fun createScanner(text: List<Char>) = RegexScanner<O>(text)
 
     override fun customCharacters(char: Char) = when (char) {
         '[' -> orBlock()
@@ -46,8 +49,8 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
     }
 
     //[ABC]
-    private fun orBlock(): StatePair<Char, Output> {
-        val end = OutputState<Char, Output>(accepting = true)
+    private fun orBlock(): StatePair<Char, O> {
+        val end = OutputState<Char, O>(accepting = true)
         var transitionPredicate: Predicate<Char> = { false }
 
         advance() //Consume '['
@@ -85,13 +88,13 @@ class RegexScanner<Output>(regex: List<Char>) : MetaScanner<Char, Output>(regex,
 private val regexCache = hashMapOf<String, OutputFSM<Char, Unit>>()
 // Just a regular RegEx parser
 internal fun regex(regex: String): RegexMatcher {
-    if (!regexCache.containsKey(regex)) regexCache[regex] = FSM.fromRegex(regex)
+    if (!regexCache.containsKey(regex)) regexCache[regex] = IFsm.fromRegex(regex)
     return RegexMatcher(regexCache[regex]!!.copy())
 }
 
-class RegexMatcher(private val fsm: FSM<Char>) {
+class RegexMatcher(private val stateMachine: IFsm<Char>) {
     fun matches(input: String): Boolean {
-        input.forEach { fsm.accept(it) }
-        return fsm.isAccepting
+        input.forEach { stateMachine.accept(it) }
+        return stateMachine.isAccepting
     }
 }

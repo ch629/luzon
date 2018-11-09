@@ -1,6 +1,6 @@
 package com.luzon.lexer
 
-import com.luzon.fsm.StringScanner
+import com.luzon.fsm.scanner.StringScanner
 import mu.KLogging
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -31,7 +31,7 @@ class Tokenizer(text: String) : StringScanner(text) {
 
 class FSMTokenizerHelper(private val scanner: StringScanner) {
     private val machine = TokenMachine.getFSM()
-    //TODO: Maybe have a save FSM to file, then I can just read that directly in from the initial Regex, rather than scan regex every time?
+    //TODO: Maybe have a save IFsm to file, then I can just read that directly in from the initial Regex, rather than scan regex every time?
 
     companion object : KLogging()
 

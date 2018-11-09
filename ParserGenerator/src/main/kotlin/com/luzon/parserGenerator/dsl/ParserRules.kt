@@ -1,4 +1,4 @@
-package com.luzon.parser
+package com.luzon.parserGenerator.dsl
 
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*

@@ -1,8 +1,8 @@
 
 import com.luzon.fsm.FSM
-import com.luzon.fsm.NormalFSM
-import com.luzon.fsm.NormalState
+import com.luzon.fsm.IFsm
 import com.luzon.fsm.OutputFSM
+import com.luzon.fsm.State
 import com.luzon.utils.equalPredicate
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -17,9 +17,9 @@ import java.nio.file.Paths
 object FSMTest : Spek({
     given("a finite state machine") {
         on("a simple transition") {
-            val root = NormalState<Char>()
-            root.addTransition('A'.equalPredicate(), NormalState())
-            val machine = NormalFSM(root)
+            val root = State<Char>()
+            root.addTransition('A'.equalPredicate(), State())
+            val machine = FSM(root)
             it("should accept to the next state successfully") {
                 machine.accept('A')
                 machine.isRunning shouldBe true
@@ -27,11 +27,11 @@ object FSMTest : Spek({
         }
 
         on("an epsilon transition") {
-            val root = NormalState<Char>()
-            val otherState = NormalState<Char>()
-            otherState.addTransition('A'.equalPredicate(), NormalState())
+            val root = State<Char>()
+            val otherState = State<Char>()
+            otherState.addTransition('A'.equalPredicate(), State())
             root.addEpsilonTransition(otherState)
-            val machine = NormalFSM(root)
+            val machine = FSM(root)
 
             it("should end with 1 state") {
                 machine.accept('A')
@@ -41,8 +41,8 @@ object FSMTest : Spek({
 
         on("a state") {
             it("finds leaf states correctly") {
-                val root = NormalState<Char>()
-                for (i in 1..5) root.addEpsilonTransition(NormalState())
+                val root = State<Char>()
+                for (i in 1..5) root.addEpsilonTransition(State())
                 root.leaves.size shouldBe 5
             }
         }
@@ -229,7 +229,7 @@ object FSMTest : Spek({
         val machine3 = regex("EF")
 
         it("should work with more merged machines") {
-            val merged = FSM.merge(machine1, machine2, machine3)
+            val merged = IFsm.merge(machine1, machine2, machine3)
 
             merged.accept("AB")
             merged.isAccepting shouldBe true
@@ -269,4 +269,4 @@ object FSMTest : Spek({
     }
 })
 
-private fun regex(regex: String): OutputFSM<Char, Int> = FSM.fromRegex(regex)
+private fun regex(regex: String): OutputFSM<Char, Int> = IFsm.fromRegex(regex)

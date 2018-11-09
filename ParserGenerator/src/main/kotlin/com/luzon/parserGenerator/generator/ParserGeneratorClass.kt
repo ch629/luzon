@@ -1,7 +1,7 @@
-package com.luzon.parser.generator
+package com.luzon.parserGenerator.generator
 
-import com.luzon.parser.ParserDSL
-import com.luzon.parser.expr
+import com.luzon.parserGenerator.dsl.ParserDSL
+import com.luzon.parserGenerator.dsl.expr
 import okio.buffer
 import okio.sink
 import java.io.File

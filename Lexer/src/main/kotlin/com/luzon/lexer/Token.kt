@@ -1,7 +1,7 @@
 package com.luzon.lexer
 
-import com.luzon.fsm.FSM
-import com.luzon.fsm.StringScanner
+import com.luzon.fsm.IFsm
+import com.luzon.fsm.scanner.StringScanner
 
 data class Token(val tokenEnum: TokenEnum, val data: String) {
     override fun toString() = when (tokenEnum) {
@@ -28,7 +28,7 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
         fun toToken(data: String) = Token(this, data)
         fun toToken() = toToken("")
 
-        fun toFSM() = FSM.fromRegex<TokenEnum>(regex()).replaceChildOutputs(this)
+        fun toFSM() = IFsm.fromRegex<TokenEnum>(regex()).replaceChildOutputs(this)
     }
 
     object None : TokenEnum {

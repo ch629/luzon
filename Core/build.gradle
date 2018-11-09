@@ -3,5 +3,6 @@ dependencies {
 
     compile project(":FSM")
     compile project(":Lexer")
-    compile project(":ParserGenerator")
+//    compile project(":ParserGenerator")
+    compile project(":RecursiveDescent")
 }

@@ -1,39 +1,40 @@
-package com.luzon.fsm
+package com.luzon.fsm.scanner
 
+import com.luzon.fsm.OutputState
 import com.luzon.utils.Predicate
 import com.luzon.utils.equalPredicate
 import com.luzon.utils.errorWithException
 import com.luzon.utils.orPredicate
 import mu.NamedKLogging
 
-abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValue: Alphabet) : Scanner<Alphabet>(text, endValue) {
-    private val root = OutputState<Alphabet, Output>()
+abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(text, endValue) {
+    private val root = OutputState<A, O>()
     protected var endState = root
     protected var metaScope = root
     private var orScope = root
     private var scopeChange = false
-    private var orState = OutputState<Alphabet, Output>()
-    private val orEndState = OutputState<Alphabet, Output>()
+    private var orState = OutputState<A, O>()
+    private val orEndState = OutputState<A, O>()
     private var afterOr = false
     private var afterMeta = false
 
-    protected abstract val orPredicate: Predicate<Alphabet>
-    protected abstract val kleeneStarPredicate: Predicate<Alphabet>
-    protected abstract val kleenePlusPredicate: Predicate<Alphabet>
-    protected abstract val optionalPredicate: Predicate<Alphabet>
-    protected abstract val startGroupPredicate: Predicate<Alphabet>
-    protected abstract val endGroupPredicate: Predicate<Alphabet>
-    protected abstract val escapePredicate: Predicate<Alphabet>
-    private var isMetaPredicate: Predicate<Alphabet>? = null
+    protected abstract val orPredicate: Predicate<A>
+    protected abstract val kleeneStarPredicate: Predicate<A>
+    protected abstract val kleenePlusPredicate: Predicate<A>
+    protected abstract val optionalPredicate: Predicate<A>
+    protected abstract val startGroupPredicate: Predicate<A>
+    protected abstract val endGroupPredicate: Predicate<A>
+    protected abstract val escapePredicate: Predicate<A>
+    private var isMetaPredicate: Predicate<A>? = null
 
     companion object : NamedKLogging("MetaScanner-Logger")
 
-    abstract fun createScanner(text: List<Alphabet>): MetaScanner<Alphabet, Output>
-    protected open fun customCharacters(char: Alphabet): StatePair<Alphabet, Output>? = null
-    protected open fun unescapedCharacters(char: Alphabet): Predicate<Alphabet>? = null
-    protected open fun escapedCharacters(char: Alphabet): Predicate<Alphabet>? = null
+    abstract fun createScanner(text: List<A>): MetaScanner<A, O>
+    protected open fun customCharacters(char: A): StatePair<A, O>? = null
+    protected open fun unescapedCharacters(char: A): Predicate<A>? = null
+    protected open fun escapedCharacters(char: A): Predicate<A>? = null
 
-    fun toFSM(): OutputState<Alphabet, Output> {
+    fun toFSM(): OutputState<A, O> {
         while (isNotAtEnd()) {
             var escape = false
             var char = peek()
@@ -78,15 +79,15 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
         return root
     }
 
-    private fun char(escape: Boolean = false): StatePair<Alphabet, Output> {
-        val charEnd = OutputState<Alphabet, Output>(accepting = true)
+    private fun char(escape: Boolean = false): StatePair<A, O> {
+        val charEnd = OutputState<A, O>(accepting = true)
         val char = advance()
         var isRange = true
 
         val unescapedCharacter = unescapedCharacters(char)
         val escapedCharacter = escapedCharacters(char)
 
-        val predicate: Predicate<Alphabet> =
+        val predicate: Predicate<A> =
                 if (!escape && unescapedCharacter != null) unescapedCharacter
                 else if (escape && escapedCharacter != null) escapedCharacter
                 else {
@@ -104,7 +105,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
         return endState to charEnd
     }
 
-    private fun isMeta(char: Alphabet): Boolean {
+    private fun isMeta(char: A): Boolean {
         if (isMetaPredicate == null)
             isMetaPredicate =
                     orPredicate(orPredicate, kleeneStarPredicate,
@@ -114,12 +115,11 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
         return isMetaPredicate!!(char)
     }
 
-    protected data class StatePair<Alphabet : Any, Output>(val start: OutputState<Alphabet, Output>,
-                                                           val end: OutputState<Alphabet, Output>)
+    protected data class StatePair<A : Any, O>(val start: OutputState<A, O>, val end: OutputState<A, O>)
 
-    protected infix fun OutputState<Alphabet, Output>.to(other: OutputState<Alphabet, Output>) = StatePair(this, other)
+    protected infix fun OutputState<A, O>.to(other: OutputState<A, O>) = StatePair(this, other)
 
-    private fun metaCharacter(): StatePair<Alphabet, Output> {
+    private fun metaCharacter(): StatePair<A, O> {
         afterMeta = true
         val char = advance()
 
@@ -134,7 +134,7 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
     }
 
     //(ABC)
-    private fun group(): StatePair<Alphabet, Output> {
+    private fun group(): StatePair<A, O> {
         val scanner = createScanner(advanceUntil(endGroupPredicate))
         val states = scanner.toFSM()
         endState.addEpsilonTransition(states)
@@ -144,8 +144,8 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
     }
 
     //A|B|C
-    private fun or(): StatePair<Alphabet, Output> {
-        val extraState = OutputState<Alphabet, Output>()
+    private fun or(): StatePair<A, O> {
+        val extraState = OutputState<A, O>()
         scopeChange = true
         afterOr = true
 
@@ -163,8 +163,8 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
     }
 
     //A*
-    private fun kleeneStar(): StatePair<Alphabet, Output> {
-        val newEndState = OutputState<Alphabet, Output>(accepting = true)
+    private fun kleeneStar(): StatePair<A, O> {
+        val newEndState = OutputState<A, O>(accepting = true)
 
         endState.addEpsilonTransition(metaScope)
         metaScope.addEpsilonTransition(newEndState)
@@ -173,8 +173,8 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
     }
 
     //A+
-    private fun kleenePlus(): StatePair<Alphabet, Output> {
-        val newEndState = OutputState<Alphabet, Output>(accepting = true)
+    private fun kleenePlus(): StatePair<A, O> {
+        val newEndState = OutputState<A, O>(accepting = true)
 
         endState.addEpsilonTransition(metaScope)
         endState.addEpsilonTransition(newEndState)
@@ -183,8 +183,8 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
     }
 
     //A?
-    private fun optional(): StatePair<Alphabet, Output> {
-        val newEndState = OutputState<Alphabet, Output>(accepting = true)
+    private fun optional(): StatePair<A, O> {
+        val newEndState = OutputState<A, O>(accepting = true)
 
         metaScope.addEpsilonTransition(newEndState)
         endState.addEpsilonTransition(newEndState)
@@ -192,8 +192,8 @@ abstract class MetaScanner<Alphabet : Any, Output>(text: List<Alphabet>, endValu
         return metaScope to newEndState
     }
 
-    private fun advanceUntil(predicate: Predicate<Alphabet>): List<Alphabet> {
-        val characters = mutableListOf<Alphabet>()
+    private fun advanceUntil(predicate: Predicate<A>): List<A> {
+        val characters = mutableListOf<A>()
 
         while (true) {
             val currentChar = advance()

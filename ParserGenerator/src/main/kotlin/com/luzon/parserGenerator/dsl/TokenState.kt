@@ -1,7 +1,9 @@
-package com.luzon.parser
+package com.luzon.parserGenerator.dsl
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal.*
+import com.luzon.parserGenerator.ASTNode
+import com.luzon.parserGenerator.TokenNode
 import com.luzon.utils.Predicate
 import com.luzon.utils.merge
 import com.luzon.utils.popOrNull
@@ -10,7 +12,7 @@ import java.util.*
 import kotlin.reflect.KFunction
 
 // TODO: Create a DSL for generating the parser ASTNode classes.
-// TODO: Create FSM & States (Either from the DSL or from an ASTNode class)
+// TODO: Create IFsm & States (Either from the DSL or from an ASTNode class)
 
 data class Transition<T, O>(val predicate: Predicate<T>, val stateTo: TokenState<O>)
 typealias TerminalTransition<O> = Transition<Token, O>
@@ -32,8 +34,8 @@ class TokenState<O>(private val node: ASTNode, private val first: Boolean = fals
                     .map { it.stateTo }
                     .distinct().toList()
 
-    // We should only need the waiting transitions if it's this is the first state of the FSM to avoid recursively
-    // pushing this non-terminal onto the FSM stack
+    // We should only need the waiting transitions if it's this is the first state of the IFsm to avoid recursively
+    // pushing this non-terminal onto the IFsm stack
     fun getWaitingTransitions() =
             if (first) nonTerminalTransitions.asSequence()
                     .filter { it.predicate(node) }.toList()
@@ -90,7 +92,7 @@ private fun <T> reduceFilterSkip(dataStack: Stack<T>, amount: Int, skip: Predica
 
 private fun Token.toNode(): ASTNode? {
     return if (tokenEnum is Token.Literal) {
-        TokenNode(when (tokenEnum) {
+        TokenNode(when (tokenEnum as Token.Literal) {
             DOUBLE -> data.toDouble() to DOUBLE
             FLOAT -> data.toFloat() to FLOAT
             INT -> data.toInt() to INT
@@ -105,11 +107,11 @@ private fun Token.toNode(): ASTNode? {
 private fun makeChar(string: String) = makeString(string)[0]
 private fun makeString(string: String) = string.substring(1, string.length - 1)
 
-// TODO: Generate constructor FSM with extra non-terminals not in the constructor parameters
+// TODO: Generate constructor IFsm with extra non-terminals not in the constructor parameters
 // PlusExpr = <Expr> PLUS <Expr> -> Where PLUS is not stored within the constructor
-// This might mean that I need to generate the main FSM from the DSL, then filter the data out and
+// This might mean that I need to generate the main IFsm from the DSL, then filter the data out and
 // run tryConstructorArgs to instantiate the class.
 // Most of the time, terminal tokens are not used within the constructor
 // Unless or'd -> then we generally want to turn that into a non-terminal within itself. (VAR | VAL)
-// I might not want to use the tryConstructorArgs though, as I could make an FSM from the DSL which outputs
+// I might not want to use the tryConstructorArgs though, as I could make an IFsm from the DSL which outputs
 // a KFunction creating the class.

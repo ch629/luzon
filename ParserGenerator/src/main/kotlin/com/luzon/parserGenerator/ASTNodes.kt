@@ -1,4 +1,4 @@
-package com.luzon.parser
+package com.luzon.parserGenerator
 
 import arrow.core.Either
 import arrow.core.Left

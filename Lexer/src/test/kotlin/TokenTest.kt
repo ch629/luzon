@@ -1,4 +1,4 @@
-import com.luzon.fsm.FSM
+import com.luzon.fsm.IFsm
 import com.luzon.lexer.Token.Keyword
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.TokenMachine
@@ -10,7 +10,7 @@ import org.jetbrains.spek.api.dsl.it
 object TokenTest : Spek({
     given("a token file") {
         val fsm = TokenMachine.getFSM()
-        it("should successfully convert to an FSM") {
+        it("should successfully convert to an IFsm") {
             fsm.isRunning shouldBe true
         }
 
@@ -27,7 +27,7 @@ object TokenTest : Spek({
 })
 
 
-private fun FSM<Char>.accept(input: String) {
+private fun IFsm<Char>.accept(input: String) {
     input.forEach {
         accept(it)
     }

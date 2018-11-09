@@ -1,11 +1,11 @@
-package com.luzon.fsm
+package com.luzon.fsm.scanner
 
 import com.luzon.utils.toCharList
 
-open class Scanner<T>(private val text: List<T>, private val endValue: T) {
+open class Scanner<A>(private val text: List<A>, private val endValue: A) {
     var current = 0
 
-    fun advance(): T {
+    fun advance(): A {
         val char = peek()
         current++
         return char
@@ -19,7 +19,7 @@ open class Scanner<T>(private val text: List<T>, private val endValue: T) {
     /**
      * Copies the scanner at the specific location
      */
-    fun copy(): Scanner<T> = Scanner(text, endValue).apply { current = this@Scanner.current }
+    fun copy(): Scanner<A> = Scanner(text, endValue).apply { current = this@Scanner.current }
 }
 
 open class StringScanner(text: String) : Scanner<Char>(text.toCharList(), '\n')
