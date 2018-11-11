@@ -9,7 +9,6 @@ fun parse(tokens: Sequence<Token>) {
 internal class RecursiveDescent(tokens: Sequence<Token>) {
     private val iterator = tokens.iterator()
     var token: Token? = null
-        get() = token
 
     init {
         next()
