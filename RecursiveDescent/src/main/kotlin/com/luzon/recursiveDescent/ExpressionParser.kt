@@ -3,103 +3,121 @@ package com.luzon.recursiveDescent
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
-import com.luzon.recursiveDescent.Expression.BinaryExpr
-import com.luzon.recursiveDescent.Expression.Literal.*
+import com.luzon.recursiveDescent.ast.Expression
+import com.luzon.recursiveDescent.ast.Expression.LiteralExpr.*
+import com.luzon.utils.popOrNull
+import java.util.*
 
-fun parseExpression(tokens: Sequence<Token>) = ExpressionParser(RecursiveDescent(tokens)).expression()
+fun parseExpression(tokens: Sequence<Token>) =
+        RPNExpressionParser(
+                ShuntingYard
+                        .fromTokenSequence(
+                                ExpressionRecognizer(RecursiveDescent(tokens)).getExpressionTokens()
+                        ).getOutput().asSequence())
+                .parse()
 
-internal class ExpressionParser(private val rd: RecursiveDescent) {
+internal class RPNExpressionParser(private val tokens: Sequence<Token>) {
+    private val stack = Stack<Expression>()
 
-    fun expression() = firstNotNullOrNull(unaryExpr(), literal())
-
-    private fun unaryExpr() = unarySub()
-
-    private fun unarySub(): Expression? {
-        return acceptExpr(SUBTRACT, ::expression)
+    companion object {
+        private val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE)
     }
 
-    private fun literal(): Expression? {
-        val expression: Expression? = firstNotNullOrNull(
-                literalDef(Literal.INT) { IntLiteral.fromToken(it) },
-                literalDef(Literal.FLOAT) { FloatLiteral.fromToken(it) },
-                literalDef(Literal.DOUBLE) { DoubleLiteral.fromToken(it) }
-        )
+    private fun Token.toExpression(): Expression? {
+        return when (tokenEnum) {
+            is Token.Literal -> {
+                when (tokenEnum) {
+                    Literal.INT -> IntLiteral.fromToken(this)
+                    Literal.FLOAT -> FloatLiteral.fromToken(this)
+                    Literal.DOUBLE -> DoubleLiteral.fromToken(this)
+                    Literal.IDENTIFIER -> IdentifierLiteral.fromToken(this)
+                    else -> null
+                }
+            }
+            in binaryOperators -> {
+                val op2 = stack.pop()
+                val op1 = stack.pop()
 
-        if (expression != null) {
-            val binary = binaryExpr(expression)
-            if (binary != null) return binary
+                when (tokenEnum) { // TODO: Kotlin didn't like it the method referencing way, so this is the only way I can do it atm.
+                    PLUS -> Expression.Binary.PlusExpr(op1, op2)
+                    SUBTRACT -> Expression.Binary.SubExpr(op1, op2)
+                    MULTIPLY -> Expression.Binary.MultExpr(op1, op2)
+                    DIVIDE -> Expression.Binary.DivExpr(op1, op2)
+                    else -> null
+                }
+
+//                expr!!(op1, op2)
+            }
+            else -> null
+        }
+    }
+
+    fun parse(): Expression? {
+        tokens.forEach {
+            stack.push(it.toExpression())
         }
 
-        return expression
+        return stack.popOrNull()
     }
-
-    private fun literalDef(tokenEnum: Token.TokenEnum, literalConstructor: (Token) -> Expression): Expression? {
-        val token = accept(tokenEnum)
-        var literal: Expression? = null
-
-        if (token != null) {
-            literal = literalConstructor(token)
-            val binary = binaryExpr(literal)
-            if (binary != null) literal = binary
-        }
-
-        return literal
-    }
-
-    private fun binaryExpr(lhs: Expression) = firstNotNullOrNull(plusExpr(lhs), subExpr(lhs), multExpr(lhs), divExpr(lhs))
-
-    private fun plusExpr(lhs: Expression) = acceptBinary(PLUS, BinaryExpr::PlusExpr, lhs)
-    private fun subExpr(lhs: Expression) = acceptBinary(SUBTRACT, BinaryExpr::SubExpr, lhs)
-    private fun multExpr(lhs: Expression) = acceptBinary(MULTIPLY, BinaryExpr::MultExpr, lhs)
-    private fun divExpr(lhs: Expression) = acceptBinary(DIVIDE, BinaryExpr::DivExpr, lhs)
-
-    private fun acceptBinary(tokenEnum: Token.TokenEnum, constructor: (Expression, Expression) -> Expression, lhs: Expression): Expression? {
-        if (expect(tokenEnum)) {
-            val rhs = expression()
-            if (rhs != null) return constructor(lhs, rhs)
-        }
-
-        return null
-    }
-
-    private fun accept(enum: Token.TokenEnum) = rd.accept(enum)
-    private fun matches(enum: Token.TokenEnum) = rd.expect(enum)
-    private fun expect(enum: Token.TokenEnum) = accept(enum) != null
-
-    private fun acceptExpr(enum: Token.TokenEnum, expr: () -> Expression?) = if (matches(enum)) expr() else null
-
-    private fun <T> firstNotNullOrNull(vararg values: T?) = values.firstOrNull { it != null }
 }
 
-sealed class Expression {
-    sealed class BinaryExpr(val left: Expression, val right: Expression) : Expression() {
-        class PlusExpr(left: Expression, right: Expression) : BinaryExpr(left, right)
-        class SubExpr(left: Expression, right: Expression) : BinaryExpr(left, right)
-        class MultExpr(left: Expression, right: Expression) : BinaryExpr(left, right)
-        class DivExpr(left: Expression, right: Expression) : BinaryExpr(left, right)
+internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
+    private val tokens = mutableListOf<Token>()
+    private var parenIndent = 0
+
+    companion object {
+        private val validBinaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE)
     }
 
-    sealed class UnaryExpr(val expr: Expression) : Expression() {
-        class SubExpr(expr: Expression) : UnaryExpr(expr)
+    fun getExpressionTokens() = if (expression()) tokens.asSequence() else emptySequence()
+
+    private fun expression() = openParen() || literal()
+
+    private fun literal(): Boolean {
+        val token = rd.consume { it is Token.Literal }
+
+        if (token != null) {
+            tokens.add(token)
+            binaryOperator()
+            closeParen()
+            return binaryOperator() || closeParen() || true
+        }
+
+        return false
     }
 
-    sealed class Literal : Expression() {
-        class IntLiteral(val value: Int) : Literal() {
-            companion object {
-                fun fromToken(token: Token): IntLiteral = IntLiteral(token.data.toInt())
-            }
+    private fun binaryOperator(): Boolean {
+        val token = rd.consume { it in validBinaryOperators }
+
+        if (token != null) {
+            tokens.add(token)
+            return expression()
         }
 
-        class FloatLiteral(val value: Float) : Literal() {
-            companion object {
-                fun fromToken(token: Token): FloatLiteral = FloatLiteral(token.data.toFloat())
-            }
+        return false
+    }
+
+    private fun openParen(): Boolean {
+        val token = rd.consume(L_PAREN)
+
+        if (token != null) {
+            parenIndent++
+
+            return expression()
         }
 
-        class DoubleLiteral(val value: Double) : Literal() {
-            companion object {
-                fun fromToken(token: Token): DoubleLiteral = DoubleLiteral(token.data.toDouble())
-            }
+        return false
+    }
+
+    private fun closeParen(): Boolean {
+        val token = rd.consume(R_PAREN)
+
+        if (token != null) {
+            parenIndent--
+
+            return binaryOperator() || parenIndent == 0
         }
+
+        return false
     }
 }

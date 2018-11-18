@@ -1,4 +1,4 @@
-package com.luzon.parser
+package com.luzon.recursiveDescent
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal
@@ -13,14 +13,31 @@ import java.util.*
 // One solution would be to traverse the tree and recreate the token stream with some
 // ASTNodes (Identifier, Function Call, etc) then put it through the Shunting Yard then back
 // through the parser to create the AST
+
+fun main(args: Array<String>) {
+    fun int(value: Int) = Literal.INT.toToken(value.toString())
+    val plus = Token.Symbol.PLUS.toToken()
+    val lParen = Token.Symbol.L_PAREN.toToken()
+    val rParen = Token.Symbol.R_PAREN.toToken()
+
+    val c = ShuntingYard.fromTokenSequence(sequenceOf(lParen, int(5), plus, int(2), rParen))
+
+    println(c.toString())
+
+    val i = 5
+}
+
 class ShuntingYard {
     private var output = mutableListOf<Token>()
     private val operatorStack = Stack<Token>()
 
     companion object {
-        // Probably removed once this is converted to AST, as I need to work with function calls which would be read as
-        // IDENTIFIER, L_PAREN, R_PAREN without any parameters, and with could include other INTs which would confuse
-        // the ShuntingYard -> Potentially make an internal class to handle these appropriately.
+
+        // TODO: Might have to process the sequence slightly to group function calls together rather than them being
+        // Separate entities that the shunting yard has to figure out
+        // So potentially to call this I can run a mini expression parser which just turns function calls into
+        // a singular object, alongside figuring out all of the tokens to be considered as an expression
+        // which needs to be put through this.
         fun fromTokenSequence(seq: Sequence<Token>): ShuntingYard {
             val yard = ShuntingYard()
             seq.forEach {
@@ -32,12 +49,6 @@ class ShuntingYard {
 
             return yard.done()
         }
-
-        // Convert into a Stream of singular values, operators, functions etc.
-        // Put into the ShuntingYard
-        fun fromAST(expr: Expression): ShuntingYard {
-            TODO()
-        }
     }
 
     fun addOperator(operator: Token) {
@@ -48,7 +59,7 @@ class ShuntingYard {
                     output.add(operatorStack.pop())
                 if (operatorStack.peek().tokenEnum == Symbol.L_PAREN)
                     operatorStack.pop() //Pop the L_PAREN
-                else throw Exception("Expression didn't have matching parenthesis") //TODO: Use Either to log this error to the user?
+                else throw Exception("Expression has mismatching parentheses") //TODO: Use Either to log this error to the user?
             }
             else -> { // Operator
                 var peek = operatorStack.peekOrNull()
@@ -80,10 +91,6 @@ class ShuntingYard {
     override fun toString() = output.joinToString(" ")
 
     fun getOutput() = output.toList()
-
-    fun toAST(): Expression {
-        TODO("Run the output though the Parser")
-    }
 
     private val Token.precedence
         get() = when (tokenEnum) {

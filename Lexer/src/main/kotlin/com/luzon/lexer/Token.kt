@@ -67,9 +67,9 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
     }
 
     enum class Literal(val regex: String) : TokenEnum {
-        DOUBLE("\\d+d|\\d+\\.\\d+d?"),
-        FLOAT("\\d+f|\\d+\\.\\d+f"),
-        INT("\\d+"),
+        DOUBLE("-?\\d+d|\\d+\\.\\d+d?"), // TODO: Test negative numbers.
+        FLOAT("-?\\d+f|\\d+\\.\\d+f"),
+        INT("-?\\d+"),
         STRING("\".*\""),
         CHAR("'\\?.'"),
         BOOLEAN("true|false"),
