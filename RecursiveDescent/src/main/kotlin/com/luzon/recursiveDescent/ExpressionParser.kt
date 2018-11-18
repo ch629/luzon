@@ -23,33 +23,28 @@ internal class RPNExpressionParser(private val tokens: Sequence<Token>) {
         private val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE)
     }
 
-    private fun Token.toExpression(): Expression? {
-        return when (tokenEnum) {
-            is Token.Literal -> {
-                when (tokenEnum) {
-                    Literal.INT -> IntLiteral.fromToken(this)
-                    Literal.FLOAT -> FloatLiteral.fromToken(this)
-                    Literal.DOUBLE -> DoubleLiteral.fromToken(this)
-                    Literal.IDENTIFIER -> IdentifierLiteral.fromToken(this)
-                    else -> null
-                }
-            }
-            in binaryOperators -> {
-                val op2 = stack.pop()
-                val op1 = stack.pop()
-
-                when (tokenEnum) { // TODO: Kotlin didn't like it the method referencing way, so this is the only way I can do it atm.
-                    PLUS -> Expression.Binary.PlusExpr(op1, op2)
-                    SUBTRACT -> Expression.Binary.SubExpr(op1, op2)
-                    MULTIPLY -> Expression.Binary.MultExpr(op1, op2)
-                    DIVIDE -> Expression.Binary.DivExpr(op1, op2)
-                    else -> null
-                }
-
-//                expr!!(op1, op2)
-            }
+    private fun Token.toExpression() = when (tokenEnum) {
+        is Token.Literal -> when (tokenEnum) {
+            Literal.INT -> IntLiteral.Companion::fromToken
+            Literal.FLOAT -> FloatLiteral.Companion::fromToken
+            Literal.DOUBLE -> DoubleLiteral.Companion::fromToken
+            Literal.IDENTIFIER -> IdentifierLiteral.Companion::fromToken
             else -> null
+        }?.invoke(this)
+
+        in binaryOperators -> {
+            val op2 = stack.pop()
+            val op1 = stack.pop()
+
+            when (tokenEnum) {
+                PLUS -> Expression.Binary::PlusExpr
+                SUBTRACT -> Expression.Binary::SubExpr
+                MULTIPLY -> Expression.Binary::MultExpr
+                DIVIDE -> Expression.Binary::DivExpr
+                else -> null
+            }?.invoke(op1, op2)
         }
+        else -> null
     }
 
     fun parse(): Expression? {
