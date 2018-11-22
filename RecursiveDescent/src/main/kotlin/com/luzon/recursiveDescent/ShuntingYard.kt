@@ -3,47 +3,24 @@ package com.luzon.recursiveDescent
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol
+import com.luzon.lexer.TokenStream
 import com.luzon.utils.peekOrNull
 import java.util.*
 
 // From https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 // Orders expression in Reverse Polish Notation with precedence
 
-// TODO: Convert this to work with an AST
-// One solution would be to traverse the tree and recreate the token stream with some
-// ASTNodes (Identifier, Function Call, etc) then put it through the Shunting Yard then back
-// through the parser to create the AST
-
-fun main(args: Array<String>) {
-    fun int(value: Int) = Literal.INT.toToken(value.toString())
-    val plus = Token.Symbol.PLUS.toToken()
-    val lParen = Token.Symbol.L_PAREN.toToken()
-    val rParen = Token.Symbol.R_PAREN.toToken()
-
-    val c = ShuntingYard.fromTokenSequence(sequenceOf(lParen, int(5), plus, int(2), rParen))
-
-    println(c.toString())
-
-    val i = 5
-}
-
 class ShuntingYard {
     private var output = mutableListOf<Token>()
     private val operatorStack = Stack<Token>()
 
     companion object {
-
-        // TODO: Might have to process the sequence slightly to group function calls together rather than them being
-        // Separate entities that the shunting yard has to figure out
-        // So potentially to call this I can run a mini expression parser which just turns function calls into
-        // a singular object, alongside figuring out all of the tokens to be considered as an expression
-        // which needs to be put through this.
-        fun fromTokenSequence(seq: Sequence<Token>): ShuntingYard {
+        fun fromTokenSequence(seq: TokenStream): ShuntingYard {
             val yard = ShuntingYard()
             seq.forEach {
                 when (it.tokenEnum) {
                     is Symbol -> yard.addOperator(it)
-                    is Literal -> yard.addLiteral(it)
+                    is Literal, is Token.CustomEnum -> yard.addLiteral(it)
                 }
             }
 
@@ -80,10 +57,13 @@ class ShuntingYard {
 
 
     fun addLiteral(token: Token) {
+        if (token.tokenEnum == Token.CustomEnum && token !is FunctionCallToken)
+            return
+
         output.add(token)
     }
 
-    fun done(): ShuntingYard = apply {
+    fun done() = apply {
         while (operatorStack.isNotEmpty())
             output.add(operatorStack.pop())
     }

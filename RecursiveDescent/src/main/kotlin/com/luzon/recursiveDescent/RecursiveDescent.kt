@@ -1,13 +1,14 @@
 package com.luzon.recursiveDescent
 
 import com.luzon.lexer.Token
+import com.luzon.lexer.TokenStream
 import com.luzon.utils.Predicate
 
-fun parse(tokens: Sequence<Token>) {
+fun parse(tokens: TokenStream) {
     TODO()
 }
 
-internal class RecursiveDescent(tokens: Sequence<Token>) {
+internal class RecursiveDescent(tokens: TokenStream) {
     private val iterator = tokens.iterator()
     var token: Token? = null
 

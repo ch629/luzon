@@ -3,7 +3,9 @@ package com.luzon.lexer
 import com.luzon.fsm.IFsm
 import com.luzon.fsm.scanner.StringScanner
 
-data class Token(val tokenEnum: TokenEnum, val data: String) {
+typealias TokenStream = Sequence<Token>
+
+open class Token(val tokenEnum: TokenEnum, val data: String) {
     override fun toString() = when (tokenEnum) {
         is Literal -> "$tokenEnum($data)"
         else -> "$tokenEnum"
@@ -84,6 +86,9 @@ data class Token(val tokenEnum: TokenEnum, val data: String) {
 
         override fun toString() = "comment:${id()}"
     }
+
+    object CustomEnum : TokenEnum
+    open class Custom : Token(CustomEnum, "") // TODO: Potentially allow Token to use type T as data, but most of these use a String?
 
     companion object {
         private fun String.replaceMetaCharacters() = replaceMetacharacters(this)

@@ -1,6 +1,7 @@
 package com.luzon.recursiveDescent.ast
 
 import com.luzon.lexer.Token
+import com.luzon.recursiveDescent.FunctionCallToken
 
 sealed class Expression {
     sealed class Binary(val left: Expression, val right: Expression) : Expression() {
@@ -36,6 +37,14 @@ sealed class Expression {
         class IdentifierLiteral(val name: String) : LiteralExpr() {
             companion object {
                 fun fromToken(token: Token): IdentifierLiteral = IdentifierLiteral(token.data)
+            }
+        }
+
+        class FunctionCall(val name: String, val params: List<Expression>) : LiteralExpr() {
+            companion object {
+                internal fun fromToken(token: FunctionCallToken): FunctionCall {
+                    return FunctionCall(token.id, emptyList())  // TODO: Need to convert each sequence of params into an Expression
+                }
             }
         }
     }

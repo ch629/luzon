@@ -16,7 +16,7 @@ class Tokenizer(text: String) : StringScanner(text) {
         fun fromFile(file: String) = Tokenizer(Files.readAllLines(Paths.get(file)).joinToString("\n"))
     }
 
-    fun findTokens(): Sequence<Token> {
+    fun findTokens(): TokenStream {
         tokenizerHelper.reset()
 
         return generateSequence {
