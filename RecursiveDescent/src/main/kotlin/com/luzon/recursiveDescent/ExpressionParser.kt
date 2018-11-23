@@ -9,20 +9,6 @@ import com.luzon.recursiveDescent.ast.Expression.LiteralExpr.*
 import com.luzon.utils.popOrNull
 import java.util.*
 
-fun main(args: Array<String>) {
-    fun int(value: Int) = Literal.INT.toToken(value.toString())
-    fun id(name: String) = Literal.IDENTIFIER.toToken(name)
-    val plus = PLUS.toToken()
-    val lParen = L_PAREN.toToken()
-    val rParen = R_PAREN.toToken()
-
-    val c = parseExpression(sequenceOf(id("apple"), plus, int(2)))
-
-    val d = parseExpression(sequenceOf(id("func"), lParen, int(2), rParen, plus, int(5)))
-
-    val i = 5
-}
-
 fun parseExpression(tokens: TokenStream) = ExpressionParser.fromUnsortedTokens(tokens).parse()
 
 internal class ExpressionParser(private val tokens: TokenStream) {
@@ -128,7 +114,7 @@ internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
     }
 
     private fun closeParen(): Boolean {
-        if (parenIndent <= 0) return false // TODO: This avoids the need for the buffer, but isn't ideal.
+        if (parenIndent <= 0 && rd.matches(R_PAREN)) return false // TODO: This avoids the need for the buffer, but isn't ideal.
         val token = rd.consume(R_PAREN)
 
         if (token != null) {
@@ -148,8 +134,8 @@ internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
     private fun functionCall(id: String): Boolean {
         if (rd.consume(L_PAREN) != null) {
             val params = mutableListOf<TokenStream>()
-
             val firstParam = recognizeExpression(rd)
+
             if (firstParam != null) {
                 firstParam.toList().forEach { println(it) }
                 params.add(firstParam)
