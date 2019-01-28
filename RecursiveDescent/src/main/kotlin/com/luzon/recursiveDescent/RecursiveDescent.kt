@@ -42,4 +42,8 @@ internal class RecursiveDescent(tokens: TokenStream) {
 
     fun matches(tokenEnum: Token.TokenEnum) = expect(tokenEnum)
     fun matches(pred: Predicate<Token.TokenEnum>) = expect(pred)
+
+    fun matchConsume(tokenEnum: Token.TokenEnum) = accept(tokenEnum) != null
+
+    fun matches(tokenEnum: Token.TokenEnum, func: (Token) -> Boolean) = if (matches(tokenEnum)) func(token!!) else false
 }
