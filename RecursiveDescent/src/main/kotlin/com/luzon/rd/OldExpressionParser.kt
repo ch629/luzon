@@ -1,11 +1,11 @@
-package com.luzon.recursiveDescent
+package com.luzon.rd
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
-import com.luzon.recursiveDescent.ast.Expression
-import com.luzon.recursiveDescent.ast.Expression.LiteralExpr.*
+import com.luzon.rd.ast.Expression
+import com.luzon.rd.ast.Expression.LiteralExpr.*
 import com.luzon.utils.popOrNull
 import java.util.*
 
@@ -23,8 +23,8 @@ fun main(args: Array<String>) {
     val FALSE = Literal.BOOLEAN.toToken("false")
 
     // Numerical
-    val c = parseExpression(sequenceOf(id("apple"), plus, int(2)))
-    val d = parseExpression(sequenceOf(id("func"), lParen, int(2), plus, int(3), rParen, plus, int(5)))
+    val c = oldParseExpression(sequenceOf(id("apple"), plus, int(2)))
+    val d = oldParseExpression(sequenceOf(id("func"), lParen, int(2), plus, int(3), rParen, plus, int(5)))
 
     // Boolean
     val e = BooleanExpressionRecognizer.recognizeExpression(sequenceOf(lParen, FALSE, or, TRUE, rParen))
@@ -33,16 +33,16 @@ fun main(args: Array<String>) {
     val i = 5
 }
 
-fun parseExpression(tokens: TokenStream) = ExpressionParser.fromUnsortedTokens(tokens).parse()
+fun oldParseExpression(tokens: TokenStream) = OldExpressionParser.fromUnsortedTokens(tokens).parse()
 
-internal class ExpressionParser(private val tokens: TokenStream) {
+internal class OldExpressionParser(private val tokens: TokenStream) {
     private val stack = Stack<Expression>()
 
     companion object {
         private val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE)
 
         fun fromUnsortedTokens(tokens: TokenStream) =
-                ExpressionParser(ShuntingYard.fromTokenSequence(
+                OldExpressionParser(ShuntingYard.fromTokenSequence(
                         ExpressionRecognizer.recognizeExpression(tokens) ?: emptySequence())
                         .getOutput()
                         .asSequence()
@@ -142,7 +142,7 @@ internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
             parenIndent--
             // TODO: The problem is that the R_PAREN is consumed, so the function can't be created.
             //  -> I need to maybe match, then consume it, if the next part passes somehow
-            //  -> Or put it in some sort of buffer which the recursiveDescent checks first
+            //  -> Or put it in some sort of buffer which the rd checks first
             // This would some sort of revert command to put back into the buffer
             // Or I just need more lookahead to check before consuming
 

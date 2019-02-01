@@ -1,16 +1,16 @@
-package com.luzon.recursiveDescent
+package com.luzon.rd
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol
-import com.luzon.recursiveDescent.ast.Expression
+import com.luzon.rd.ast.Expression
 
 // New Solution
 
 /*
 When current token is an operator and higher precedence than the root node's operator, place new operator on rhs of root
 if the rhs of root is not null, place the value into the left of the new operator then place the operator on the rhs of root
-if lower, place the root as the lhs of the new node.
+if lower, place the root as the lhs of the new node. // TODO: Kinda, I need to traverse the tree to the bottom node, or potentially just hold that node, to insert new nodes into
 
 If the token is a literal, and the root is null, set root to the literal
 if the root is not null
@@ -20,6 +20,8 @@ if the root is not null
 // TODO: Left associativity
 
 // TODO: Inner -> Inside of parentheses
+
+// TODO: Either figure this way out, with a lot of tree traversal and manipulation, or mix this in with the old Shunting Yard system as this is neater.
 internal class RecursiveExpressionParser(rd: RecursiveDescent, private val inner: Boolean = false) : RecursiveParser<Expression>(rd) {
     private var root: Expression? = null
 
@@ -66,7 +68,7 @@ internal class RecursiveExpressionParser(rd: RecursiveDescent, private val inner
             var expr = Expression.LiteralExpr.fromToken(token)
 
             if (token.tokenEnum == Literal.IDENTIFIER) {
-                val functionCall = RecursiveFunctionCallParser(token.data, rd).parse()
+                val functionCall = FunctionCallParser(token.data, rd).parse()
 
                 if (functionCall != null)
                     expr = functionCall
@@ -124,7 +126,7 @@ internal class RecursiveExpressionParser(rd: RecursiveDescent, private val inner
         val op = rd.accept { it in binaryOperators }
 
         if (op != null) {
-            setExpression(Expression.Binary.PlusExpr())
+            setExpression(Expression.Binary.PlusExpr()) // TODO: Check which operator and apply accordingly
             return literal() || parentheses()
 //            TODO()
         }
@@ -145,34 +147,8 @@ fun main() {
             int(20), plus, id("test"), lParen, int(5), comma, int(2), rParen
     )
 
-//    val funCall = RecursiveFunctionCallParser("test", RecursiveDescent(tokens)).parse()
+//    val funCall = FunctionCallParser("test", RecursiveDescent(tokens)).parse()
     val expr = RecursiveExpressionParser(RecursiveDescent(tokens)).parse()
 
     val i = 0
-}
-
-internal class RecursiveFunctionCallParser(private var name: String, rd: RecursiveDescent) : RecursiveParser<Expression.LiteralExpr.FunctionCall>(rd) {
-    private val params = mutableListOf<Expression>()
-
-    override fun parse() = if (openParen()) Expression.LiteralExpr.FunctionCall(name, params.toList()) else null
-
-    private fun openParen() = rd.matchConsume(Symbol.L_PAREN) && (endParen() || parameter())
-    private fun endParen() = rd.matchConsume(Symbol.R_PAREN)
-
-    private fun parameter(): Boolean {
-        val expr = RecursiveExpressionParser(rd).parse()
-
-        if (expr != null) {
-            params.add(expr)
-            return endParen() || comma()
-        }
-
-        return false
-    }
-
-    private fun comma() = rd.matchConsume(Symbol.COMMA) && parameter()
-}
-
-internal abstract class RecursiveParser<T>(val rd: RecursiveDescent) {
-    abstract fun parse(): T?
 }

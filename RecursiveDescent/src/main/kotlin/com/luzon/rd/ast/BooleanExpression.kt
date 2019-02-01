@@ -1,4 +1,4 @@
-package com.luzon.recursiveDescent.ast
+package com.luzon.rd.ast
 
 
 //https://codereview.stackexchange.com/questions/89967/boolean-expressions-from-infix-to-postfix-notation-using-dijkstras-shunting-yar
