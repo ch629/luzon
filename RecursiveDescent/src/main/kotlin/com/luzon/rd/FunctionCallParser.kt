@@ -3,7 +3,7 @@ package com.luzon.rd
 import com.luzon.lexer.Token
 import com.luzon.rd.ast.Expression
 
-internal class FunctionCallParser(private var name: String, rd: RecursiveDescent) : RecursiveParser<Expression.LiteralExpr.FunctionCall>(rd) {
+internal class FunctionCallParser(private var name: String, rd: TokenRDStream) : RecursiveParser<Expression.LiteralExpr.FunctionCall>(rd) {
     private val params = mutableListOf<Expression>()
 
     override fun parse() = if (openParen()) Expression.LiteralExpr.FunctionCall(name, params.toList()) else null

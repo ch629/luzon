@@ -5,11 +5,11 @@ import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
 import com.luzon.rd.ast.Expression
 
-fun precedenceClimb(tokens: TokenStream) = PrecedenceClimbing(RecursiveDescent(tokens)).parse()
-internal fun precedenceClimb(rd: RecursiveDescent) = PrecedenceClimbing(rd).parse()
+fun precedenceClimb(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(tokens)).parse()
+internal fun precedenceClimb(rd: TokenRDStream) = PrecedenceClimbing(rd).parse()
 
-internal class PrecedenceClimbing(rd: RecursiveDescent) {
-    private val rd: ExpressionRecursiveDescent = ExpressionRecursiveDescent(ExpressionRecognizer.recognize(rd)
+internal class PrecedenceClimbing(rd: TokenRDStream) {
+    private val rd: ExpressionRDStream = ExpressionRDStream(ExpressionRecognizer.recognize(rd)
             ?: emptySequence())
 
     fun parse() = exp(0)
@@ -25,21 +25,21 @@ internal class PrecedenceClimbing(rd: RecursiveDescent) {
                 val right = exp(q)
 
                 left = when (n.tokenType) {
-                    PLUS -> Expression.Binary.PlusExpr(left, right)
-                    SUBTRACT -> Expression.Binary.SubExpr(left, right)
-                    MULTIPLY -> Expression.Binary.MultExpr(left, right)
-                    DIVIDE -> Expression.Binary.DivExpr(left, right)
+                    PLUS -> Expression.Binary::PlusExpr
+                    SUBTRACT -> Expression.Binary::SubExpr
+                    MULTIPLY -> Expression.Binary::MultExpr
+                    DIVIDE -> Expression.Binary::DivExpr
 
-                    EQUAL_EQUAL -> Expression.Binary.Equals(left, right)
-                    NOT_EQUAL -> Expression.Binary.NotEquals(left, right)
-                    GREATER_EQUAL -> Expression.Binary.GreaterEquals(left, right)
-                    GREATER -> Expression.Binary.Greater(left, right)
-                    LESS -> Expression.Binary.Less(left, right)
-                    LESS_EQUAL -> Expression.Binary.LessEquals(left, right)
-                    AND -> Expression.Binary.And(left, right)
-                    OR -> Expression.Binary.Or(left, right)
-                    else -> left // TODO: null?
-                }
+                    EQUAL_EQUAL -> Expression.Binary::Equals
+                    NOT_EQUAL -> Expression.Binary::NotEquals
+                    GREATER_EQUAL -> Expression.Binary::GreaterEquals
+                    GREATER -> Expression.Binary::Greater
+                    LESS -> Expression.Binary::Less
+                    LESS_EQUAL -> Expression.Binary::LessEquals
+                    AND -> Expression.Binary::And
+                    OR -> Expression.Binary::Or
+                    else -> null
+                }?.invoke(left, right) ?: left
             }
         } while (n != null)
 
@@ -47,7 +47,7 @@ internal class PrecedenceClimbing(rd: RecursiveDescent) {
     }
 
     fun p(): Expression? {
-        if (rd.matches { it is ExpressionToken.FunctionCall }) {
+        if (rd.matches { it is ExpressionToken.FunctionCall }) { // TODO: When this -> Need something like a peek, then use when, and consume if it hits one?
             return (rd.consume() as ExpressionToken.FunctionCall).function
         } else if (rd.matches { it is ExpressionToken.UnaryOperator }) {
             val unary = rd.consume()
@@ -66,11 +66,10 @@ internal class PrecedenceClimbing(rd: RecursiveDescent) {
             if (rd.matchConsume(R_PAREN)) {
                 return t
             } // else error
-        } else if (rd.matches { it.tokenType is Token.Literal }) {
-            val literal = rd.consume()
+        } else if (rd.matches { it is ExpressionToken.ExpressionLiteral }) {
+            val literal = rd.consume() as ExpressionToken.ExpressionLiteral
 
-            if (literal is ExpressionToken.ExpressionLiteral)
-                return Expression.LiteralExpr.fromToken(literal.token) // TODO: Error if null?
+            return Expression.LiteralExpr.fromToken(literal.token) // TODO: Error if null?
         }
 
         return null

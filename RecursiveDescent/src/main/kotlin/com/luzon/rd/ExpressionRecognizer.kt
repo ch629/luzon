@@ -5,7 +5,7 @@ import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
 import com.luzon.rd.ast.Expression
 
-internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
+internal class ExpressionRecognizer(private val rd: TokenRDStream) {
     private var parenIndent = 0
     private val expressionList = ExpressionStreamList()
 
@@ -14,15 +14,15 @@ internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
         val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE, MOD, LESS, LESS_EQUAL, EQUAL_EQUAL, GREATER_EQUAL, GREATER, AND, OR, NOT_EQUAL)
         val unaryOperators = listOf(SUBTRACT, NOT)
 
-        fun recognize(rd: RecursiveDescent) = ExpressionRecognizer(rd).recognize()
-        fun recognize(tokens: TokenStream) = ExpressionRecognizer(RecursiveDescent(tokens)).recognize()
+        fun recognize(rd: TokenRDStream) = ExpressionRecognizer(rd).recognize()
+        fun recognize(tokens: TokenStream) = ExpressionRecognizer(TokenRDStream(tokens)).recognize()
     }
 
     fun recognize() = if (expression()) expressionList.toStream() else null
 
     private fun expression(): Boolean = literal() || unaryOperator() || openParen()
 
-    private fun literal(): Boolean = rd.accept({ it is Literal }, { literal ->
+    private fun literal(): Boolean = rd.accept({ it.tokenEnum is Literal }, { literal ->
         var functionCall: Expression.LiteralExpr.FunctionCall? = null
 
         if (literal.tokenEnum == Literal.IDENTIFIER && rd.matches(L_PAREN))
@@ -52,13 +52,13 @@ internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
         } else false
     }
 
-    private fun binaryOperator(): Boolean = rd.accept({ it in binaryOperators }, { operator ->
+    private fun binaryOperator(): Boolean = rd.accept({ it.tokenEnum in binaryOperators }, { operator ->
         expressionList.add(operator)
 
         openParen() || unaryOperator() || literal()
     })
 
-    private fun unaryOperator(): Boolean = rd.accept({ it in unaryOperators }, { operator ->
+    private fun unaryOperator(): Boolean = rd.accept({ it.tokenEnum in unaryOperators }, { operator ->
         expressionList.add(operator, true)
 
         openParen() || literal()
