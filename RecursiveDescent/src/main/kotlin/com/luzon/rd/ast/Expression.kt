@@ -8,6 +8,16 @@ sealed class Expression {
         class SubExpr(left: Expression? = null, right: Expression? = null) : Binary(left, right)
         class MultExpr(left: Expression? = null, right: Expression? = null) : Binary(left, right)
         class DivExpr(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+
+        class Equals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+        class NotEquals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+        class GreaterEquals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+        class Greater(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+        class Less(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+        class LessEquals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+
+        class And(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+        class Or(left: Expression? = null, right: Expression? = null) : Binary(left, right)
     }
 
     sealed class Unary(var expr: Expression?) : Expression() {

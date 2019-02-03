@@ -9,7 +9,7 @@ fun precedenceClimb(tokens: TokenStream) = PrecedenceClimbing(RecursiveDescent(t
 internal fun precedenceClimb(rd: RecursiveDescent) = PrecedenceClimbing(rd).parse()
 
 internal class PrecedenceClimbing(rd: RecursiveDescent) {
-    val rd: ExpressionRecursiveDescent = ExpressionRecursiveDescent(ExpressionRecognizer.recognize(rd)
+    private val rd: ExpressionRecursiveDescent = ExpressionRecursiveDescent(ExpressionRecognizer.recognize(rd)
             ?: emptySequence())
 
     fun parse() = exp(0)
@@ -29,6 +29,15 @@ internal class PrecedenceClimbing(rd: RecursiveDescent) {
                     SUBTRACT -> Expression.Binary.SubExpr(left, right)
                     MULTIPLY -> Expression.Binary.MultExpr(left, right)
                     DIVIDE -> Expression.Binary.DivExpr(left, right)
+
+                    EQUAL_EQUAL -> Expression.Binary.Equals(left, right)
+                    NOT_EQUAL -> Expression.Binary.NotEquals(left, right)
+                    GREATER_EQUAL -> Expression.Binary.GreaterEquals(left, right)
+                    GREATER -> Expression.Binary.Greater(left, right)
+                    LESS -> Expression.Binary.Less(left, right)
+                    LESS_EQUAL -> Expression.Binary.LessEquals(left, right)
+                    AND -> Expression.Binary.And(left, right)
+                    OR -> Expression.Binary.Or(left, right)
                     else -> left // TODO: null?
                 }
             }
@@ -69,11 +78,10 @@ internal class PrecedenceClimbing(rd: RecursiveDescent) {
 
     private fun ExpressionToken.precedence(unary: Boolean = false) = tokenType?.precedence(unary) ?: -1
 
-    // TODO: Boolean operators
     private fun Token.TokenEnum.precedence(unary: Boolean = false) = when (this) {
         OR -> 0
         AND -> 1
-        EQUAL_EQUAL -> 2
+        EQUAL_EQUAL, LESS_EQUAL, LESS, GREATER, GREATER_EQUAL, NOT_EQUAL -> 2 // TODO: Check these.
         PLUS, SUBTRACT -> if (unary) 4 else 3
         MULTIPLY, DIVIDE -> 5// TODO: Mod?
         else -> -1
