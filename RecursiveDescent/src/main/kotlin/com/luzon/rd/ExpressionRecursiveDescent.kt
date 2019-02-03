@@ -29,7 +29,7 @@ internal class ExpressionRecursiveDescent(expr: ExpressionStream) {
         } else null
     }
 
-    fun accept(tokenEnum: Token.TokenEnum) = accept { it == tokenEnum }
+    fun accept(tokenEnum: Token.TokenEnum) = accept { it.tokenType == tokenEnum }
 
     fun consume(pred: Predicate<ExpressionToken>) = accept(pred)
     fun consume() = accept { true }
