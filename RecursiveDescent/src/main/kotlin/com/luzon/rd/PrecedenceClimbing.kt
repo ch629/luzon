@@ -9,14 +9,10 @@ fun precedenceClimb(tokens: TokenStream) = PrecedenceClimbing(RecursiveDescent(t
 internal fun precedenceClimb(rd: RecursiveDescent) = PrecedenceClimbing(rd).parse()
 
 internal class PrecedenceClimbing(rd: RecursiveDescent) {
-    val rd: ExpressionRecursiveDescent = ExpressionRecursiveDescent(NewExpressionRecognizer.recognize(rd)
+    val rd: ExpressionRecursiveDescent = ExpressionRecursiveDescent(ExpressionRecognizer.recognize(rd)
             ?: emptySequence())
 
-    fun parse(): Expression? {
-        val expr = exp(0)
-        // expect end?
-        return expr
-    }
+    fun parse() = exp(0)
 
     fun exp(prec: Int): Expression? {
         var left = p()
@@ -71,11 +67,9 @@ internal class PrecedenceClimbing(rd: RecursiveDescent) {
         return null
     }
 
-    private fun ExpressionToken.precedence(unary: Boolean = false): Int {
-        val prec = tokenType!!.precedence(unary)
-        return prec
-    }
+    private fun ExpressionToken.precedence(unary: Boolean = false) = tokenType?.precedence(unary) ?: -1
 
+    // TODO: Boolean operators
     private fun Token.TokenEnum.precedence(unary: Boolean = false) = when (this) {
         OR -> 0
         AND -> 1
@@ -85,7 +79,7 @@ internal class PrecedenceClimbing(rd: RecursiveDescent) {
         else -> -1
     }
 
-    private fun ExpressionToken.leftAssociative() = tokenType!!.leftAssociative()
+    private fun ExpressionToken.leftAssociative() = tokenType?.leftAssociative() ?: false
 
     private fun Token.TokenEnum.leftAssociative() = when (this) {
         OR, AND, EQUAL_EQUAL, PLUS, SUBTRACT, MULTIPLY, DIVIDE -> true // TODO: Mod?

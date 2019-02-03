@@ -5,7 +5,7 @@ import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
 import com.luzon.rd.ast.Expression
 
-internal class NewExpressionRecognizer(private val rd: RecursiveDescent) {
+internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
     private var parenIndent = 0
     private val expressionList = ExpressionStreamList()
 
@@ -14,8 +14,8 @@ internal class NewExpressionRecognizer(private val rd: RecursiveDescent) {
         val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE, MOD, LESS, LESS_EQUAL, EQUAL_EQUAL, GREATER_EQUAL, GREATER, AND, OR, NOT_EQUAL)
         val unaryOperators = listOf(SUBTRACT, NOT)
 
-        fun recognize(rd: RecursiveDescent) = NewExpressionRecognizer(rd).recognize()
-        fun recognize(tokens: TokenStream) = NewExpressionRecognizer(RecursiveDescent(tokens)).recognize()
+        fun recognize(rd: RecursiveDescent) = ExpressionRecognizer(rd).recognize()
+        fun recognize(tokens: TokenStream) = ExpressionRecognizer(RecursiveDescent(tokens)).recognize()
     }
 
     fun recognize() = if (expression()) expressionList.toStream() else null

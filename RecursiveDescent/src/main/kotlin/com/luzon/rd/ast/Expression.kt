@@ -1,8 +1,6 @@
 package com.luzon.rd.ast
 
 import com.luzon.lexer.Token
-import com.luzon.rd.FunctionCallToken
-import com.luzon.rd.oldParseExpression
 
 sealed class Expression {
     sealed class Binary(var left: Expression?, var right: Expression?) : Expression() { // TODO: Mod?
@@ -54,12 +52,6 @@ sealed class Expression {
             }
         }
 
-        data class FunctionCall(val name: String, val params: List<Expression>) : LiteralExpr() {
-            companion object {
-                internal fun fromToken(token: FunctionCallToken): FunctionCall {
-                    return FunctionCall(token.id, token.params.mapNotNull { oldParseExpression(it) })  // TODO: Need to convert each sequence of params into an Expression
-                }
-            }
-        }
+        data class FunctionCall(val name: String, val params: List<Expression>) : LiteralExpr()
     }
 }

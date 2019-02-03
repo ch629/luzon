@@ -1,8 +1,5 @@
 package com.luzon.rd.ast
 
-
-//https://codereview.stackexchange.com/questions/89967/boolean-expressions-from-infix-to-postfix-notation-using-dijkstras-shunting-yar
-// Probably need to use that.
 sealed class BooleanExpression {
     sealed class Binary(val left: BooleanExpression, val right: BooleanExpression) : BooleanExpression() {
         class Equals(left: BooleanExpression, right: BooleanExpression) : Binary(left, right)

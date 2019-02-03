@@ -49,8 +49,8 @@ sealed class ExpressionToken {
         fun fromToken(token: Token) = when (token.tokenEnum) {
             is Token.Literal -> ExpressionLiteral(token)
             is Token.Symbol -> when (token.tokenEnum) {
-                in NewExpressionRecognizer.binaryOperators -> BinaryOperator(token.tokenEnum as Token.Symbol)
-                in NewExpressionRecognizer.unaryOperators -> UnaryOperator(token.tokenEnum as Token.Symbol)
+                in ExpressionRecognizer.binaryOperators -> BinaryOperator(token.tokenEnum as Token.Symbol)
+                in ExpressionRecognizer.unaryOperators -> UnaryOperator(token.tokenEnum as Token.Symbol)
                 else -> SymbolToken(token.tokenEnum as Token.Symbol)
             }
             else -> null

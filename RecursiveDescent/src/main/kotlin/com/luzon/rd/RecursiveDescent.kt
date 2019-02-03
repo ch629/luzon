@@ -4,13 +4,8 @@ import com.luzon.lexer.Token
 import com.luzon.lexer.TokenStream
 import com.luzon.utils.Predicate
 
-fun parse(tokens: TokenStream) {
-    TODO()
-}
-
 internal class RecursiveDescent(tokens: TokenStream) {
     private val iterator = tokens.iterator()
-    private var lookahead: Token? = null
     private var token: Token? = null
 
     init {
@@ -18,22 +13,12 @@ internal class RecursiveDescent(tokens: TokenStream) {
     }
 
     fun next(): Boolean {
-        // Init
-        if (token == null && lookahead == null && iterator.hasNext())
-            lookahead = iterator.next()
-
-        token = lookahead
-        lookahead = if (iterator.hasNext()) iterator.next() else null
-
+        token = if (iterator.hasNext()) iterator.next() else null
         return token != null
-
-//        token = if (iterator.hasNext()) iterator.next() else null
-//        return token != null
     }
 
     fun expect(pred: Predicate<Token.TokenEnum>) = token != null && pred(token!!.tokenEnum)
     fun expect(tokenEnum: Token.TokenEnum) = expect { it == tokenEnum }
-    fun expect(vararg tokenEnums: Token.TokenEnum) = token != null && tokenEnums.any { it == token!!.tokenEnum }
 
     fun accept(pred: Predicate<Token.TokenEnum>): Token? {
         val rightType = expect(pred)
@@ -56,14 +41,9 @@ internal class RecursiveDescent(tokens: TokenStream) {
 
     fun accept(tokenEnum: Token.TokenEnum) = accept { it == tokenEnum }
 
-    fun consume(tokenEnum: Token.TokenEnum) = accept(tokenEnum)
-    fun consume(pred: Predicate<Token.TokenEnum>) = accept(pred)
     fun consume() = accept { true }
 
-    fun peek() = lookahead
-
     fun matches(tokenEnum: Token.TokenEnum) = expect(tokenEnum)
-    fun matches(pred: Predicate<Token.TokenEnum>) = expect(pred)
 
     fun matchConsume(tokenEnum: Token.TokenEnum) = accept(tokenEnum) != null
 
