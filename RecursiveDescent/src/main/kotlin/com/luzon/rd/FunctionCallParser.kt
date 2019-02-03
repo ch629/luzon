@@ -12,10 +12,11 @@ internal class FunctionCallParser(private var name: String, rd: RecursiveDescent
     private fun endParen() = rd.matchConsume(Token.Symbol.R_PAREN)
 
     private fun parameter(): Boolean {
-        val expr = parseExpression(rd)
+        val expr = precedenceClimb(rd)
 
         if (expr != null) {
             params.add(expr)
+
             return endParen() || comma()
         }
 

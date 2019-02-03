@@ -2,86 +2,79 @@ package com.luzon.rd
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Symbol.*
+import com.luzon.lexer.TokenStream
 import com.luzon.rd.ast.Expression
 
-// This will probably have to be run after going through an expression recognizer.
-internal class PrecedenceClimbing(val rd: RecursiveDescent) {
-    fun parse(): Expression {
+fun precedenceClimb(tokens: TokenStream) = PrecedenceClimbing(RecursiveDescent(tokens)).parse()
+internal fun precedenceClimb(rd: RecursiveDescent) = PrecedenceClimbing(rd).parse()
+
+internal class PrecedenceClimbing(rd: RecursiveDescent) {
+    val rd: ExpressionRecursiveDescent = ExpressionRecursiveDescent(NewExpressionRecognizer.recognize(rd)
+            ?: emptySequence())
+
+    fun parse(): Expression? {
         val expr = exp(0)
         // expect end?
         return expr
     }
 
-    fun exp(prec: Int): Expression {
-        val left = p()
+    fun exp(prec: Int): Expression? {
+        var left = p()
 
         do {
-            val n = rd.consume { isBinary(it) && it.precedence(false) >= prec }
+            val n = rd.consume { it is ExpressionToken.BinaryOperator && it.precedence(false) >= prec }
 
             if (n != null) {
                 val q = n.precedence() + if (n.leftAssociative()) 1 else 0
                 val right = exp(q)
 
-                // TODO: Make Expression Node from Operator, left and right
-
-                // TODO: Maybe this is better? -> Can remove the peek stuff if so
+                left = when (n.tokenType) {
+                    PLUS -> Expression.Binary.PlusExpr(left, right)
+                    SUBTRACT -> Expression.Binary.SubExpr(left, right)
+                    MULTIPLY -> Expression.Binary.MultExpr(left, right)
+                    DIVIDE -> Expression.Binary.DivExpr(left, right)
+                    else -> left // TODO: null?
+                }
             }
         } while (n != null)
 
-        val next = rd.peek()
-
-        if (next != null) {
-            while (isBinary(next) && next.precedence() >= prec) { // TODO: Maybe redo the peek to just match isBinary and precedence correctly?
-                rd.consume()
-                val q = next.precedence() + if (next.leftAssociative()) 1 else 0
-
-                val right = exp(q)
-                // TODO: Make Expression Node from Operator, left and right
-            }
-        }
-        TODO()
+        return left
     }
 
-    fun p(): Expression {
-        val next = rd.peek()
+    fun p(): Expression? {
+        if (rd.matches { it is ExpressionToken.FunctionCall }) {
+            return (rd.consume() as ExpressionToken.FunctionCall).function
+        } else if (rd.matches { it is ExpressionToken.UnaryOperator }) {
+            val unary = rd.consume()
 
-        if (isUnary(next)) {
-            rd.consume()
-
-            val q = next!!.precedence(true)
+            val q = unary!!.precedence(true)
             val expr = exp(q)
 
-            // TODO: Make Node
+            return when (unary.tokenType) {
+                SUBTRACT -> Expression.Unary.SubExpr(expr)
+                NOT -> Expression.Unary.NotExpr(expr)
+                else -> null
+            }
         } else if (rd.matchConsume(L_PAREN)) {
             val t = exp(0)
 
-            if (rd.matchConsume(R_PAREN)) { // expect R_PAREN
+            if (rd.matchConsume(R_PAREN)) {
                 return t
             } // else error
-        } else if (rd.matches { it is Token.Literal }) {
+        } else if (rd.matches { it.tokenType is Token.Literal }) {
             val literal = rd.consume()
 
-            return Expression.LiteralExpr.fromToken(literal!!)!!
+            if (literal is ExpressionToken.ExpressionLiteral)
+                return Expression.LiteralExpr.fromToken(literal.token) // TODO: Error if null?
         }
 
-        TODO()
+        return null
     }
 
-    private fun isBinary(token: Token.TokenEnum): Boolean { // TODO: Need to detect if the next token is a binary operation and not a unary one.
-        TODO()
+    private fun ExpressionToken.precedence(unary: Boolean = false): Int {
+        val prec = tokenType!!.precedence(unary)
+        return prec
     }
-
-    private fun isBinary(token: Token) = isBinary(token.tokenEnum)
-
-    private fun isUnary(token: Token?): Boolean {
-        TODO()
-    }
-
-    private fun binary(token: Token): Expression {
-        TODO()
-    }
-
-    private fun Token.precedence(unary: Boolean = false) = tokenEnum.precedence(unary)
 
     private fun Token.TokenEnum.precedence(unary: Boolean = false) = when (this) {
         OR -> 0
@@ -92,7 +85,7 @@ internal class PrecedenceClimbing(val rd: RecursiveDescent) {
         else -> -1
     }
 
-    private fun Token.leftAssociative() = tokenEnum.leftAssociative()
+    private fun ExpressionToken.leftAssociative() = tokenType!!.leftAssociative()
 
     private fun Token.TokenEnum.leftAssociative() = when (this) {
         OR, AND, EQUAL_EQUAL, PLUS, SUBTRACT, MULTIPLY, DIVIDE -> true // TODO: Mod?

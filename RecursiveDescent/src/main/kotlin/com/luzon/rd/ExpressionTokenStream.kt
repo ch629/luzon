@@ -14,12 +14,7 @@ class ExpressionStreamList {
         expression.add(ExpressionToken.FunctionCall(functionCall))
     }
 
-    fun add(token: Token) {
-        val exprToken = ExpressionToken.fromToken(token)
-        if (exprToken != null) expression.add(exprToken)
-    }
-
-    fun add(token: Token, unary: Boolean) {
+    fun add(token: Token, unary: Boolean = false) {
         var exprToken = ExpressionToken.fromToken(token)
 
         if (exprToken != null) {
@@ -29,7 +24,9 @@ class ExpressionStreamList {
     }
 
     fun add(symbol: Token.Symbol, unary: Boolean = false) {
-        expression.add(if (unary) ExpressionToken.UnaryOperator(symbol) else ExpressionToken.BinaryOperator(symbol))
+        if (symbol == Token.Symbol.L_PAREN || symbol == Token.Symbol.R_PAREN) {
+            expression.add(ExpressionToken.SymbolToken(symbol))
+        } else expression.add(if (unary) ExpressionToken.UnaryOperator(symbol) else ExpressionToken.BinaryOperator(symbol))
     }
 }
 
@@ -46,10 +43,16 @@ sealed class ExpressionToken {
 
     class FunctionCall(val function: Expression.LiteralExpr.FunctionCall) : ExpressionToken()
 
+    class SymbolToken(val symbol: Token.Symbol) : ExpressionToken()
+
     companion object {
         fun fromToken(token: Token) = when (token.tokenEnum) {
             is Token.Literal -> ExpressionLiteral(token)
-            is Token.Symbol -> BinaryOperator(token.tokenEnum as Token.Symbol)
+            is Token.Symbol -> when (token.tokenEnum) {
+                in NewExpressionRecognizer.binaryOperators -> BinaryOperator(token.tokenEnum as Token.Symbol)
+                in NewExpressionRecognizer.unaryOperators -> UnaryOperator(token.tokenEnum as Token.Symbol)
+                else -> SymbolToken(token.tokenEnum as Token.Symbol)
+            }
             else -> null
         }
     }
@@ -59,6 +62,7 @@ sealed class ExpressionToken {
             is ExpressionLiteral -> token.tokenEnum
             is BinaryOperator -> symbol
             is UnaryOperator -> symbol
+            is SymbolToken -> symbol
             else -> null
         }
 }

@@ -106,9 +106,9 @@ internal class ExpressionRecognizer(private val rd: RecursiveDescent) {
         val token = rd.consume { it is Literal && it != Literal.BOOLEAN }
 
         if (token != null) {
-            tokens.add(token)
+            if (token.tokenEnum == Literal.IDENTIFIER && functionCall(token.data)) return true
             // TODO: Maybe exclude identifier from this, and use a separate rule; like I use in the boolean version
-            return (token.tokenEnum == Literal.IDENTIFIER && functionCall(token.data)) || binaryOperator() || closeParen() || true
+            return binaryOperator() || closeParen() || true
         }
 
         return false
@@ -161,7 +161,6 @@ private fun functionCallGeneral(rd: RecursiveDescent, tokens: MutableList<Token>
         val firstParam = ExpressionRecognizer.recognizeExpression(rd)
 
         if (firstParam != null) {
-            firstParam.toList().forEach { println(it) }
             params.add(firstParam)
 
             while (rd.consume(COMMA) != null) {

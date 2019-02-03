@@ -7,9 +7,9 @@ import com.luzon.rd.oldParseExpression
 sealed class Expression {
     sealed class Binary(var left: Expression?, var right: Expression?) : Expression() { // TODO: Mod?
         class PlusExpr(left: Expression? = null, right: Expression? = null) : Binary(left, right) // TODO: Keep these separate, or use an Enum to distinguish between each? i.e. Binary(operator, left, right)
-        class SubExpr(left: Expression, right: Expression) : Binary(left, right)
-        class MultExpr(left: Expression, right: Expression) : Binary(left, right)
-        class DivExpr(left: Expression, right: Expression) : Binary(left, right)
+        class SubExpr(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+        class MultExpr(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+        class DivExpr(left: Expression? = null, right: Expression? = null) : Binary(left, right)
     }
 
     sealed class Unary(var expr: Expression?) : Expression() {
@@ -24,6 +24,7 @@ sealed class Expression {
                     Token.Literal.INT -> IntLiteral.fromToken(token)
                     Token.Literal.FLOAT -> FloatLiteral.fromToken(token)
                     Token.Literal.DOUBLE -> DoubleLiteral.fromToken(token)
+                    Token.Literal.IDENTIFIER -> IdentifierLiteral.fromToken(token)
                     else -> null
                 }
             }

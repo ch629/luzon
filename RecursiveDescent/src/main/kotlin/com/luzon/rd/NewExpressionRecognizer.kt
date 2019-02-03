@@ -2,6 +2,8 @@ package com.luzon.rd
 
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
+import com.luzon.lexer.TokenStream
+import com.luzon.rd.ast.Expression
 
 internal class NewExpressionRecognizer(private val rd: RecursiveDescent) {
     private var parenIndent = 0
@@ -9,10 +11,11 @@ internal class NewExpressionRecognizer(private val rd: RecursiveDescent) {
 
     companion object {
         // TODO: Increment, Decrement, etc?
-        private val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE, MOD, LESS, LESS_EQUAL, EQUAL_EQUAL, GREATER_EQUAL, GREATER, AND, OR, NOT_EQUAL)
-        private val unaryOperators = listOf(SUBTRACT, NOT)
+        val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE, MOD, LESS, LESS_EQUAL, EQUAL_EQUAL, GREATER_EQUAL, GREATER, AND, OR, NOT_EQUAL)
+        val unaryOperators = listOf(SUBTRACT, NOT)
 
         fun recognize(rd: RecursiveDescent) = NewExpressionRecognizer(rd).recognize()
+        fun recognize(tokens: TokenStream) = NewExpressionRecognizer(RecursiveDescent(tokens)).recognize()
     }
 
     fun recognize() = if (expression()) expressionList.toStream() else null
@@ -20,22 +23,18 @@ internal class NewExpressionRecognizer(private val rd: RecursiveDescent) {
     private fun expression(): Boolean = literal() || unaryOperator() || openParen()
 
     private fun literal(): Boolean = rd.accept({ it is Literal }, { literal ->
-        fun afterLiteral() = binaryOperator() || closeParen() || true
+        var functionCall: Expression.LiteralExpr.FunctionCall? = null
 
-        if (literal.tokenEnum == Literal.IDENTIFIER && rd.matches(L_PAREN)) {
-            val functionCall = FunctionCallParser(literal.data, rd).parse()
+        if (literal.tokenEnum == Literal.IDENTIFIER && rd.matches(L_PAREN))
+            functionCall = FunctionCallParser(literal.data, rd).parse()
 
-            if (functionCall != null) {
-                expressionList.add(functionCall)
+        if (functionCall != null) expressionList.add(functionCall)
+        else expressionList.add(literal)
 
-                return@accept afterLiteral()
-            }
-        }
-
-        expressionList.add(literal)
-        return@accept afterLiteral()
+        binaryOperator() || closeParen() || true
     })
 
+    // TODO: Maybe redesign this work with similarly to the precedence climbing. i.e. expect an expression, then a closeParen within openParen, rather than storing the indentation?
     private fun openParen(): Boolean = rd.accept(L_PAREN) {
         parenIndent++
         expressionList.add(L_PAREN)
@@ -43,8 +42,9 @@ internal class NewExpressionRecognizer(private val rd: RecursiveDescent) {
         expression()
     }
 
-    private fun closeParen(): Boolean = rd.accept(R_PAREN) {
+    private fun closeParen(): Boolean = rd.matches(R_PAREN) {
         if (parenIndent > 0) {
+            rd.consume()
             parenIndent--
             expressionList.add(R_PAREN)
 
