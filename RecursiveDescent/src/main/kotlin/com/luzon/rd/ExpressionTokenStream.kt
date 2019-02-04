@@ -37,9 +37,7 @@ sealed class ExpressionToken {
         fun unary() = UnaryOperator(symbol)
     }
 
-    class UnaryOperator(val symbol: Token.Symbol) : ExpressionToken() {
-        fun binary() = BinaryOperator(symbol)
-    }
+    class UnaryOperator(val symbol: Token.Symbol) : ExpressionToken()
 
     class FunctionCall(val function: Expression.LiteralExpr.FunctionCall) : ExpressionToken()
 

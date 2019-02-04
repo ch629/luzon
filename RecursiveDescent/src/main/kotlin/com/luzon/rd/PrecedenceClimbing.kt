@@ -1,12 +1,10 @@
 package com.luzon.rd
 
-import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
 import com.luzon.rd.ast.Expression
 
-fun precedenceClimb(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(tokens)).parse()
-internal fun precedenceClimb(rd: TokenRDStream) = PrecedenceClimbing(rd).parse()
+fun parseExpression(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(tokens)).parse()
 
 internal class PrecedenceClimbing(rd: TokenRDStream) {
     private val rd: ExpressionRDStream = ExpressionRDStream(ExpressionRecognizer.recognize(rd)
@@ -14,7 +12,7 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
 
     fun parse() = exp(0)
 
-    fun exp(prec: Int): Expression? {
+    private fun exp(prec: Int): Expression? {
         var left = p()
 
         do {
@@ -46,7 +44,7 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
         return left
     }
 
-    fun p(): Expression? {
+    private fun p(): Expression? {
         if (rd.matches { it is ExpressionToken.FunctionCall }) { // TODO: When this -> Need something like a peek, then use when, and consume if it hits one?
             return (rd.consume() as ExpressionToken.FunctionCall).function
         } else if (rd.matches { it is ExpressionToken.UnaryOperator }) {
@@ -56,10 +54,10 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
             val expr = exp(q)
 
             return when (unary.tokenType) {
-                SUBTRACT -> Expression.Unary.SubExpr(expr)
-                NOT -> Expression.Unary.NotExpr(expr)
+                SUBTRACT -> Expression.Unary::SubExpr
+                NOT -> Expression.Unary::NotExpr
                 else -> null
-            }
+            }?.invoke(expr)
         } else if (rd.matchConsume(L_PAREN)) {
             val t = exp(0)
 
@@ -75,9 +73,7 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
         return null
     }
 
-    private fun ExpressionToken.precedence(unary: Boolean = false) = tokenType?.precedence(unary) ?: -1
-
-    private fun Token.TokenEnum.precedence(unary: Boolean = false) = when (this) {
+    private fun ExpressionToken.precedence(unary: Boolean = false) = when (tokenType) {
         OR -> 0
         AND -> 1
         EQUAL_EQUAL, LESS_EQUAL, LESS, GREATER, GREATER_EQUAL, NOT_EQUAL -> 2 // TODO: Check these.
@@ -86,10 +82,6 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
         else -> -1
     }
 
-    private fun ExpressionToken.leftAssociative() = tokenType?.leftAssociative() ?: false
-
-    private fun Token.TokenEnum.leftAssociative() = when (this) {
-        OR, AND, EQUAL_EQUAL, PLUS, SUBTRACT, MULTIPLY, DIVIDE -> true // TODO: Mod?
-        else -> false
-    }
+    // TODO: Only power is left associative -> Which I don't implement? -> If needed, just add when(tokenType)
+    private fun ExpressionToken.leftAssociative() = true
 }

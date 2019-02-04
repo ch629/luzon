@@ -12,7 +12,7 @@ internal class FunctionCallParser(private var name: String, rd: TokenRDStream) :
     private fun endParen() = rd.matchConsume(Token.Symbol.R_PAREN)
 
     private fun parameter(): Boolean {
-        val expr = precedenceClimb(rd)
+        val expr = PrecedenceClimbing(rd).parse()
 
         if (expr != null) {
             params.add(expr)
