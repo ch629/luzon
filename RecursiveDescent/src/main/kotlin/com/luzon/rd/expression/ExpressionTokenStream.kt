@@ -1,4 +1,4 @@
-package com.luzon.rd
+package com.luzon.rd.expression
 
 import com.luzon.lexer.Token
 import com.luzon.rd.ast.Expression

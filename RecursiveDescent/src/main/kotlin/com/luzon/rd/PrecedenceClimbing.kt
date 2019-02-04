@@ -3,6 +3,9 @@ package com.luzon.rd
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
 import com.luzon.rd.ast.Expression
+import com.luzon.rd.expression.ExpressionRDStream
+import com.luzon.rd.expression.ExpressionRecognizer
+import com.luzon.rd.expression.ExpressionToken
 
 fun parseExpression(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(tokens)).parse()
 
@@ -22,22 +25,7 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
                 val q = n.precedence() + if (n.leftAssociative()) 1 else 0
                 val right = exp(q)
 
-                left = when (n.tokenType) {
-                    PLUS -> Expression.Binary::PlusExpr
-                    SUBTRACT -> Expression.Binary::SubExpr
-                    MULTIPLY -> Expression.Binary::MultExpr
-                    DIVIDE -> Expression.Binary::DivExpr
-
-                    EQUAL_EQUAL -> Expression.Binary::Equals
-                    NOT_EQUAL -> Expression.Binary::NotEquals
-                    GREATER_EQUAL -> Expression.Binary::GreaterEquals
-                    GREATER -> Expression.Binary::Greater
-                    LESS -> Expression.Binary::Less
-                    LESS_EQUAL -> Expression.Binary::LessEquals
-                    AND -> Expression.Binary::And
-                    OR -> Expression.Binary::Or
-                    else -> null
-                }?.invoke(left, right) ?: left
+                left = Expression.Binary.fromOperator(n.tokenType, left, right) ?: left
             }
         } while (n != null)
 
@@ -45,7 +33,7 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
     }
 
     private fun p(): Expression? {
-        if (rd.matches { it is ExpressionToken.FunctionCall }) { // TODO: When this -> Need something like a peek, then use when, and consume if it hits one?
+        if (rd.matches { it is ExpressionToken.FunctionCall }) {
             return (rd.consume() as ExpressionToken.FunctionCall).function
         } else if (rd.matches { it is ExpressionToken.UnaryOperator }) {
             val unary = rd.consume()

@@ -5,7 +5,7 @@ import com.luzon.lexer.TokenStream
 import com.luzon.utils.Predicate
 
 // TODO: Come up with a better name
-open class RDStream<T>(tokens: Sequence<T>) { // TODO: All return null using this?
+open class RDStream<T>(tokens: Sequence<T>) {
     private val iterator = tokens.iterator()
     private var token: T? = null
 
@@ -44,8 +44,4 @@ class TokenRDStream(tokens: TokenStream) : RDStream<Token>(tokens) {
     fun matches(tokenEnum: Token.TokenEnum) = matches { it.tokenEnum == tokenEnum }
     fun matches(tokenEnum: Token.TokenEnum, block: (Token) -> Boolean) = matches({ it.tokenEnum == tokenEnum }, block)
     fun matchConsume(tokenEnum: Token.TokenEnum) = matchConsume { it.tokenEnum == tokenEnum }
-}
-
-class ExpressionRDStream(tokens: ExpressionStream) : RDStream<ExpressionToken>(tokens) {
-    fun matchConsume(tokenEnum: Token.TokenEnum) = matchConsume { it.tokenType == tokenEnum }
 }

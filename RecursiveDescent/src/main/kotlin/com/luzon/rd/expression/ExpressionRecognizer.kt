@@ -1,8 +1,9 @@
-package com.luzon.rd
+package com.luzon.rd.expression
 
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
+import com.luzon.rd.TokenRDStream
 import com.luzon.rd.ast.Expression
 
 internal class ExpressionRecognizer(private val rd: TokenRDStream) {
