@@ -7,16 +7,25 @@ import com.luzon.utils.Predicate
 // TODO: Come up with a better name
 open class RDStream<T>(tokens: Sequence<T>) {
     private val iterator = tokens.iterator()
+    private var lookahead: T? = null
     private var token: T? = null
 
     init {
+        if (token == null && lookahead == null && iterator.hasNext()) // initialize lookahead
+            lookahead = iterator.next()
+
         next()
     }
 
     fun next(): Boolean {
-        token = if (iterator.hasNext()) iterator.next() else null
+        token = lookahead
+        lookahead = if (iterator.hasNext()) iterator.next() else null
+
+//        token = if (iterator.hasNext()) iterator.next() else null
         return token != null
     }
+
+    fun lookaheadMatches(pred: Predicate<T>) = lookahead != null && pred(lookahead!!)
 
     fun matches(pred: Predicate<T>) = token != null && pred(token!!)
     fun matches(pred: Predicate<T>, block: (T) -> Boolean) = if (matches(pred) && token != null) block(token!!) else false
@@ -48,4 +57,6 @@ class TokenRDStream(tokens: TokenStream) : RDStream<Token>(tokens) {
     fun matchConsume(tokenEnum: Token.TokenEnum) = matchConsume { it.tokenEnum == tokenEnum }
 
     fun accept(tokenEnum: Token.TokenEnum) = accept { it.tokenEnum == tokenEnum }
+
+    fun lookaheadMatches(tokenEnum: Token.TokenEnum) = lookaheadMatches { it.tokenEnum == tokenEnum }
 }

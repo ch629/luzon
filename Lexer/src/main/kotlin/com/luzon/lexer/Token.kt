@@ -40,6 +40,7 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
     enum class Keyword(val capitalize: Boolean = false) : TokenEnum {
         FOR, WHILE, IF, ELSE, WHEN, BREAK,
         VAR, VAL, FUN, CLASS, ABSTRACT, ENUM,
+        DO,
         DOUBLE(true),
         FLOAT(true),
         INT(true),
