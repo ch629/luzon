@@ -69,7 +69,7 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
     }
 
     enum class Literal(val regex: String) : TokenEnum {
-        DOUBLE("-?\\d+d|\\d+\\.\\d+d?"), // TODO: Test negative numbers.
+        DOUBLE("-?\\d+d|\\d+\\.\\d+d?"), // TODO: Maybe remove the negative from this? Then I can just read it as an expression?
         FLOAT("-?\\d+f|\\d+\\.\\d+f"),
         INT("-?\\d+"),
         STRING("\".*\""),

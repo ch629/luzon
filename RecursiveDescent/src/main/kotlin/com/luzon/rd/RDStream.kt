@@ -41,7 +41,11 @@ open class RDStream<T>(tokens: Sequence<T>) {
 
 class TokenRDStream(tokens: TokenStream) : RDStream<Token>(tokens) {
     fun accept(tokenEnum: Token.TokenEnum, block: (Token) -> Boolean) = accept({ it.tokenEnum == tokenEnum }, block)
+    fun accept(vararg tokenEnum: Token.TokenEnum) = accept { token -> tokenEnum.any { token.tokenEnum == it } }
+
     fun matches(tokenEnum: Token.TokenEnum) = matches { it.tokenEnum == tokenEnum }
     fun matches(tokenEnum: Token.TokenEnum, block: (Token) -> Boolean) = matches({ it.tokenEnum == tokenEnum }, block)
     fun matchConsume(tokenEnum: Token.TokenEnum) = matchConsume { it.tokenEnum == tokenEnum }
+
+    fun accept(tokenEnum: Token.TokenEnum) = accept { it.tokenEnum == tokenEnum }
 }
