@@ -46,6 +46,8 @@ open class RDStream<T>(tokens: Sequence<T>) {
     fun consume() = accept { true }
 
     fun consume(pred: Predicate<T>) = accept(pred)
+
+    fun isDone() = iterator.hasNext()
 }
 
 class TokenRDStream(tokens: TokenStream) : RDStream<Token>(tokens) {

@@ -68,6 +68,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
         TODO()
     }
 
+    // TODO: Separate function statements and class statements?
     private fun statement(): ASTNode? {
         TODO()
     }
@@ -190,7 +191,6 @@ class RecursiveDescent(val rd: TokenRDStream) {
                     return ASTNode.VariableAssign(id.data, expr)
             }
         }
-
         return null
     }
 }
