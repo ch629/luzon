@@ -4,7 +4,7 @@ import com.luzon.lexer.Token
 import com.luzon.rd.PrecedenceClimbing
 import com.luzon.rd.RecursiveParser
 import com.luzon.rd.TokenRDStream
-import com.luzon.rd.ast.Expression
+import com.luzon.rd.ast.ASTNode.Expression
 
 internal class FunctionCallParser(private var name: String, rd: TokenRDStream) : RecursiveParser<Expression.LiteralExpr.FunctionCall>(rd) {
     private val params = mutableListOf<Expression>()

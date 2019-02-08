@@ -3,7 +3,7 @@ package com.luzon.rd
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
-import com.luzon.rd.ast.Expression
+import com.luzon.rd.ast.ASTNode.Expression
 import com.luzon.rd.expression.ExpressionRDStream
 import com.luzon.rd.expression.ExpressionRecognizer
 import com.luzon.rd.expression.ExpressionToken
@@ -83,8 +83,8 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
             val expr = exp(q)
 
             return when (unary.tokenType) {
-                SUBTRACT -> Expression.Unary::SubExpr
-                NOT -> Expression.Unary::NotExpr
+                SUBTRACT -> Expression.Unary::Sub
+                NOT -> Expression.Unary::Not
                 else -> null
             }?.invoke(expr)
         } else if (rd.matchConsume(L_PAREN)) {

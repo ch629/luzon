@@ -4,7 +4,7 @@ import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
 import com.luzon.rd.TokenRDStream
-import com.luzon.rd.ast.Expression
+import com.luzon.rd.ast.ASTNode
 
 internal class ExpressionRecognizer(private val rd: TokenRDStream) {
     private var parenIndent = 0
@@ -24,7 +24,7 @@ internal class ExpressionRecognizer(private val rd: TokenRDStream) {
     private fun expression(): Boolean = literal() || unaryOperator() || openParen()
 
     private fun literal(): Boolean = rd.accept({ it.tokenEnum is Literal }, { literal ->
-        var functionCall: Expression.LiteralExpr.FunctionCall? = null
+        var functionCall: ASTNode.Expression.LiteralExpr.FunctionCall? = null
 
         if (literal.tokenEnum == Literal.IDENTIFIER && rd.matches(L_PAREN))
             functionCall = FunctionCallParser(literal.data, rd).parse()

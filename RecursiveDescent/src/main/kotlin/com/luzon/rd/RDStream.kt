@@ -61,4 +61,5 @@ class TokenRDStream(tokens: TokenStream) : RDStream<Token>(tokens) {
     fun accept(tokenEnum: Token.TokenEnum) = accept { it.tokenEnum == tokenEnum }
 
     fun lookaheadMatches(tokenEnum: Token.TokenEnum) = lookaheadMatches { it.tokenEnum == tokenEnum }
+    fun lookaheadMatches(vararg tokenEnums: Token.TokenEnum) = lookaheadMatches { token -> tokenEnums.any { token.tokenEnum == it } }
 }

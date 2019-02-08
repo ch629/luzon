@@ -1,7 +1,7 @@
 package com.luzon.rd.expression
 
 import com.luzon.lexer.Token
-import com.luzon.rd.ast.Expression
+import com.luzon.rd.ast.ASTNode.Expression
 
 typealias ExpressionStream = Sequence<ExpressionToken>
 

@@ -54,18 +54,64 @@ class RecursiveDescent(val rd: TokenRDStream) {
     }
 
     private fun classDefinition(): ASTNode? {
-        TODO()
+        fun parameterList(): List<ASTNode.ConstructorVariableDeclaration> {
+            val params = mutableListOf<ASTNode.ConstructorVariableDeclaration>()
+
+            do {
+                val valVar = rd.accept(Keyword.VAL, Keyword.VAR)
+
+                if (valVar != null) {
+                    val id = rd.accept(Literal.IDENTIFIER)
+
+                    if (id != null) {
+                        if (rd.matchConsume(Symbol.TYPE)) {
+                            val type = rd.accept(Literal.IDENTIFIER)
+
+                            if (type != null)
+                                params.add(ASTNode.ConstructorVariableDeclaration(id.data, type.data, valVar.tokenEnum == Keyword.VAL))
+                        }
+                    }
+                }
+            } while (rd.matchConsume(Symbol.COMMA))
+
+            return params
+        }
+
+        if (rd.matchConsume(Keyword.CLASS)) {
+            val id = rd.accept(Literal.IDENTIFIER)
+            var constructor: ASTNode.Constructor? = null
+
+            if (id != null) {
+                if (rd.matchConsume(Symbol.L_PAREN)) {
+                    val parameters = parameterList()
+
+                    if (rd.matchConsume(Symbol.R_PAREN))
+                        constructor = ASTNode.Constructor(parameters)
+                }
+
+                val block = block()
+
+                if (block != null)
+                    return ASTNode.Class(id.data, constructor, block)
+            }
+        }
+
+        return null
     }
 
     private fun block(): ASTNode.Block? {
         if (rd.matchConsume(Symbol.L_BRACE)) {
-            // Find statements
+            val lines = mutableListOf<ASTNode>()
 
-            if (rd.matchConsume(Symbol.R_BRACE)) {
-                // Return block
+            while (!rd.matchConsume(Symbol.R_BRACE)) {
+                val statement = statement() ?: return null
+
+                lines.add(statement)
             }
+
+            return ASTNode.Block(lines)
         }
-        TODO()
+        return null
     }
 
     // TODO: Separate function statements and class statements?
@@ -179,16 +225,20 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
+    // i = 5, i += 5 etc.
     private fun variableAssign(): ASTNode? {
-        if (rd.lookaheadMatches(Symbol.EQUAL)) {
+        if (rd.lookaheadMatches(Symbol.EQUAL, Symbol.MULTIPLY_ASSIGN, Symbol.DIVIDE_ASSIGN, Symbol.MOD_ASSIGN, Symbol.PLUS_ASSIGN, Symbol.SUBTRACT_ASSIGN)) {
             val id = rd.accept(Literal.IDENTIFIER)
 
             if (id != null) {
-                rd.consume() // Consume Symbol.EQUAL
+                val operator = rd.consume()?.tokenEnum as Symbol
                 val expr = expression()
 
-                if (expr != null)
-                    return ASTNode.VariableAssign(id.data, expr)
+                if (expr != null) {
+                    if (operator == Symbol.EQUAL)
+                        return ASTNode.VariableAssign(id.data, expr)
+                    return ASTNode.OperatorVariableAssign(id.data, expr, operator)
+                }
             }
         }
         return null
