@@ -1,52 +1,11 @@
 package com.luzon.rd
 
-import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
 import com.luzon.rd.ast.ASTNode.Expression
 import com.luzon.rd.expression.ExpressionRDStream
 import com.luzon.rd.expression.ExpressionRecognizer
 import com.luzon.rd.expression.ExpressionToken
-
-fun main() {
-    fun int(value: Int) = Token.Literal.INT.toToken(value.toString())
-    fun id(name: String) = Token.Literal.IDENTIFIER.toToken(name)
-    val plus = PLUS.toToken()
-    val mult = MULTIPLY.toToken()
-    val sub = SUBTRACT.toToken()
-    val equals = EQUAL_EQUAL.toToken()
-    val lParen = L_PAREN.toToken()
-    val rParen = R_PAREN.toToken()
-    val comma = COMMA.toToken()
-    val and = AND.toToken()
-    val or = OR.toToken()
-    val greater = GREATER.toToken()
-    val lesser = LESS.toToken()
-    val TRUE = Token.Literal.BOOLEAN.toToken("true")
-    val FALSE = Token.Literal.BOOLEAN.toToken("false")
-
-    val a = parseExpression(sequenceOf(int(2), plus, int(5)))
-
-    // Numerical
-    val b = parseExpression(sequenceOf(id("apple"), plus, int(2)))
-
-    val c = parseExpression(sequenceOf(id("func"), lParen, int(1), plus, int(2), comma, int(3), plus, int(4), rParen, plus, int(5)))
-
-    val expr = ExpressionRecognizer.recognize(sequenceOf(lParen, int(1), plus, int(2), rParen))
-
-    // Boolean
-    val d = parseExpression(sequenceOf(lParen, int(5), plus, int(2), rParen))
-    val e = parseExpression(sequenceOf(FALSE, or, TRUE))
-    val f = parseExpression(sequenceOf(int(2), greater, int(5)))
-    val seq = sequenceOf(
-            id("a"), mult, id("b"), sub, id("c"), mult, id("d"), sub, id("e"), mult,
-            id("f"), equals, id("g"), mult, id("h"), sub, id("i"), mult, id("j"),
-            sub, id("k"), mult, id("l"))
-
-    val g = parseExpression(seq)
-
-    val i = 5
-}
 
 fun parseExpression(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(tokens)).parse()
 

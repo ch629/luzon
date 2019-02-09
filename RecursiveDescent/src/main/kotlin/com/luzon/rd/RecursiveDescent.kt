@@ -5,10 +5,9 @@ import com.luzon.lexer.Token.*
 import com.luzon.rd.ast.ASTNode
 
 // Main entry point from the lz file
-
 class RecursiveDescent(val rd: TokenRDStream) {
     // TODO: List of ASTNodes -> Can have multiple functions and classes defined in the same file?
-    fun parse(): ASTNode? = functionDefinition() ?: classDefinition()
+    fun parse(): ASTNode? = classDefinition()
 
     // TODO: Use either for error logging?
     // fun name(): Int { }
@@ -43,7 +42,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
                     if (rd.matchConsume(Symbol.TYPE))
                         type = rd.accept(Literal.IDENTIFIER) // TODO: Could maybe make accept throw an Exception for the error? -> Expected IDENTIFIER found ...
 
-                    val block = block()
+                    val block = functionBlock()
 
                     if (block != null)
                         return ASTNode.FunctionDefinition(id.data, paramList, type?.data, block)
@@ -53,6 +52,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
+    // class <name>(<params>): <type> { }
     private fun classDefinition(): ASTNode? {
         fun parameterList(): List<ASTNode.ConstructorVariableDeclaration> {
             val params = mutableListOf<ASTNode.ConstructorVariableDeclaration>()
@@ -89,7 +89,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
                         constructor = ASTNode.Constructor(parameters)
                 }
 
-                val block = block()
+                val block = classBlock()
 
                 if (block != null)
                     return ASTNode.Class(id.data, constructor, block)
@@ -99,12 +99,16 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
-    private fun block(): ASTNode.Block? {
+    private fun functionBlock() = generalBlock(::functionStatement)
+    private fun classBlock() = generalBlock(::classStatement)
+    private fun block() = generalBlock(::statement)
+
+    private fun generalBlock(stmt: () -> ASTNode?): ASTNode.Block? {
         if (rd.matchConsume(Symbol.L_BRACE)) {
             val lines = mutableListOf<ASTNode>()
 
             while (!rd.matchConsume(Symbol.R_BRACE)) {
-                val statement = statement() ?: return null
+                val statement = stmt() ?: return null
 
                 lines.add(statement)
             }
@@ -114,9 +118,25 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
-    // TODO: Separate function statements and class statements?
-    private fun statement(): ASTNode? {
-        TODO()
+    // statements accepted within classes
+    // secondary constructor // TODO: Secondary Constructor
+    private fun classStatement() = acceptAny(::statement)
+
+    // statements accepted within functions
+    // return, loops, if // TODO: Return statement
+    private fun functionStatement() = acceptAny(::statement, ::forLoop, ::whileLoop, ::doWhileLoop, ::ifStatement)
+
+    // statements accepted anywhere
+    // variables, function def, class def?
+    private fun statement() = acceptAny(::variableDeclaration, ::functionDefinition, ::classDefinition)
+
+    private fun acceptAny(vararg nodes: () -> ASTNode?): ASTNode? {
+        nodes.forEach {
+            val result = it()
+            if (result != null)
+                return result
+        }
+        return null
     }
 
     // if(expr) { } else if(expr) { } else { }
@@ -175,10 +195,10 @@ class RecursiveDescent(val rd: TokenRDStream) {
         if (rd.matchConsume(Keyword.WHILE) && rd.matchConsume(Symbol.L_PAREN)) {
             val expr = expression()
 
-            if (expr != null && rd.matchConsume(Symbol.R_PAREN) && rd.matchConsume(Symbol.L_BRACE)) {
+            if (expr != null && rd.matchConsume(Symbol.R_PAREN)) {
                 val block = block()
 
-                if (block != null && rd.matchConsume(Symbol.R_BRACE))
+                if (block != null)
                     return ASTNode.WhileLoop(false, expr, block)
             }
         }
