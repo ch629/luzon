@@ -37,16 +37,17 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         override fun toString() = "none"
     }
 
+    // TODO: Should I include types here, they could just be Identifiers and then used directly as so?
     enum class Keyword(val capitalize: Boolean = false) : TokenEnum {
         FOR, WHILE, IF, ELSE, WHEN, BREAK,
         VAR, VAL, FUN, CLASS, ABSTRACT, ENUM,
         DO,
-        DOUBLE(true),
-        FLOAT(true),
-        INT(true),
-        STRING(true),
-        CHAR(true),
-        BOOLEAN(true),
+        //        DOUBLE(true),
+//        FLOAT(true),
+//        INT(true),
+//        STRING(true),
+//        CHAR(true),
+//        BOOLEAN(true),
         IS, AS, IN, PRIVATE;
 
         override fun toString() = "keyword:${id()}"
