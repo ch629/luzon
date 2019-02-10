@@ -7,6 +7,7 @@ typealias Predicate<T> = (T) -> Boolean
 fun <T> Stack<T>.peekOrNull() = if (isEmpty()) null else peek()
 fun <T> Stack<T>.popOrNull() = if (isEmpty()) null else pop()
 
+fun StringBuilder.indent(times: Int = 1): StringBuilder = append("    ".repeat(times))
 
 private class IfTest {
     companion object {
