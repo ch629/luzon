@@ -3,6 +3,10 @@ package com.luzon.rd.ast
 import com.luzon.utils.indent
 import kotlin.reflect.KClass
 
+fun main() {
+    VisitorGenerator.generate()
+}
+
 object VisitorGenerator {
     fun generate() {
         val lines = findNodes()
@@ -14,7 +18,7 @@ object VisitorGenerator {
         lines.forEach {
             val line = it.trim()
 
-            visitorSb.indent().appendln("fun visit(node: $line): T")
+            visitorSb.indent().appendln("fun visit(node: $line): T = throw NotImplementedError(\"$line visitor not implemented.\")")
             acceptSb.indent().appendln("is $line -> visitor.visit(this)")
         }
 

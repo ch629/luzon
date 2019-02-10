@@ -1,41 +1,41 @@
 package com.luzon.rd.ast
 
 interface ASTNodeVisitor<T> {
-    fun visit(node: ASTNode.Class): T
-    fun visit(node: ASTNode.Constructor): T
-    fun visit(node: ASTNode.ConstructorVariableDeclaration): T
-    fun visit(node: ASTNode.FunctionDefinition): T
-    fun visit(node: ASTNode.FunctionParameter): T
-    fun visit(node: ASTNode.ForLoop): T
-    fun visit(node: ASTNode.WhileLoop): T
-    fun visit(node: ASTNode.IfStatement): T
-    fun visit(node: ASTNode.ElseStatements.ElseIfStatement): T
-    fun visit(node: ASTNode.ElseStatements.ElseStatement): T
-    fun visit(node: ASTNode.VariableDeclaration): T
-    fun visit(node: ASTNode.VariableAssign): T
-    fun visit(node: ASTNode.OperatorVariableAssign): T
-    fun visit(node: ASTNode.Block): T
-    fun visit(node: ASTNode.Expression.Binary.Plus): T
-    fun visit(node: ASTNode.Expression.Binary.Sub): T
-    fun visit(node: ASTNode.Expression.Binary.Mult): T
-    fun visit(node: ASTNode.Expression.Binary.Div): T
-    fun visit(node: ASTNode.Expression.Binary.Equals): T
-    fun visit(node: ASTNode.Expression.Binary.NotEquals): T
-    fun visit(node: ASTNode.Expression.Binary.GreaterEquals): T
-    fun visit(node: ASTNode.Expression.Binary.Greater): T
-    fun visit(node: ASTNode.Expression.Binary.Less): T
-    fun visit(node: ASTNode.Expression.Binary.LessEquals): T
-    fun visit(node: ASTNode.Expression.Binary.And): T
-    fun visit(node: ASTNode.Expression.Binary.Or): T
-    fun visit(node: ASTNode.Expression.Unary.Sub): T
-    fun visit(node: ASTNode.Expression.Unary.Not): T
-    fun visit(node: ASTNode.Expression.Unary.Increment): T
-    fun visit(node: ASTNode.Expression.Unary.Decrement): T
-    fun visit(node: ASTNode.Expression.LiteralExpr.IntLiteral): T
-    fun visit(node: ASTNode.Expression.LiteralExpr.FloatLiteral): T
-    fun visit(node: ASTNode.Expression.LiteralExpr.DoubleLiteral): T
-    fun visit(node: ASTNode.Expression.LiteralExpr.IdentifierLiteral): T
-    fun visit(node: ASTNode.Expression.LiteralExpr.FunctionCall): T
+    fun visit(node: ASTNode.Class): T = throw NotImplementedError("ASTNode.Class visitor not implemented.")
+    fun visit(node: ASTNode.Constructor): T = throw NotImplementedError("ASTNode.Constructor visitor not implemented.")
+    fun visit(node: ASTNode.ConstructorVariableDeclaration): T = throw NotImplementedError("ASTNode.ConstructorVariableDeclaration visitor not implemented.")
+    fun visit(node: ASTNode.FunctionDefinition): T = throw NotImplementedError("ASTNode.FunctionDefinition visitor not implemented.")
+    fun visit(node: ASTNode.FunctionParameter): T = throw NotImplementedError("ASTNode.FunctionParameter visitor not implemented.")
+    fun visit(node: ASTNode.ForLoop): T = throw NotImplementedError("ASTNode.ForLoop visitor not implemented.")
+    fun visit(node: ASTNode.WhileLoop): T = throw NotImplementedError("ASTNode.WhileLoop visitor not implemented.")
+    fun visit(node: ASTNode.IfStatement): T = throw NotImplementedError("ASTNode.IfStatement visitor not implemented.")
+    fun visit(node: ASTNode.ElseStatements.ElseIfStatement): T = throw NotImplementedError("ASTNode.ElseStatements.ElseIfStatement visitor not implemented.")
+    fun visit(node: ASTNode.ElseStatements.ElseStatement): T = throw NotImplementedError("ASTNode.ElseStatements.ElseStatement visitor not implemented.")
+    fun visit(node: ASTNode.VariableDeclaration): T = throw NotImplementedError("ASTNode.VariableDeclaration visitor not implemented.")
+    fun visit(node: ASTNode.VariableAssign): T = throw NotImplementedError("ASTNode.VariableAssign visitor not implemented.")
+    fun visit(node: ASTNode.OperatorVariableAssign): T = throw NotImplementedError("ASTNode.OperatorVariableAssign visitor not implemented.")
+    fun visit(node: ASTNode.Block): T = throw NotImplementedError("ASTNode.Block visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.Plus): T = throw NotImplementedError("ASTNode.Expression.Binary.Plus visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.Sub): T = throw NotImplementedError("ASTNode.Expression.Binary.Sub visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.Mult): T = throw NotImplementedError("ASTNode.Expression.Binary.Mult visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.Div): T = throw NotImplementedError("ASTNode.Expression.Binary.Div visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.Equals): T = throw NotImplementedError("ASTNode.Expression.Binary.Equals visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.NotEquals): T = throw NotImplementedError("ASTNode.Expression.Binary.NotEquals visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.GreaterEquals): T = throw NotImplementedError("ASTNode.Expression.Binary.GreaterEquals visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.Greater): T = throw NotImplementedError("ASTNode.Expression.Binary.Greater visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.Less): T = throw NotImplementedError("ASTNode.Expression.Binary.Less visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.LessEquals): T = throw NotImplementedError("ASTNode.Expression.Binary.LessEquals visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.And): T = throw NotImplementedError("ASTNode.Expression.Binary.And visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Binary.Or): T = throw NotImplementedError("ASTNode.Expression.Binary.Or visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Unary.Sub): T = throw NotImplementedError("ASTNode.Expression.Unary.Sub visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Unary.Not): T = throw NotImplementedError("ASTNode.Expression.Unary.Not visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Unary.Increment): T = throw NotImplementedError("ASTNode.Expression.Unary.Increment visitor not implemented.")
+    fun visit(node: ASTNode.Expression.Unary.Decrement): T = throw NotImplementedError("ASTNode.Expression.Unary.Decrement visitor not implemented.")
+    fun visit(node: ASTNode.Expression.LiteralExpr.IntLiteral): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.IntLiteral visitor not implemented.")
+    fun visit(node: ASTNode.Expression.LiteralExpr.FloatLiteral): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.FloatLiteral visitor not implemented.")
+    fun visit(node: ASTNode.Expression.LiteralExpr.DoubleLiteral): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.DoubleLiteral visitor not implemented.")
+    fun visit(node: ASTNode.Expression.LiteralExpr.IdentifierLiteral): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.IdentifierLiteral visitor not implemented.")
+    fun visit(node: ASTNode.Expression.LiteralExpr.FunctionCall): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.FunctionCall visitor not implemented.")
 }
 
 fun <T> ASTNode.accept(visitor: ASTNodeVisitor<T>) = when (this) {
