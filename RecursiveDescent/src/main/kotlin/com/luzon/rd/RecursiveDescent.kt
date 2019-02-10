@@ -6,7 +6,7 @@ import com.luzon.rd.ast.ASTNode
 
 // Main entry point from the lz file
 class RecursiveDescent(val rd: TokenRDStream) {
-    // TODO: List of ASTNodes -> Can have multiple functions and classes defined in the same file?
+    // TODO: List of ASTNodes -> Can have functions outside of classes like Kotlin?
     fun parse(): ASTNode? = classDefinition()
 
     // TODO: Use either for error logging?

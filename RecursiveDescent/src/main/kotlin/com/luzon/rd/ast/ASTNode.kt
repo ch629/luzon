@@ -80,41 +80,19 @@ sealed class ASTNode {
 
         sealed class LiteralExpr : Expression() {
             companion object {
-                fun fromToken(token: Token): LiteralExpr? {
-                    return when (token.tokenEnum) {
-                        Literal.INT -> IntLiteral.fromToken(token)
-                        Literal.FLOAT -> FloatLiteral.fromToken(token)
-                        Literal.DOUBLE -> DoubleLiteral.fromToken(token)
-                        Literal.IDENTIFIER -> IdentifierLiteral.fromToken(token)
-                        else -> null
-                    }
+                fun fromToken(token: Token) = when (token.tokenEnum) {
+                    Literal.INT -> IntLiteral(token.data.toInt())
+                    Literal.FLOAT -> FloatLiteral(token.data.toFloat())
+                    Literal.DOUBLE -> DoubleLiteral(token.data.toDouble())
+                    Literal.IDENTIFIER -> IdentifierLiteral(token.data)
+                    else -> null
                 }
             }
 
-            data class IntLiteral(val value: Int) : LiteralExpr() {
-                companion object {
-                    fun fromToken(token: Token): IntLiteral = IntLiteral(token.data.toInt())
-                }
-            }
-
-            data class FloatLiteral(val value: Float) : LiteralExpr() {
-                companion object {
-                    fun fromToken(token: Token): FloatLiteral = FloatLiteral(token.data.toFloat())
-                }
-            }
-
-            data class DoubleLiteral(val value: Double) : LiteralExpr() {
-                companion object {
-                    fun fromToken(token: Token): DoubleLiteral = DoubleLiteral(token.data.toDouble())
-                }
-            }
-
-            data class IdentifierLiteral(val name: String) : LiteralExpr() {
-                companion object {
-                    fun fromToken(token: Token): IdentifierLiteral = IdentifierLiteral(token.data)
-                }
-            }
-
+            data class IntLiteral(val value: Int) : LiteralExpr()
+            data class FloatLiteral(val value: Float) : LiteralExpr()
+            data class DoubleLiteral(val value: Double) : LiteralExpr()
+            data class IdentifierLiteral(val name: String) : LiteralExpr()
             data class FunctionCall(val name: String, val params: List<Expression>) : LiteralExpr()
         }
     }
