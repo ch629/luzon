@@ -54,10 +54,9 @@ sealed class ASTNode {
 
             // TODO: Keep these separate, or use an Enum to distinguish between each? i.e. Binary(operator, left, right)
             class Plus(left: Expression? = null, right: Expression? = null) : Binary(left, right)
-
             class Sub(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class Mult(left: Expression? = null, right: Expression? = null) : Binary(left, right)
-            class Div(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+            class Div(left: Expression? = null, right: Expression? = null) : Binary(left, right) // TODO: Should I add an Integer division using \? or just always return a Double/Float which can then be rounded?
 
             class Equals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class NotEquals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
