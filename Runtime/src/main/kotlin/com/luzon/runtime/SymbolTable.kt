@@ -1,11 +1,11 @@
 package com.luzon.runtime
 
-class SymbolTable {
-    fun insert() {
+object SymbolTable {
+    fun insert(name: String, obj: Any) { // TODO: This shouldn't be Any, need to figure out what to put in there?
         TODO()
     }
 
-    fun lookup(name: String) {
+    fun lookup(name: String): Any? {
         TODO()
     }
 }

@@ -1,13 +1,15 @@
-package com.luzon.runtime
+package com.luzon.runtime.visitors
 
 import com.luzon.rd.ast.ASTNode
 import com.luzon.rd.ast.ASTNode.Expression.Binary
 import com.luzon.rd.ast.ASTNode.Expression.LiteralExpr
 import com.luzon.rd.ast.ASTNodeVisitor
 import com.luzon.rd.ast.accept
+import com.luzon.runtime.LzObject
+import com.luzon.runtime.nullObject
 
 object ExpressionVisitor : ASTNodeVisitor<LzObject> {
-    private fun accept(node: ASTNode?) = node!!.accept(this)
+    private fun accept(node: ASTNode?) = node?.accept(this) ?: nullObject // TODO: GlobalVisitor?
 
     private fun Any.isNumerical() = weight() != -1
 
@@ -80,4 +82,69 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: LiteralExpr.IntLiteral) = LzObject("Int", node.value)
     override fun visit(node: LiteralExpr.FloatLiteral) = LzObject("Float", node.value)
     override fun visit(node: LiteralExpr.DoubleLiteral) = LzObject("Double", node.value)
+    override fun visit(node: LiteralExpr.BooleanLiteral) = LzObject("Boolean", node.value)
+
+    override fun visit(node: Binary.Equals) = LzObject("Boolean", accept(node.left).value == accept(node.right).value)
+    override fun visit(node: Binary.NotEquals) = LzObject("Boolean", accept(node.left).value != accept(node.right).value)
+
+    override fun visit(node: Binary.GreaterEquals): LzObject {
+        val left = accept(node.left)
+        val right = accept(node.right)
+
+        return super.visit(node)
+    }
+
+    override fun visit(node: Binary.Greater): LzObject {
+        val left = accept(node.left)
+        val right = accept(node.right)
+
+        return super.visit(node)
+    }
+
+    override fun visit(node: Binary.Less): LzObject {
+        val left = accept(node.left)
+        val right = accept(node.right)
+
+        return super.visit(node)
+    }
+
+    override fun visit(node: Binary.LessEquals): LzObject {
+        val left = accept(node.left)
+        val right = accept(node.right)
+
+        return super.visit(node)
+    }
+
+    override fun visit(node: Binary.And): LzObject {
+        val left = accept(node.left)
+        val right = accept(node.right)
+
+        if (left.value is Boolean && right.value is Boolean)
+            return LzObject("Boolean", left.value && right.value)
+        return nullObject
+    }
+
+    override fun visit(node: Binary.Or): LzObject {
+        val left = accept(node.left)
+        val right = accept(node.right)
+
+        if (left.value is Boolean && right.value is Boolean)
+            return LzObject("Boolean", left.value || right.value)
+        return nullObject
+    }
+
+    override fun visit(node: ASTNode.Expression.Unary.Sub) = accept(node.expr).run {
+        when (value) {
+            is Int -> LzObject("Int", -value)
+            is Float -> LzObject("Float", -value)
+            is Double -> LzObject("Double", -value)
+            else -> nullObject
+        }
+    }
+
+    override fun visit(node: ASTNode.Expression.Unary.Not) = accept(node.expr).run {
+        if (value is Boolean) LzObject("Boolean", !value)
+        else nullObject
+    }
+
 }

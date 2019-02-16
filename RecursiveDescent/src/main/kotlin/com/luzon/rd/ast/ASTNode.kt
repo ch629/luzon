@@ -83,6 +83,7 @@ sealed class ASTNode {
                     Literal.INT -> IntLiteral(token.data.toInt())
                     Literal.FLOAT -> FloatLiteral(token.data.toFloat())
                     Literal.DOUBLE -> DoubleLiteral(token.data.toDouble())
+                    Literal.BOOLEAN -> BooleanLiteral(token.data.toBoolean())
                     Literal.IDENTIFIER -> IdentifierLiteral(token.data)
                     else -> null
                 }
@@ -92,6 +93,7 @@ sealed class ASTNode {
             data class FloatLiteral(val value: Float) : LiteralExpr()
             data class DoubleLiteral(val value: Double) : LiteralExpr()
             data class IdentifierLiteral(val name: String) : LiteralExpr()
+            data class BooleanLiteral(val value: Boolean) : LiteralExpr()
             data class FunctionCall(val name: String, val params: List<Expression>) : LiteralExpr()
         }
     }

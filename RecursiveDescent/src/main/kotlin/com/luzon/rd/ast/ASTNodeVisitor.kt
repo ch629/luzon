@@ -35,6 +35,7 @@ interface ASTNodeVisitor<T> {
     fun visit(node: ASTNode.Expression.LiteralExpr.FloatLiteral): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.FloatLiteral visitor not implemented.")
     fun visit(node: ASTNode.Expression.LiteralExpr.DoubleLiteral): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.DoubleLiteral visitor not implemented.")
     fun visit(node: ASTNode.Expression.LiteralExpr.IdentifierLiteral): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.IdentifierLiteral visitor not implemented.")
+    fun visit(node: ASTNode.Expression.LiteralExpr.BooleanLiteral): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.BooleanLiteral visitor not implemented.")
     fun visit(node: ASTNode.Expression.LiteralExpr.FunctionCall): T = throw NotImplementedError("ASTNode.Expression.LiteralExpr.FunctionCall visitor not implemented.")
 }
 
@@ -73,5 +74,6 @@ fun <T> ASTNode.accept(visitor: ASTNodeVisitor<T>) = when (this) {
     is ASTNode.Expression.LiteralExpr.FloatLiteral -> visitor.visit(this)
     is ASTNode.Expression.LiteralExpr.DoubleLiteral -> visitor.visit(this)
     is ASTNode.Expression.LiteralExpr.IdentifierLiteral -> visitor.visit(this)
+    is ASTNode.Expression.LiteralExpr.BooleanLiteral -> visitor.visit(this)
     is ASTNode.Expression.LiteralExpr.FunctionCall -> visitor.visit(this)
 }
