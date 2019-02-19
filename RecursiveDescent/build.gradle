@@ -1,3 +1,20 @@
 dependencies {
     compile project(":Lexer")
 }
+
+sourceSets {
+    main.kotlin.srcDirs += "src-gen/main/kotlin"
+}
+
+task generateVisitor(type: JavaExec) {
+//    apply plugin: "application"
+//    mainClassName = "com.luzon.rd.ast.VisitorGeneratorKt"
+
+    classpath sourceSets.main.runtimeClasspath
+    main = "com.luzon.rd.ast.VisitorGeneratorKt"
+    args "${projectDir}\\src-gen\\main\\kotlin"
+
+//    run {
+//        args "${projectDir}.src-gen.main.kotlin"
+//    }
+}
