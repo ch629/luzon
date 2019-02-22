@@ -37,18 +37,10 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         override fun toString() = "none"
     }
 
-    // TODO: Should I include types here, they could just be Identifiers and then used directly as so?
     enum class Keyword(val capitalize: Boolean = false) : TokenEnum {
         FOR, WHILE, IF, ELSE, WHEN, BREAK,
         VAR, VAL, FUN, CLASS, ABSTRACT, ENUM,
-        DO,
-        //        DOUBLE(true),
-//        FLOAT(true),
-//        INT(true),
-//        STRING(true),
-//        CHAR(true),
-//        BOOLEAN(true),
-        IS, AS, IN, PRIVATE;
+        DO, IS, AS, IN, PRIVATE;
 
         override fun toString() = "keyword:${id()}"
     }
@@ -71,9 +63,9 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
     }
 
     enum class Literal(val regex: String) : TokenEnum {
-        DOUBLE("-?\\d+d|\\d+\\.\\d+d?"), // TODO: Maybe remove the negative from this? Then I can just read it as an expression?
-        FLOAT("-?\\d+f|\\d+\\.\\d+f"),
-        INT("-?\\d+"),
+        DOUBLE("\\d+d|\\d+\\.\\d+d?"),
+        FLOAT("\\d+f|\\d+\\.\\d+f"),
+        INT("\\d+"),
         STRING("\".*\""),
         CHAR("'\\?.'"),
         BOOLEAN("true|false"),
@@ -88,9 +80,6 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
 
         override fun toString() = "comment:${id()}"
     }
-
-    object CustomEnum : TokenEnum
-    open class Custom : Token(CustomEnum, "") // TODO: Potentially allow Token to use type T as data, but most of these use a String?
 
     companion object {
         private fun String.replaceMetaCharacters() = replaceMetacharacters(this)

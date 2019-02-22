@@ -19,7 +19,6 @@ open class OutputFSM<A, O : Any>(states: MutableList<IState<A>> = mutableListOf(
                 .toList()
 
     fun replaceChildOutputs(output: O) = apply {
-        // TODO: This is being called but not calling replaceChildOutputs -> Check this is happening, might be outdated.
         states.forEach {
             (it as? OutputState<A, O>)?.replaceChildOutput(output)
         }
