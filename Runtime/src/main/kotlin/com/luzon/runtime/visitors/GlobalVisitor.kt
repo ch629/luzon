@@ -1,7 +1,7 @@
 package com.luzon.runtime.visitors
 
 import com.luzon.rd.ast.ASTNode
-import com.luzon.rd.ast.accept
+import com.luzon.rd.expression.accept
 import com.luzon.runtime.LzObject
 
 object GlobalVisitor {
