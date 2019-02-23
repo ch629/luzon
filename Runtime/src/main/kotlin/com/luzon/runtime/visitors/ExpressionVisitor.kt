@@ -63,11 +63,8 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         else -> nullObject
     }
 
-    override fun visit(node: Binary.Plus): LzObject {
-        val left = accept(node.left)
-        val right = accept(node.right)
-
-        return when {
+    override fun visit(node: Binary.Plus): LzObject = acceptBinary(node).run {
+        when {
             left.value.isNumerical() && right.value.isNumerical() ->
                 plus(accept(node.left).value, accept(node.right).value)
             left.value is String && right.value is String ->
@@ -99,19 +96,17 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: Binary.Less) = LzObject(LzBoolean, accept(node.left).asFloat() < accept(node.right).asFloat())
     override fun visit(node: Binary.LessEquals) = LzObject(LzBoolean, accept(node.left).asFloat() <= accept(node.right).asFloat())
 
-    override fun visit(node: Binary.And): LzObject {
-        val left = accept(node.left)
-        val right = accept(node.right)
+    private data class BinaryObjects(val left: LzObject, val right: LzObject)
 
+    private fun acceptBinary(node: Binary) = BinaryObjects(accept(node.left), accept(node.right))
+
+    override fun visit(node: Binary.And): LzObject = acceptBinary(node).run {
         if (left.value is Boolean && right.value is Boolean)
             return LzObject(LzBoolean, left.value && right.value)
         return nullObject
     }
 
-    override fun visit(node: Binary.Or): LzObject {
-        val left = accept(node.left)
-        val right = accept(node.right)
-
+    override fun visit(node: Binary.Or): LzObject = acceptBinary(node).run {
         if (left.value is Boolean && right.value is Boolean)
             return LzObject(LzBoolean, left.value || right.value)
         return nullObject
