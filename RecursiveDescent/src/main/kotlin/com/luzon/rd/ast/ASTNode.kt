@@ -73,7 +73,7 @@ sealed class ASTNode {
             class Sub(expr: Expression? = null) : Unary(expr)
             class Not(expr: Expression? = null) : Unary(expr)
 
-            class Increment(expr: Expression? = null, val pre: Boolean) : Unary(expr) // TODO: Only should work on Identifiers really?
+            class Increment(expr: Expression? = null, val pre: Boolean) : Unary(expr) // TODO: IdentifierLiteral rather than Expression
             class Decrement(expr: Expression? = null, val pre: Boolean) : Unary(expr)
         }
 

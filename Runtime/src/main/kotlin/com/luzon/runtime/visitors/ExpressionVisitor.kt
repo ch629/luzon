@@ -1,15 +1,13 @@
 package com.luzon.runtime.visitors
 
 import com.luzon.rd.ast.ASTNode
-import com.luzon.rd.ast.ASTNode.Expression.Binary
-import com.luzon.rd.ast.ASTNode.Expression.LiteralExpr
+import com.luzon.rd.ast.ASTNode.Expression.*
 import com.luzon.rd.expression.ASTNodeVisitor
 import com.luzon.rd.expression.accept
 import com.luzon.runtime.*
 
 object ExpressionVisitor : ASTNodeVisitor<LzObject> {
-    private var environment = Environment.global
-    private fun accept(node: ASTNode?) = node?.accept(this) ?: nullObject // TODO: GlobalVisitor?
+    private fun accept(node: ASTNode?) = node?.accept(this) ?: nullObject
 
     private fun Any.isNumerical() = weight() != -1
 
@@ -34,7 +32,6 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         else -> -1.0
     }
 
-    // TODO: If I can get ArrowKt working without it freezing IntelliJ, rather than else -> nullObject, I can return Left("Expected ... got ..."), or a custom error object.
     private fun subtract(left: Any, right: Any) = when (maxOf(left, right, compareBy { it.weight() })) {
         is Int -> LzObject(LzInt, left as Int - right as Int)
         is Float -> LzObject(LzFloat, left.asFloat() - right.asFloat())
@@ -82,7 +79,7 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: LiteralExpr.DoubleLiteral) = LzObject(LzDouble, node.value)
     override fun visit(node: LiteralExpr.BooleanLiteral) = LzObject(LzBoolean, node.value)
 
-    override fun visit(node: LiteralExpr.IdentifierLiteral) = environment[node.name] ?: nullObject
+    override fun visit(node: LiteralExpr.IdentifierLiteral) = EnvironmentManager[node.name] ?: nullObject
 
     override fun visit(node: Binary.Equals) = LzObject(LzBoolean, accept(node.left).value == accept(node.right).value)
     override fun visit(node: Binary.NotEquals) = LzObject(LzBoolean, accept(node.left).value != accept(node.right).value)
@@ -112,7 +109,7 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         return nullObject
     }
 
-    override fun visit(node: ASTNode.Expression.Unary.Sub) = accept(node.expr).run {
+    override fun visit(node: Unary.Sub) = accept(node.expr).run {
         when (value) {
             is Int -> LzObject(LzInt, -value)
             is Float -> LzObject(LzFloat, -value)
@@ -121,8 +118,48 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         }
     }
 
-    override fun visit(node: ASTNode.Expression.Unary.Not) = accept(node.expr).run {
+    override fun visit(node: Unary.Not) = accept(node.expr).run {
         if (value is Boolean) LzObject(LzBoolean, !value)
         else nullObject
+    }
+
+    override fun visit(node: ASTNode.OperatorVariableAssign): LzObject {
+        val (name, expr, op) = node
+        val binaryExpr = Binary.fromOperator(op, LiteralExpr.IdentifierLiteral(name), expr)
+        val obj = accept(binaryExpr)
+
+        EnvironmentManager[name] = obj // TODO: Type checking on this
+
+        return obj
+    }
+
+    private fun unaryModifier(node: Unary): LzObject {
+        val increment = node is Unary.Increment
+        val pre = (node as? Unary.Increment)?.pre ?: (node as? Unary.Decrement)?.pre ?: false
+        val exprObj = accept(node.expr)
+
+        if (node.expr is LiteralExpr.IdentifierLiteral) {
+            val newObject = if (exprObj.value.isNumerical()) {
+                when (exprObj.value) {
+                    is Int -> LzObject(LzInt, exprObj.value + if (increment) 1 else -1)
+                    is Float -> LzObject(LzFloat, exprObj.value + if (increment) 1 else -1)
+                    is Double -> LzObject(LzDouble, exprObj.value + if (increment) 1 else -1)
+                    else -> nullObject
+                }
+            } else nullObject
+
+            EnvironmentManager[(node.expr as LiteralExpr.IdentifierLiteral).name] = newObject
+
+            return if (pre) exprObj else newObject
+        }
+
+        return nullObject
+    }
+
+    override fun visit(node: Unary.Increment) = unaryModifier(node)
+    override fun visit(node: Unary.Decrement) = unaryModifier(node)
+
+    override fun visit(node: LiteralExpr.FunctionCall): LzObject {
+        TODO()
     }
 }
