@@ -8,6 +8,7 @@ sealed class ASTNode {
     data class Class(val name: String, val constructor: Constructor?, val block: Block) : ASTNode() // TODO: Maybe ClassBlock?
 
     data class Constructor(val variables: List<ConstructorVariableDeclaration>) : ASTNode() // TODO: This is the Primary Constructor
+    // TODO: Not all of these should be val/var, only if they are held within the class
     data class ConstructorVariableDeclaration(val name: String, val type: String, val constant: Boolean) : ASTNode()
 
     data class FunctionDefinition(val name: String, val parameters: List<FunctionParameter>, val returnType: String?, val block: Block) : ASTNode()

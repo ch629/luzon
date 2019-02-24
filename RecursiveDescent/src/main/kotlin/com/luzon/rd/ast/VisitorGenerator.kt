@@ -1,12 +1,10 @@
 package com.luzon.rd.ast
 
 import com.luzon.utils.indent
-import java.nio.file.Files
-import java.nio.file.Paths
 import kotlin.reflect.KClass
 
 fun main(args: Array<String>) {
-    if (args.isNotEmpty()) VisitorGenerator.generate(args[0])
+    /*if (args.isNotEmpty())*/ VisitorGenerator.generate("")
 }
 
 object VisitorGenerator {
@@ -29,15 +27,15 @@ object VisitorGenerator {
         visitorSb.appendln("}")
         acceptSb.appendln("}")
 
-        val path = Paths.get("$path\\com\\luzon\\rd\\expression\\ASTNodeVisitor.kt")
-        Files.deleteIfExists(path)
-        Files.createDirectories(path.parent)
-        Files.createFile(path)
+//        val path = Paths.get("$path\\com\\luzon\\rd\\expression\\ASTNodeVisitor.kt")
+//        Files.deleteIfExists(path)
+//        Files.createDirectories(path.parent)
+//        Files.createFile(path)
 
-        Files.write(path, visitorSb.appendln().appendln(acceptSb).toString().toByteArray())
+//        Files.write(path, visitorSb.appendln().appendln(acceptSb).toString().toByteArray())
 
-//        println(visitorSb.toString())
-//        println(acceptSb.toString())
+        println(visitorSb.toString())
+        println(acceptSb.toString())
     }
 
     private fun findNodes(clazz: KClass<*> = ASTNode::class, prefix: String = "ASTNode"): List<String> = mutableListOf<String>().apply {
