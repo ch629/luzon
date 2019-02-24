@@ -14,10 +14,10 @@ object TokenTest : Spek({
             fsm.isRunning shouldBe true
         }
 
-        it("should successfully recognize Float as a Keyword.FLOAT, and additions to that as a Literal.IDENTIFIER") {
-            fsm.accept("Float")
+        it("should successfully recognize 'for' as a Keyword.FOR, and additions to that as a Literal.IDENTIFIER") {
+            fsm.accept("for")
             fsm.isAccepting shouldBe true
-            fsm.currentOutput.firstOrNull() shouldBe Keyword.FLOAT
+            fsm.currentOutput.firstOrNull() shouldBe Keyword.FOR
 
             fsm.accept('T')
             fsm.isAccepting shouldBe true
