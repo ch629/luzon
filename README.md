@@ -1,5 +1,7 @@
 # Luzon Language
 
+[![Build Status](https://travis-ci.org/ch629/luzon.svg?branch=master)](https://travis-ci.org/ch629/luzon)
+
 This is an embedded language created in Kotlin to work with Java applications.
 I created this language for my final year project at University. 
 

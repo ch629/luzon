@@ -23,7 +23,7 @@ subprojects {
     group 'com.luzon'
     version '1.0-SNAPSHOT'
 
-    sourceCompatibility = 1.8
+    sourceCompatibility = targetCompatibility = 1.8
 
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
