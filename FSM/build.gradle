@@ -1,3 +1,5 @@
+ext.moshiVersion = "1.6.0"
+
 dependencies {
     compile project(":Utils")
 
