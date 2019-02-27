@@ -28,20 +28,29 @@ class ExpressionStreamList {
             expression.add(ExpressionToken.SymbolToken(symbol))
         } else expression.add(if (unary) ExpressionToken.UnaryOperator(symbol) else ExpressionToken.BinaryOperator(symbol))
     }
+
+    operator fun plusAssign(symbol: Token.Symbol) = add(symbol)
+    operator fun plusAssign(token: Token) = add(token)
+
+    operator fun plusAssign(exprToken: ExpressionToken) {
+        expression.add(exprToken)
+    }
 }
 
 sealed class ExpressionToken {
     class ExpressionLiteral(val token: Token) : ExpressionToken()
 
-    class BinaryOperator(val symbol: Token.Symbol) : ExpressionToken() {
+    data class DotChain(val token: ExpressionToken, val next: DotChain? = null) : ExpressionToken()
+
+    data class BinaryOperator(val symbol: Token.Symbol) : ExpressionToken() {
         fun unary() = UnaryOperator(symbol)
     }
 
-    class UnaryOperator(val symbol: Token.Symbol) : ExpressionToken()
+    data class UnaryOperator(val symbol: Token.Symbol) : ExpressionToken()
 
-    class FunctionCall(val function: Expression.LiteralExpr.FunctionCall) : ExpressionToken()
+    data class FunctionCall(val function: Expression.LiteralExpr.FunctionCall) : ExpressionToken()
 
-    class SymbolToken(val symbol: Token.Symbol) : ExpressionToken()
+    data class SymbolToken(val symbol: Token.Symbol) : ExpressionToken()
 
     companion object {
         fun fromToken(token: Token) = when (token.tokenEnum) {

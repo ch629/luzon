@@ -4,11 +4,9 @@ import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
 import com.luzon.rd.TokenRDStream
-import com.luzon.rd.ast.ASTNode
 
 internal class ExpressionRecognizer(private val rd: TokenRDStream) {
-    private var parenIndent = 0
-    private val expressionList = ExpressionStreamList()
+    private val exprList = ExpressionStreamList()
 
     companion object {
         // TODO: Increment, Decrement, etc?
@@ -19,49 +17,88 @@ internal class ExpressionRecognizer(private val rd: TokenRDStream) {
         fun recognize(tokens: TokenStream) = ExpressionRecognizer(TokenRDStream(tokens)).recognize()
     }
 
-    fun recognize() = if (expression()) expressionList.toStream() else null
+    fun recognize() = if (expression()) exprList.toStream() else null
 
-    private fun expression(): Boolean = literal() || unaryOperator() || openParen()
+    private fun expression() = grouping() || literal() || unaryOperator()
 
-    private fun literal(): Boolean = rd.accept({ it.tokenEnum is Literal }, { literal ->
-        var functionCall: ASTNode.Expression.LiteralExpr.FunctionCall? = null
+    private fun grouping(): Boolean {
+        if (rd.matchConsume(L_PAREN)) {
+            exprList += L_PAREN
 
-        if (literal.tokenEnum == Literal.IDENTIFIER && rd.matches(L_PAREN))
-            functionCall = FunctionCallParser(literal.data, rd).parse()
+            if (expression() && rd.matchConsume(R_PAREN)) {
+                exprList += R_PAREN
+                return binaryOperator() || true
+            }
+        }
 
-        if (functionCall != null) expressionList.add(functionCall)
-        else expressionList.add(literal)
-
-        binaryOperator() || closeParen() || true
-    })
-
-    // TODO: Maybe redesign this work with similarly to the precedence climbing. i.e. expect an expression, then a closeParen within openParen, rather than storing the indentation?
-    private fun openParen(): Boolean = rd.accept(L_PAREN) {
-        parenIndent++
-        expressionList.add(L_PAREN)
-
-        expression()
+        return false
     }
 
-    private fun closeParen(): Boolean = rd.matches(R_PAREN) {
-        if (parenIndent > 0) {
-            rd.consume()
-            parenIndent--
-            expressionList.add(R_PAREN)
+    private fun literal(): Boolean {
+        val literal = getLiteral()
 
-            binaryOperator() || true
-        } else false
+        if (literal != null) {
+            exprList += dotChain(literal) ?: literal
+
+            return binaryOperator() || true
+        }
+
+        return false
     }
 
-    private fun binaryOperator(): Boolean = rd.accept({ it.tokenEnum in binaryOperators }, { operator ->
-        expressionList.add(operator)
+    private fun getLiteral(): ExpressionToken? {
+        val literal = rd.accept { it.tokenEnum is Literal }
 
-        openParen() || unaryOperator() || literal()
-    })
+        if (literal != null) {
+            if (literal.tokenEnum == Literal.IDENTIFIER) {
+                if (rd.matches(L_PAREN)) {
+                    val funCall = FunctionCallParser(literal.data, rd).parse()
 
-    private fun unaryOperator(): Boolean = rd.accept({ it.tokenEnum in unaryOperators }, { operator ->
-        expressionList.add(operator, true)
+                    if (funCall != null) return ExpressionToken.FunctionCall(funCall) // TODO: else error
+                }
+            }
 
-        openParen() || literal()
-    })
+            return ExpressionToken.fromToken(literal)
+        }
+
+        return null
+    }
+
+    private fun dotChain(first: ExpressionToken? = null): ExpressionToken.DotChain? {
+        if (first != null && rd.matches(DOT))
+            return ExpressionToken.DotChain(first, dotChain())
+
+        if (rd.matchConsume(DOT)) {
+            val literal = getLiteral()
+
+            if (literal != null)
+                return ExpressionToken.DotChain(literal, dotChain())
+        }
+
+        return null
+    }
+
+    private fun binaryOperator(): Boolean {
+        val op = rd.accept { it.tokenEnum in binaryOperators }
+
+        if (op != null) {
+            exprList += op
+
+            return expression()
+        }
+
+        return false
+    }
+
+    private fun unaryOperator(): Boolean {
+        val op = rd.accept { it.tokenEnum in unaryOperators }
+
+        if (op != null) {
+            exprList.add(op, true)
+
+            return expression()
+        }
+
+        return false
+    }
 }

@@ -56,9 +56,19 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
             val literal = rd.consume() as ExpressionToken.ExpressionLiteral
 
             return Expression.LiteralExpr.fromToken(literal.token) // TODO: Error if null?
+        } else if (rd.matches { it is ExpressionToken.DotChain }) {
+            return dotChain(rd.consume() as ExpressionToken.DotChain)
         }
 
         return null
+    }
+
+    private fun dotChain(first: ExpressionToken.DotChain? = null): Expression.LiteralExpr.DotChainLiteral? {
+        return if (first != null)
+            Expression.LiteralExpr.DotChainLiteral(
+                    Expression.LiteralExpr.fromToken((first.token as ExpressionToken.ExpressionLiteral).token)!!,
+                    dotChain(first.next))
+        else null
     }
 
     private fun ExpressionToken.precedence(unary: Boolean = false) = when (tokenType) {
