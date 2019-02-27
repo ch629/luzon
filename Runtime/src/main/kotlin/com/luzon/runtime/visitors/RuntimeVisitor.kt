@@ -4,6 +4,8 @@ import com.luzon.rd.ast.ASTNode
 import com.luzon.rd.expression.ASTNodeVisitor
 import com.luzon.rd.expression.accept
 import com.luzon.runtime.EnvironmentManager
+import com.luzon.runtime.LzInt
+import com.luzon.runtime.LzObject
 
 object RuntimeVisitor : ASTNodeVisitor<Unit> {
 //    private fun accept(node: ASTNode?) = node?.accept(this)
@@ -20,9 +22,14 @@ object RuntimeVisitor : ASTNodeVisitor<Unit> {
         EnvironmentManager[name] = expr.accept(ExpressionVisitor)
     }
 
-
     override fun visit(node: ASTNode.ForLoop) {
-        TODO()
+        (node.start..node.end).forEach {
+            EnvironmentManager.newEnvironment()
+            EnvironmentManager += node.id to LzObject(LzInt, it) // This just boxes the loop in an extra environment
+
+            visit(node.block)
+            EnvironmentManager.pop()
+        }
     }
 
     override fun visit(node: ASTNode.WhileLoop) {
