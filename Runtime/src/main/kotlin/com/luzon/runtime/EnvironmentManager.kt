@@ -1,13 +1,14 @@
 package com.luzon.runtime
 
 object EnvironmentManager {
-    private var currentEnvironment = Environment.global
+    var currentEnvironment = Environment.global
+        private set
 
-    fun pop() {
+    fun pop(): Environment = currentEnvironment.apply {
         currentEnvironment = currentEnvironment.pop()
     }
 
-    fun newEnvironment() {
+    fun newEnvironment(): Environment = currentEnvironment.apply {
         currentEnvironment = currentEnvironment.newEnv()
     }
 

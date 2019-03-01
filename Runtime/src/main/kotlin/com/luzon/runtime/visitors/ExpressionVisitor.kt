@@ -162,4 +162,8 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: LiteralExpr.FunctionCall): LzObject {
         TODO()
     }
+
+    override fun visit(node: LiteralExpr.DotChainLiteral): LzObject {
+        TODO()
+    }
 }

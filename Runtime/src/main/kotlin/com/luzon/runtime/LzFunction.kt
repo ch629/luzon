@@ -1,13 +1,19 @@
 package com.luzon.runtime
 
 import com.luzon.rd.ast.ASTNode
-import com.luzon.rd.expression.accept
-import com.luzon.runtime.visitors.RuntimeVisitor
+
+interface Invokable {
+    fun invoke(environment: Environment, args: List<LzObject>): LzObject
+}
 
 data class LzFunction(val name: String, val params: List<ASTNode.FunctionParameter>, val returnType: LzType<*>?,
-                      val block: ASTNode.Block?, val onRun: (List<LzObject>) -> Unit = { block?.accept(RuntimeVisitor) }) {
-    fun invoke(args: List<LzObject>): LzObject {
-        onRun(args) // TODO: Could make return throw an exception, and catch it here
+                      val block: ASTNode.Block?) : Invokable {
+    override fun invoke(environment: Environment, args: List<LzObject>): LzObject {
+        // TODO: Check args match the params.
+
+        args.forEachIndexed { i, obj ->
+            environment += params[i].name to obj
+        }
 
         return nullObject
     }

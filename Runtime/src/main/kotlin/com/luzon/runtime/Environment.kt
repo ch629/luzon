@@ -39,4 +39,10 @@ class Environment private constructor(private val parent: Environment?) {
 
         values[name] = value
     }
+
+    fun copy(): Environment {
+        val newEnvironment = Environment(parent)
+        newEnvironment.values.putAll(values)
+        return newEnvironment
+    }
 }
