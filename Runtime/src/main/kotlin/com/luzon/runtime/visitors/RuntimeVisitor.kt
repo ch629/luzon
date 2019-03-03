@@ -8,8 +8,6 @@ import com.luzon.runtime.LzInt
 import com.luzon.runtime.LzObject
 
 object RuntimeVisitor : ASTNodeVisitor<Unit> {
-//    private fun accept(node: ASTNode?) = node?.accept(this)
-
     override fun visit(node: ASTNode.VariableDeclaration) {
         val (name, type, expr, constant) = node
 

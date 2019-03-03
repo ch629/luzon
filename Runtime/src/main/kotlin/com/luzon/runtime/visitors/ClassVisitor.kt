@@ -27,7 +27,7 @@ object ClassVisitor : ASTNodeVisitor<Any> {
     }
 
     override fun visit(node: ASTNode.Constructor) =
-            LzFunction("", node.variables.map { visit(it) }, null, ASTNode.Block(emptyList()))
+            LzFunction("", node.variables.map { visit(it) }, null, null)
 
     // TODO: Return Type? Maybe make it a String rather than LzType?
     override fun visit(node: ASTNode.FunctionDefinition) =
