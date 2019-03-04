@@ -1,15 +1,21 @@
 package com.luzon.runtime
 
-object EnvironmentManager {
-    var currentEnvironment = Environment.global
-        private set
+import java.util.*
 
-    fun pop(): Environment = currentEnvironment.apply {
-        currentEnvironment = currentEnvironment.pop()
+object EnvironmentManager {
+    private val stack = Stack<Environment>()
+
+    val currentEnvironment: Environment
+        get() = stack.peek()
+
+    fun push(environment: Environment) {
+        stack.push(environment)
     }
 
-    fun newEnvironment(): Environment = currentEnvironment.apply {
-        currentEnvironment = currentEnvironment.newEnv()
+    fun pop(): Environment = if (stack.size > 1) stack.pop() else currentEnvironment.pop()
+
+    fun newEnvironment(): Environment = currentEnvironment.newEnv().apply {
+        stack.push(this)
     }
 
     operator fun plusAssign(pair: Pair<String, LzObject>) = currentEnvironment.plusAssign(pair)
@@ -18,4 +24,10 @@ object EnvironmentManager {
     operator fun set(name: String, value: LzObject) {
         currentEnvironment[name] = value
     }
+}
+
+fun with(environment: Environment, block: () -> Unit) {
+    EnvironmentManager.push(environment)
+    block()
+    EnvironmentManager.pop()
 }

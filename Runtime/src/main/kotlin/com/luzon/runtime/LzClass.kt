@@ -17,25 +17,24 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
     }
 
     fun newInstance(args: List<LzObject>): LzObject? {
-        val environment = parentEnvironment.newEnv()
+        val environment = parentEnvironment.copy()
 
         return if (constructor.params.size == args.size) {
             constructor.invoke(environment, args)
 
-            block.nodes.filter { it !is ASTNode.FunctionDefinition }.forEach {
-                it.accept(RuntimeVisitor) // TODO: Environment?
+            // TODO: This, or use normal classes with Environment within the constructor?
+            with(environment) {
+                block.nodes.filter { it !is ASTNode.FunctionDefinition }.forEach {
+                    it.accept(RuntimeVisitor)
+                }
             }
 
-            // TODO: Should the value be Unit here?
-            primitiveObject(Unit)
+            LzObject(this, null, environment)
         } else null
     }
 
     private fun List<LzObject>.toFunctionParams(): String = joinToString(",") { it.clazz.name }
 
-    fun invokeFunction(name: String, args: List<LzObject>, environment: Environment): LzObject? {
-        val potentialFunctions = functionsMap["$name(${args.toFunctionParams()})"]
-
-        return potentialFunctions?.invoke(environment, args)
-    }
+    fun invokeFunction(name: String, args: List<LzObject>, environment: Environment) =
+            functionsMap["$name(${args.toFunctionParams()})"]?.invoke(environment, args)
 }

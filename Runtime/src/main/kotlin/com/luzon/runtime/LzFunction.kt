@@ -1,6 +1,8 @@
 package com.luzon.runtime
 
 import com.luzon.rd.ast.ASTNode
+import com.luzon.rd.expression.accept
+import com.luzon.runtime.visitors.RuntimeVisitor
 
 interface Invokable {
     fun invoke(environment: Environment, args: List<LzObject>): LzObject
@@ -12,10 +14,18 @@ data class LzFunction(val name: String, val params: List<ASTNode.FunctionParamet
     override fun invoke(environment: Environment, args: List<LzObject>): LzObject {
         // TODO: Check args match the params.
 
+        // Load arguments into the environment
+        val innerEnvironment = environment.newEnv()
         args.forEachIndexed { i, obj ->
-            environment += params[i].name to obj
+            innerEnvironment += params[i].name to obj
         }
 
+        // TODO: Or is this a good implementation, rather than using the environment as an argument for the visitors?
+        with(innerEnvironment) {
+            block.accept(RuntimeVisitor)
+        }
+
+        // TODO: Return statement, so I can return something other than a nullObject here.
         return nullObject
     }
 }
