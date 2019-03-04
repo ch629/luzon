@@ -16,7 +16,7 @@ object ClassVisitor : ASTNodeVisitor<Any> {
 
         val constructorFunction =
                 if (constructor != null) visit(constructor)
-                else LzFunction(name, emptyList(), null, null)
+                else LzFunction(name, emptyList(), null)
 
         ClassReferenceTable.classMap += name to LzClass(name, constructorFunction, processClassFunctions(block),
                 EnvironmentManager.currentEnvironment, block)
@@ -27,7 +27,7 @@ object ClassVisitor : ASTNodeVisitor<Any> {
     }
 
     override fun visit(node: ASTNode.Constructor) =
-            LzFunction("", node.variables.map { visit(it) }, null, null)
+            LzFunction("", node.variables.map { visit(it) }, null)
 
     // TODO: Return Type? Maybe make it a String rather than LzType?
     override fun visit(node: ASTNode.FunctionDefinition) =

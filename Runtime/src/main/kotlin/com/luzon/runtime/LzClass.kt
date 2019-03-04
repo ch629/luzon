@@ -4,9 +4,9 @@ import com.luzon.rd.ast.ASTNode
 import com.luzon.rd.expression.accept
 import com.luzon.runtime.visitors.RuntimeVisitor
 
-class LzClass(val name: String, val constructor: LzFunction = LzFunction(name, emptyList(), null, null),
-              functions: List<LzFunction>, val parentEnvironment: Environment = EnvironmentManager.currentEnvironment,
-              val block: ASTNode.Block) {
+open class LzClass(val name: String, val constructor: LzFunction = LzFunction(name, emptyList(), null),
+                   functions: List<LzFunction> = emptyList(), val parentEnvironment: Environment = EnvironmentManager.currentEnvironment,
+                   val block: ASTNode.Block = ASTNode.Block(emptyList())) {
     private val functionsMap = hashMapOf<String, LzFunction>()
 
     init {
