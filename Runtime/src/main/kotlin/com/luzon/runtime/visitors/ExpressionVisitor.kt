@@ -9,12 +9,6 @@ import com.luzon.runtime.LzObject
 import com.luzon.runtime.nullObject
 import com.luzon.runtime.primitiveObject
 
-fun main() {
-    val a = ASTNode.Expression.Binary.Plus(ASTNode.Expression.LiteralExpr.IntLiteral(5), ASTNode.Expression.LiteralExpr.IntLiteral(4))
-    val b = a.accept(ExpressionVisitor)
-    val i = 0
-}
-
 object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     private fun accept(node: ASTNode?) = node?.accept(this) ?: nullObject
 
