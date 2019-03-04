@@ -34,7 +34,7 @@ class Environment private constructor(private val parent: Environment?) {
     fun setValue(name: String, value: LzObject) {
         if (!values.contains(name))
             return // TODO: Error -> Doesn't exist
-        if (values[name]!!.type != value.type) // TODO: Custom Types, Constants, Subclass
+        if (values[name]!!.clazz.name != value.clazz.name) // TODO: Custom Types, Constants, Subclass
             return // TODO: Error -> Wrong Type
 
         values[name] = value

@@ -27,11 +27,11 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
             }
 
             // TODO: Should the value be Unit here?
-            LzObject(LzCustomType(name), Unit, environment)
+            primitiveObject(Unit)
         } else null
     }
 
-    private fun List<LzObject>.toFunctionParams(): String = joinToString(",") { it.type.type.simpleName!! }
+    private fun List<LzObject>.toFunctionParams(): String = joinToString(",") { it.clazz.name }
 
     fun invokeFunction(name: String, args: List<LzObject>, environment: Environment): LzObject? {
         val potentialFunctions = functionsMap["$name(${args.toFunctionParams()})"]

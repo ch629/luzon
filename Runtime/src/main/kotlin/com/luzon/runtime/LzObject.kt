@@ -1,9 +1,9 @@
 package com.luzon.runtime
 
-// TODO: Maybe make a class to hold the type, so we can implement primitives directly, then have one for CustomType where the implemented ones will be stored?
-data class LzObject(val type: LzType<*>, val value: Any, val environment: Environment = EnvironmentManager.currentEnvironment) {
-    // TODO: Or default Global?
+fun primitiveObject(value: Any?) = LzObject(clazz = LzClass("PRIMITIVE"), value = value)
+
+data class LzObject(val clazz: LzClass, val value: Any? = null, val environment: Environment = Environment.global) {
     operator fun get(name: String) = environment[name]
 }
 
-val nullObject = LzObject(LzNullType, Unit)
+val nullObject = primitiveObject(null) // TODO: Or Unit?
