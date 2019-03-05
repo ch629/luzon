@@ -30,6 +30,7 @@ object ClassVisitor : ASTNodeVisitor<Any> {
             LzFunction("", node.variables.map { visit(it) }, null)
 
     // TODO: Return Type? Maybe make it a String rather than LzType?
+    // TODO: Also register the function in the environment.
     override fun visit(node: ASTNode.FunctionDefinition) =
             LzFunction(node.name, node.parameters, null, node.block)
 

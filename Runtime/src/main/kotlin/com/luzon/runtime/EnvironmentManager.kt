@@ -8,6 +8,10 @@ object EnvironmentManager {
     val currentEnvironment: Environment
         get() = stack.peek()
 
+    init {
+        stack.push(Environment.global)
+    }
+
     fun push(environment: Environment) {
         stack.push(environment)
     }
