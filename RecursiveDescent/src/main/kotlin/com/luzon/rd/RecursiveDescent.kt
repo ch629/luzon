@@ -52,6 +52,12 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
+    private fun returnStatement(): ASTNode? {
+        return if (rd.matchConsume(Keyword.RETURN))
+            ASTNode.Return(expression())
+        else null
+    }
+
     // class <name>(<params>): <type> { }
     private fun classDefinition(): ASTNode? {
         fun parameterList(): List<ASTNode.ConstructorVariableDeclaration> {
@@ -123,8 +129,8 @@ class RecursiveDescent(val rd: TokenRDStream) {
     private fun classStatement() = acceptAny(::statement)
 
     // statements accepted within functions
-    // return, loops, if // TODO: Return statement
-    private fun functionStatement() = acceptAny(::statement, ::variableAssign, ::forLoop, ::whileLoop, ::doWhileLoop, ::ifStatement)
+    // return, loops, if
+    private fun functionStatement() = acceptAny(::statement, ::variableAssign, ::forLoop, ::whileLoop, ::doWhileLoop, ::ifStatement, ::returnStatement)
 
     // statements accepted anywhere
     // variables, function def, class def?

@@ -19,6 +19,8 @@ sealed class ASTNode {
 
     data class IfStatement(val expr: Expression, val block: Block, val elseStatement: ElseStatements?) : ASTNode()
 
+    data class Return(val data: Expression?) : ASTNode()
+
     sealed class ElseStatements : ASTNode() {
         data class ElseIfStatement(val ifStatement: IfStatement) : ElseStatements()
         data class ElseStatement(val block: Block) : ElseStatements()

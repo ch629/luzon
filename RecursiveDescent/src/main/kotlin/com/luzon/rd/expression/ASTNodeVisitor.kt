@@ -11,6 +11,7 @@ interface ASTNodeVisitor<T> {
     fun visit(node: ASTNode.ForLoop): T = throw NotImplementedError("ASTNode.ForLoop visitor not implemented.")
     fun visit(node: ASTNode.WhileLoop): T = throw NotImplementedError("ASTNode.WhileLoop visitor not implemented.")
     fun visit(node: ASTNode.IfStatement): T = throw NotImplementedError("ASTNode.IfStatement visitor not implemented.")
+    fun visit(node: ASTNode.Return): T = throw NotImplementedError("ASTNode.Return visitor not implemented.")
     fun visit(node: ASTNode.ElseStatements.ElseIfStatement): T = throw NotImplementedError("ASTNode.ElseStatements.ElseIfStatement visitor not implemented.")
     fun visit(node: ASTNode.ElseStatements.ElseStatement): T = throw NotImplementedError("ASTNode.ElseStatements.ElseStatement visitor not implemented.")
     fun visit(node: ASTNode.VariableDeclaration): T = throw NotImplementedError("ASTNode.VariableDeclaration visitor not implemented.")
@@ -51,6 +52,7 @@ fun <T> ASTNode.accept(visitor: ASTNodeVisitor<T>) = when (this) {
     is ASTNode.ForLoop -> visitor.visit(this)
     is ASTNode.WhileLoop -> visitor.visit(this)
     is ASTNode.IfStatement -> visitor.visit(this)
+    is ASTNode.Return -> visitor.visit(this)
     is ASTNode.ElseStatements.ElseIfStatement -> visitor.visit(this)
     is ASTNode.ElseStatements.ElseStatement -> visitor.visit(this)
     is ASTNode.VariableDeclaration -> visitor.visit(this)
@@ -80,4 +82,5 @@ fun <T> ASTNode.accept(visitor: ASTNodeVisitor<T>) = when (this) {
     is ASTNode.Expression.LiteralExpr.BooleanLiteral -> visitor.visit(this)
     is ASTNode.Expression.LiteralExpr.FunctionCall -> visitor.visit(this)
     is ASTNode.Expression.LiteralExpr.DotChainLiteral -> visitor.visit(this)
+    else -> throw NotImplementedError("Hit else when accepting an ASTNode.")
 }

@@ -26,6 +26,12 @@ object EnvironmentManager {
     }
 }
 
+fun withNewEnvironment(block: () -> Unit) {
+    EnvironmentManager.newEnvironment()
+    block()
+    EnvironmentManager.pop()
+}
+
 fun with(environment: Environment, block: () -> Unit) {
     EnvironmentManager.push(environment)
     block()

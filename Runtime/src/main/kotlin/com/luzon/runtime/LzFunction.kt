@@ -13,19 +13,21 @@ data class LzFunction(val name: String, val params: List<ASTNode.FunctionParamet
                       val block: ASTNode.Block = ASTNode.Block(emptyList())) : Invokable {
     override fun invoke(environment: Environment, args: List<LzObject>): LzObject {
         // TODO: Check args match the params.
+        var returnObject: LzObject? = null
 
         // Load arguments into the environment
-        val innerEnvironment = environment.newEnv()
-        args.forEachIndexed { i, obj ->
-            innerEnvironment += params[i].name to obj
+        with(environment.newEnv()) {
+            args.forEachIndexed { i, obj ->
+                EnvironmentManager += params[i].name to obj
+            }
+
+            try {
+                block.accept(RuntimeVisitor)
+            } catch (ret: Return) {
+                returnObject = ret.data
+            }
         }
 
-        // TODO: Or is this a good implementation, rather than using the environment as an argument for the visitors?
-        with(innerEnvironment) {
-            block.accept(RuntimeVisitor)
-        }
-
-        // TODO: Return statement, so I can return something other than a nullObject here.
-        return nullObject
+        return returnObject ?: nullObject
     }
 }

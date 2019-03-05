@@ -4,6 +4,7 @@ import com.luzon.rd.ast.ASTNode
 import com.luzon.rd.expression.ASTNodeVisitor
 import com.luzon.rd.expression.accept
 import com.luzon.runtime.EnvironmentManager
+import com.luzon.runtime.Return
 import com.luzon.runtime.primitiveObject
 
 object RuntimeVisitor : ASTNodeVisitor<Unit> {
@@ -52,16 +53,25 @@ object RuntimeVisitor : ASTNodeVisitor<Unit> {
         node.block.accept(this)
     }
 
+    @Throws(Return::class)
     override fun visit(node: ASTNode.Block) {
         EnvironmentManager.newEnvironment()
 
         node.nodes.forEach {
-            when (it) {
-                is ASTNode.Expression -> it.accept(ExpressionVisitor)
-                else -> it.accept(this)
+            try {
+                when (it) {
+                    is ASTNode.Expression -> it.accept(ExpressionVisitor)
+                    else -> it.accept(this)
+                }
+            } catch (ret: Return) {
+                EnvironmentManager.pop()
+                throw ret
             }
         }
 
         EnvironmentManager.pop()
     }
+
+    @Throws(Return::class)
+    override fun visit(node: ASTNode.Return) = throw Return(node.data?.accept(ExpressionVisitor))
 }

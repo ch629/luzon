@@ -3,8 +3,8 @@ package com.luzon.rd.ast
 import com.luzon.utils.indent
 import kotlin.reflect.KClass
 
-fun main(args: Array<String>) {
-    /*if (args.isNotEmpty())*/ VisitorGenerator.generate("")
+fun main() {
+    VisitorGenerator.generate("")
 }
 
 object VisitorGenerator {
@@ -23,6 +23,8 @@ object VisitorGenerator {
             visitorSb.indent().appendln("fun visit(node: $line): T = throw NotImplementedError(\"$line visitor not implemented.\")")
             acceptSb.indent().appendln("is $line -> visitor.visit(this)")
         }
+
+        acceptSb.indent().appendln("else -> throw NotImplementedError(\"Hit else when accepting an ASTNode.\")")
 
         visitorSb.appendln("}")
         acceptSb.appendln("}")
