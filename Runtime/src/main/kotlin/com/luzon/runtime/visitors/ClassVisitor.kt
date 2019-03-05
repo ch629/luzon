@@ -2,15 +2,12 @@ package com.luzon.runtime.visitors
 
 import com.luzon.rd.ast.ASTNode
 import com.luzon.rd.expression.ASTNodeVisitor
-import com.luzon.rd.expression.accept
-import com.luzon.runtime.*
+import com.luzon.runtime.ClassReferenceTable
+import com.luzon.runtime.EnvironmentManager
+import com.luzon.runtime.LzClass
+import com.luzon.runtime.LzFunction
 
 object ClassVisitor : ASTNodeVisitor<Any> {
-    private fun accept(node: ASTNode?) {
-        if (node is ASTNode.Expression) node.accept(ExpressionVisitor)
-        else node?.accept(this)
-    }
-
     override fun visit(node: ASTNode.Class) {
         val (name, constructor, block) = node
 
@@ -37,17 +34,5 @@ object ClassVisitor : ASTNodeVisitor<Any> {
     // TODO: Secondary Constructors
     private fun processClassFunctions(node: ASTNode.Block) = node.nodes.filter { it is ASTNode.FunctionDefinition }.map {
         visit(it as ASTNode.FunctionDefinition)
-    }
-
-    // TODO: The problem with this implementation, is that they may use functions from this class or others before they are added.
-    private fun processClassVariables(block: ASTNode.Block): Environment {
-        EnvironmentManager.newEnvironment()
-
-        block.nodes.filter { it is ASTNode.VariableDeclaration }.forEach {
-            it as ASTNode.VariableDeclaration
-            EnvironmentManager += it.name to it.expr.accept(ExpressionVisitor)
-        }
-
-        return EnvironmentManager.pop()
     }
 }

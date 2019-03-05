@@ -6,10 +6,11 @@ import com.luzon.rd.expression.accept
 import com.luzon.runtime.EnvironmentManager
 import com.luzon.runtime.Return
 import com.luzon.runtime.primitiveObject
+import com.luzon.runtime.withNewEnvironment
 
 object RuntimeVisitor : ASTNodeVisitor<Unit> {
     override fun visit(node: ASTNode.VariableDeclaration) {
-        val (name, type, expr, constant) = node
+        val (name, _, expr, _) = node
 
         EnvironmentManager += name to expr.accept(ExpressionVisitor)
     }
@@ -22,11 +23,12 @@ object RuntimeVisitor : ASTNodeVisitor<Unit> {
 
     override fun visit(node: ASTNode.ForLoop) {
         (node.start..node.end).forEach {
-            EnvironmentManager.newEnvironment()
-            EnvironmentManager += node.id to primitiveObject(it) // This just boxes the loop in an extra environment
+            // This just boxes the loop in an extra environment
+            withNewEnvironment {
+                EnvironmentManager += node.id to primitiveObject(it)
 
-            visit(node.block)
-            EnvironmentManager.pop()
+                visit(node.block)
+            }
         }
     }
 

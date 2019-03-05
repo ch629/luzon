@@ -5,7 +5,7 @@ import com.luzon.rd.expression.accept
 import com.luzon.runtime.visitors.RuntimeVisitor
 
 interface Invokable {
-    fun invoke(environment: Environment, args: List<LzObject>): LzObject
+    operator fun invoke(environment: Environment, args: List<LzObject>): LzObject
 }
 
 // TODO: This probably shouldn't use the FunctionParameter type, as I won't be able to check subtypes, and it only stores the type as a String which is not ideal

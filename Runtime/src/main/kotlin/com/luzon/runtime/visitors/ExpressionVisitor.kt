@@ -4,10 +4,7 @@ import com.luzon.rd.ast.ASTNode
 import com.luzon.rd.ast.ASTNode.Expression.*
 import com.luzon.rd.expression.ASTNodeVisitor
 import com.luzon.rd.expression.accept
-import com.luzon.runtime.EnvironmentManager
-import com.luzon.runtime.LzObject
-import com.luzon.runtime.nullObject
-import com.luzon.runtime.primitiveObject
+import com.luzon.runtime.*
 
 object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     private fun accept(node: ASTNode?) = node?.accept(this) ?: nullObject
@@ -167,7 +164,10 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: Unary.Decrement) = unaryModifier(node)
 
     override fun visit(node: LiteralExpr.FunctionCall): LzObject {
-        TODO()
+        val params = node.params.map { it.accept(ExpressionVisitor) }
+
+        // TODO: For now just using the Global manager, but in future I need to load a set of functions from the DotChainLiteral call, alongside the current class function list
+        return GlobalFunctionManager(node.name, params) ?: nullObject
     }
 
     override fun visit(node: LiteralExpr.DotChainLiteral): LzObject {
