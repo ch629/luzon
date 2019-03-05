@@ -57,19 +57,18 @@ object RuntimeVisitor : ASTNodeVisitor<Unit> {
     override fun visit(node: ASTNode.Block) {
         EnvironmentManager.newEnvironment()
 
-        node.nodes.forEach {
-            try {
+        try {
+            node.nodes.forEach {
                 when (it) {
                     is ASTNode.Expression -> it.accept(ExpressionVisitor)
                     else -> it.accept(this)
                 }
-            } catch (ret: Return) {
-                EnvironmentManager.pop()
-                throw ret
             }
+        } catch (ret: Return) {
+            throw ret
+        } finally {
+            EnvironmentManager.pop()
         }
-
-        EnvironmentManager.pop()
     }
 
     @Throws(Return::class)
