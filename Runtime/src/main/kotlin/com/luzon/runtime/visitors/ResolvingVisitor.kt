@@ -13,8 +13,7 @@ object ResolvingVisitor : ASTNodeVisitor<Unit> {
 
     override fun visit(node: ASTNode.Class) {
         // TODO: Constructor to LzFunction
-        ClassReferenceTable.classMap += node.name to
-                LzClass(name = node.name, functions = emptyList(), block = node.block)
+        ClassReferenceTable += LzClass(name = node.name, functions = emptyList(), block = node.block)
 
         val constructor = accept(node.constructor)
         val block = accept(node.block)

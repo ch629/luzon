@@ -15,11 +15,12 @@ object ClassVisitor : ASTNodeVisitor<Any> {
                 if (constructor != null) visit(constructor)
                 else LzFunction(name, emptyList(), null)
 
-        ClassReferenceTable.classMap += name to LzClass(name, constructorFunction, processClassFunctions(block),
+        ClassReferenceTable += LzClass(name, constructorFunction, processClassFunctions(block),
                 EnvironmentManager.currentEnvironment, block)
     }
 
-    override fun visit(node: ASTNode.ConstructorVariableDeclaration) = ASTNode.FunctionParameter(node.name, node.type)
+    override fun visit(node: ASTNode.ConstructorVariableDeclaration) =
+            ASTNode.FunctionParameter(node.name, node.type)
 
     override fun visit(node: ASTNode.Constructor) =
             LzFunction("", node.variables.map { visit(it) }, null)

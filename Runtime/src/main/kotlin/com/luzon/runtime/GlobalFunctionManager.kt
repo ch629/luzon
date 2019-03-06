@@ -5,14 +5,19 @@ object GlobalFunctionManager {
 
     fun invokeFunction(name: String, args: List<LzObject>): LzObject? {
         // TODO: Should this environment be global?
-        return functions[getFunctionMapName(name, args)]?.invoke(Environment.global, args)
+        return functions[LzFunction.getFunctionSignature(name, args)]?.invoke(Environment.global, args)
+    }
+
+    fun registerFunction(function: LzFunction) {
+        functions += function.getSignatureString() to function
+        println(function.getSignatureString())
     }
 
     fun registerFunction(name: String, function: LzFunction) {
-        functions += function.params.toFunctionMapName(name) to function
+        functions += name to function
     }
 
-    operator fun plusAssign(pair: Pair<String, LzFunction>) = registerFunction(pair.first, pair.second)
-    operator fun set(name: String, func: LzFunction) = registerFunction(name, func)
+    operator fun plusAssign(func: LzFunction) = registerFunction(func)
+    operator fun set(name: String, func: LzFunction) = registerFunction(name, func) // TODO: Do I need this one?
     operator fun invoke(name: String, args: List<LzObject>) = invokeFunction(name, args)
 }

@@ -11,11 +11,11 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
 
     init {
         functions.forEach {
-            functionsMap += it.params.toFunctionMapName(it.name) to it
+            functionsMap += it.getSignatureString() to it
         }
 
         // Register the constructor as a global function
-        GlobalFunctionManager[constructor.params.toFunctionMapName(name)] = constructor
+        GlobalFunctionManager += constructor
     }
 
     fun newInstance(args: List<LzObject>): LzObject? {
@@ -36,10 +36,5 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
     }
 
     fun invokeFunction(name: String, args: List<LzObject>, environment: Environment) =
-            functionsMap[getFunctionMapName(name, args)]?.invoke(environment, args)
+            functionsMap[LzFunction.getFunctionSignature(name, args)]?.invoke(environment, args)
 }
-
-internal fun List<LzObject>.toFunctionParams(): String = joinToString(",") { it.clazz.name }
-internal fun getFunctionMapName(name: String, args: List<LzObject>) = "$name(${args.toFunctionParams()})"
-internal fun List<ASTNode.FunctionParameter>.toFunctionMapName(name: String) =
-        "$name(${joinToString(",") { it.type }})"

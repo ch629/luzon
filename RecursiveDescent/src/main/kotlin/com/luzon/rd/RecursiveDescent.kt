@@ -130,7 +130,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
 
     // statements accepted within functions
     // return, loops, if
-    private fun functionStatement() = acceptAny(::statement, ::variableAssign, ::forLoop, ::whileLoop, ::doWhileLoop, ::ifStatement, ::returnStatement)
+    private fun functionStatement() = acceptAny(::variableAssign, ::forLoop, ::whileLoop, ::doWhileLoop, ::ifStatement, ::returnStatement, ::statement)
 
     // statements accepted anywhere
     // variables, function def, class def?

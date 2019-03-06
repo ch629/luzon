@@ -1,7 +1,8 @@
 package com.luzon.runtime
 
 class Environment private constructor(private val parent: Environment?) {
-    private val values: HashMap<String, LzObject> = hashMapOf()
+    private val values = hashMapOf<String, LzObject>()
+    private val functions = hashMapOf<String, LzFunction>()
 
     companion object {
         val global = Environment(null)
@@ -15,11 +16,20 @@ class Environment private constructor(private val parent: Environment?) {
         else -> null
     }
 
+    fun invokeFunction(name: String, args: List<LzObject>) =
+            functions[LzFunction.getFunctionSignature(name, args)]?.invoke(this, args)
+
     operator fun get(name: String) = findValue(name)
     operator fun set(name: String, value: LzObject) = setValue(name, value)
 
     operator fun plusAssign(pair: Pair<String, LzObject>) {
         defineValue(pair.first, pair.second)
+    }
+
+    operator fun plusAssign(function: LzFunction) = defineFunction(function)
+
+    fun defineFunction(function: LzFunction) {
+        functions += function.getSignatureString() to function
     }
 
     fun newEnv() = Environment(this)
