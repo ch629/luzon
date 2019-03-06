@@ -19,9 +19,7 @@ object ClassVisitor : ASTNodeVisitor<Any> {
                 EnvironmentManager.currentEnvironment, block)
     }
 
-    override fun visit(node: ASTNode.ConstructorVariableDeclaration): ASTNode.FunctionParameter {
-        TODO()
-    }
+    override fun visit(node: ASTNode.ConstructorVariableDeclaration) = ASTNode.FunctionParameter(node.name, node.type)
 
     override fun visit(node: ASTNode.Constructor) =
             LzFunction("", node.variables.map { visit(it) }, null)
