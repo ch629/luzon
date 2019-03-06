@@ -23,7 +23,9 @@ object EnvironmentManager {
     }
 
     operator fun plusAssign(pair: Pair<String, LzObject>) = currentEnvironment.plusAssign(pair)
+    operator fun plusAssign(func: LzFunction) = currentEnvironment.plusAssign(func)
     operator fun get(name: String) = currentEnvironment[name]
+    operator fun invoke(name: String, args: List<LzObject>) = currentEnvironment.invokeFunction(name, args)
 
     operator fun set(name: String, value: LzObject) {
         currentEnvironment[name] = value
@@ -36,7 +38,7 @@ fun withNewEnvironment(block: () -> Unit) {
     EnvironmentManager.pop()
 }
 
-fun with(environment: Environment, block: () -> Unit) {
+fun withEnvironment(environment: Environment, block: () -> Unit) {
     EnvironmentManager.push(environment)
     block()
     EnvironmentManager.pop()

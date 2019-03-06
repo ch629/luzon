@@ -66,7 +66,8 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
     private fun dotChain(first: ExpressionToken.DotChain? = null): Expression.LiteralExpr.DotChainLiteral? {
         return if (first != null)
             Expression.LiteralExpr.DotChainLiteral(
-                    Expression.LiteralExpr.fromToken((first.token as ExpressionToken.ExpressionLiteral).token)!!,
+                    if (first.token is ExpressionToken.ExpressionLiteral) Expression.LiteralExpr.fromToken(first.token.token)!!
+                    else (first.token as ExpressionToken.FunctionCall).function,
                     dotChain(first.next))
         else null
     }

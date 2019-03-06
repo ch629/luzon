@@ -16,14 +16,20 @@ class Tokenizer(text: String) : StringScanner(text) {
         fun fromFile(file: String) = Tokenizer(Files.readAllLines(Paths.get(file)).joinToString("\n"))
     }
 
+    private fun findNextToken(): Token? {
+        while (peek() in skipChars && isNotAtEnd()) advance()
+        return if (isAtEnd()) null
+        else {
+            val token = tokenizerHelper.findNextToken()
+
+            return if (token.tokenEnum is Token.Comment) findNextToken() else token
+        }
+    }
+
     fun findTokens(): TokenStream {
         tokenizerHelper.reset()
 
-        return generateSequence {
-            while (peek() in skipChars && isNotAtEnd()) advance()
-            if (isAtEnd()) null
-            else tokenizerHelper.findNextToken()
-        }
+        return generateSequence { findNextToken() }
     }
 
     fun tokensAsString() = findTokens().joinToString(" ")

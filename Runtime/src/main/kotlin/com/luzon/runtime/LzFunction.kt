@@ -21,7 +21,7 @@ data class LzFunction(val name: String, val params: List<ASTNode.FunctionParamet
         var returnObject: LzObject? = null
 
         // Load arguments into the environment
-        with(environment.newEnv()) {
+        withEnvironment(environment.newEnv()) {
             args.forEachIndexed { i, obj ->
                 EnvironmentManager += params[i].name to obj
             }

@@ -99,7 +99,7 @@ sealed class ASTNode {
             data class BooleanLiteral(val value: Boolean) : LiteralExpr()
             data class FunctionCall(val name: String, val params: List<Expression>) : LiteralExpr()
 
-            data class DotChainLiteral(val value: LiteralExpr, val next: DotChainLiteral? = null) : LiteralExpr()
+            data class DotChainLiteral(val value: Expression, val next: DotChainLiteral? = null) : LiteralExpr()
         }
     }
 }

@@ -166,11 +166,19 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: LiteralExpr.FunctionCall): LzObject {
         val params = node.params.map { it.accept(ExpressionVisitor) }
 
-        // TODO: For now just using the Global manager, but in future I need to load a set of functions from the DotChainLiteral call, alongside the current class function list
-        return GlobalFunctionManager(node.name, params) ?: nullObject
+        return EnvironmentManager(node.name, params) ?: nullObject
     }
 
     override fun visit(node: LiteralExpr.DotChainLiteral): LzObject {
-        TODO()
+        val valueObject = node.value.accept(ExpressionVisitor)
+
+        var last: LzObject = nullObject
+
+        withEnvironment(valueObject.environment) {
+            if (node.next != null)
+                last = node.next!!.accept(ExpressionVisitor)
+        }
+
+        return last
     }
 }

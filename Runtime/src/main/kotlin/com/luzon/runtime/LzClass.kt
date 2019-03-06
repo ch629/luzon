@@ -15,7 +15,7 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
         }
 
         // Register the constructor as a global function
-        GlobalFunctionManager += constructor
+        Environment.global.defineFunction(constructor)
     }
 
     fun newInstance(args: List<LzObject>): LzObject? {
@@ -25,7 +25,12 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
             constructor.invoke(environment, args)
 
             // TODO: This, or use normal classes with Environment within the constructor?
-            with(environment) {
+            withEnvironment(environment) {
+                // Load functions into the environment
+                functionsMap.values.forEach {
+                    environment += it
+                }
+
                 block.nodes.filter { it !is ASTNode.FunctionDefinition }.forEach {
                     it.accept(RuntimeVisitor)
                 }

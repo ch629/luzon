@@ -11,13 +11,19 @@ class Environment private constructor(private val parent: Environment?) {
     fun isGlobal() = parent == null
 
     fun findValue(name: String): LzObject? = when {
-        values.containsKey(name) -> values[name]!!
+        values.containsKey(name) -> values[name]
         parent != null -> parent.findValue(name)
         else -> null
     }
 
+    fun findFunction(signature: String): LzFunction? = when {
+        functions.containsKey(signature) -> functions[signature]
+        parent != null -> parent.findFunction(signature)
+        else -> null
+    }
+
     fun invokeFunction(name: String, args: List<LzObject>) =
-            functions[LzFunction.getFunctionSignature(name, args)]?.invoke(this, args)
+            findFunction(LzFunction.getFunctionSignature(name, args))?.invoke(this, args)
 
     operator fun get(name: String) = findValue(name)
     operator fun set(name: String, value: LzObject) = setValue(name, value)
@@ -28,6 +34,7 @@ class Environment private constructor(private val parent: Environment?) {
 
     operator fun plusAssign(function: LzFunction) = defineFunction(function)
 
+    // TODO: This is a fine solution for now, but it will be better to hold the classes and find the functions within them using the current environment
     fun defineFunction(function: LzFunction) {
         functions += function.getSignatureString() to function
     }
@@ -42,12 +49,11 @@ class Environment private constructor(private val parent: Environment?) {
     }
 
     fun setValue(name: String, value: LzObject) {
-        if (!values.contains(name))
-            return // TODO: Error -> Doesn't exist
-        if (values[name]!!.clazz.name != value.clazz.name) // TODO: Custom Types, Constants, Subclass
-            return // TODO: Error -> Wrong Type
-
-        values[name] = value
+        when {
+            values.contains(name) -> values[name] = value
+            parent != null -> parent.setValue(name, value)
+            else -> return // TODO: Value doesn't exist
+        }
     }
 
     fun copy(): Environment {
