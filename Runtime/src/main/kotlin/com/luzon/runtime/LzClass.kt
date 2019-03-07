@@ -15,11 +15,16 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
         }
 
         // Register the constructor as a global function
-        Environment.global.defineFunction(constructor)
+        Environment.global.defineFunction(LzCodeFunction(constructor.name, constructor.params, constructor.returnType) { _, args ->
+            newInstance(args) ?: nullObject
+        })
+
+//        Environment.global.defineFunction(constructor)
     }
 
     fun newInstance(args: List<LzObject>): LzObject? {
-        val environment = parentEnvironment.copy()
+//        val environment = parentEnvironment.copy()
+        val environment = parentEnvironment.newEnv()
 
         return if (constructor.params.size == args.size) {
             constructor.invoke(environment, args)

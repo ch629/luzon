@@ -170,13 +170,12 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     }
 
     override fun visit(node: LiteralExpr.DotChainLiteral): LzObject {
-        val valueObject = node.value.accept(ExpressionVisitor)
+        var last: LzObject = node.value.accept(ExpressionVisitor)
 
-        var last: LzObject = nullObject
-
-        withEnvironment(valueObject.environment) {
-            if (node.next != null)
-                last = node.next!!.accept(ExpressionVisitor)
+        if (node.next != null) {
+            withEnvironment(last.environment) {
+                last = visit(node.next!!)
+            }
         }
 
         return last
