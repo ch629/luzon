@@ -60,8 +60,8 @@ private val examples = arrayOf(
                         Literal.IDENTIFIER to "c",
                         Symbol.EQUAL,
                         Literal.STRING to "\"test\"",
-                        Comment.COMMENT_MULTI,
-                        Comment.COMMENT_SINGLE,
+//                        Comment.COMMENT_MULTI,
+//                        Comment.COMMENT_SINGLE,
                         Symbol.R_BRACE,
                         Symbol.R_BRACE
                 )
