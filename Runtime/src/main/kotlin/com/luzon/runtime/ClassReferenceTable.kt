@@ -7,4 +7,8 @@ object ClassReferenceTable {
     operator fun plusAssign(clazz: LzClass) {
         classMap += clazz.name to clazz
     }
+
+    fun reset() {
+        classMap.clear()
+    }
 }

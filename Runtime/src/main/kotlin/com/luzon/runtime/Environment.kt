@@ -8,6 +8,11 @@ class Environment private constructor(private val parent: Environment?) {
         val global = Environment(null)
     }
 
+    fun reset() {
+        values.clear()
+        functions.clear()
+    }
+
     fun isGlobal() = parent == null
 
     fun findValue(name: String): LzObject? = when {

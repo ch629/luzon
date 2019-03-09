@@ -32,7 +32,7 @@ class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean =
             FSM(initialStates + other.initialStates, false)
 
     fun reset() {
-        states = initialStates // TODO: Check to make sure nothing changes the initial states
+        states = initialStates
     }
 
     fun replaceChildOutputs(value: O?) = apply {
