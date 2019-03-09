@@ -1,6 +1,6 @@
-import com.luzon.fsm.IFsm
+import com.luzon.fsm.FSM
 
-fun IFsm<Char>.accept(input: String) {
+fun FSM<Char, Int>.accept(input: String) {
     input.forEach {
         accept(it)
     }

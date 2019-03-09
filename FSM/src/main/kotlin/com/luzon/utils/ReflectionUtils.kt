@@ -1,38 +1,38 @@
 package com.luzon.utils
 
-import com.luzon.fsm.OutputFSM
-import com.luzon.fsm.OutputState
+import com.luzon.fsm.FSM
+import com.luzon.fsm.State
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.isSubclassOf
 
-fun KClass<*>.constructorsToFSM(): OutputFSM<KClass<*>, KFunction<KClass<*>>> {
-    val root = OutputState<KClass<*>, KFunction<KClass<*>>>()
+fun KClass<*>.constructorsToFSM(): FSM<KClass<*>, KFunction<KClass<*>>> {
+    val root = State<KClass<*>, KFunction<KClass<*>>>()
     var pointer = root
 
     constructors.forEach { con ->
         con.parameters.forEach { param ->
-            val newState = OutputState<KClass<*>, KFunction<KClass<*>>>()
+            val newState = State<KClass<*>, KFunction<KClass<*>>>()
 
             pointer.addTransition({ it.isSubclassOf(param.type.classifier as KClass<*>) }, newState)
             pointer = newState
         }
 
-        pointer.output = con as KFunction<KClass<*>>
+        pointer.accepting = con as KFunction<KClass<*>>
         pointer = root
     }
 
-    return OutputFSM(root)
+    return FSM(listOf(root))
 }
 
-private val constructorFSMCache = hashMapOf<KClass<*>, OutputFSM<KClass<*>, KFunction<KClass<*>>>>()
+private val constructorFSMCache = hashMapOf<KClass<*>, FSM<KClass<*>, KFunction<KClass<*>>>>()
 fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: Any): T? { //TODO: Use Either here? -> Rather than nullable
     if (!constructorFSMCache.containsKey(clazz)) constructorFSMCache[clazz] = clazz.constructorsToFSM()
-    val fsm = constructorFSMCache[clazz]!!.copy()
+    val fsm = constructorFSMCache[clazz]!!.copyOriginal()
 
     args.forEach { fsm.accept(it::class) }
 
-    return (fsm.currentOutput.firstOrNull() as KFunction<T>?)?.call(*args)
+    return (fsm.acceptValue as? KFunction<T>?)?.call(*args)
 }
 
 inline fun <reified T : Any> tryConstructorArgs(vararg args: Any) = tryConstructorArguments(T::class, *args)

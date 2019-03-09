@@ -1,0 +1,6 @@
+class MouseHandler {
+    fun mouseClick(x: Double, y: Double) {
+        println(x)
+        println(y)
+    }
+}

@@ -1,6 +1,6 @@
 package com.luzon.fsm.scanner
 
-import com.luzon.fsm.OutputState
+import com.luzon.fsm.State
 import com.luzon.utils.Predicate
 import com.luzon.utils.equalPredicate
 import com.luzon.utils.errorWithException
@@ -8,13 +8,13 @@ import com.luzon.utils.orPredicate
 import mu.NamedKLogging
 
 abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(text, endValue) {
-    private val root = OutputState<A, O>()
+    private val root = State<A, O>()
     protected var endState = root
     protected var metaScope = root
     private var orScope = root
     private var scopeChange = false
-    private var orState = OutputState<A, O>()
-    private val orEndState = OutputState<A, O>()
+    private var orState = State<A, O>()
+    private val orEndState = State<A, O>()
     private var afterOr = false
     private var afterMeta = false
 
@@ -34,7 +34,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
     protected open fun unescapedCharacters(char: A): Predicate<A>? = null
     protected open fun escapedCharacters(char: A): Predicate<A>? = null
 
-    fun toFSM(): OutputState<A, O> {
+    fun toFSM(): State<A, O> {
         while (isNotAtEnd()) {
             var escape = false
             var char = peek()
@@ -70,17 +70,17 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         }
 
         if (hasOr()) {
-            endState.addEpsilonTransition(orEndState)
+            endState.addEpsilon(orEndState)
             endState = orEndState
         }
 
-        endState.accepting = true
+        endState.forceAccept = true
 
         return root
     }
 
     private fun char(escape: Boolean = false): StatePair<A, O> {
-        val charEnd = OutputState<A, O>(accepting = true)
+        val charEnd = State<A, O>(forceAccept = true)
         val char = advance()
         var isRange = true
 
@@ -115,9 +115,9 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         return isMetaPredicate!!(char)
     }
 
-    protected data class StatePair<A : Any, O>(val start: OutputState<A, O>, val end: OutputState<A, O>)
+    protected data class StatePair<A : Any, O>(val start: State<A, O>, val end: State<A, O>)
 
-    protected infix fun OutputState<A, O>.to(other: OutputState<A, O>) = StatePair(this, other)
+    protected infix fun State<A, O>.to(other: State<A, O>) = StatePair(this, other)
 
     private fun metaCharacter(): StatePair<A, O> {
         afterMeta = true
@@ -137,7 +137,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
     private fun group(): StatePair<A, O> {
         val scanner = createScanner(advanceUntil(endGroupPredicate))
         val states = scanner.toFSM()
-        endState.addEpsilonTransition(states)
+        endState.addEpsilon(states)
         metaScope = states
 
         return states to scanner.endState
@@ -145,7 +145,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
 
     //A|B|C
     private fun or(): StatePair<A, O> {
-        val extraState = OutputState<A, O>()
+        val extraState = State<A, O>()
         scopeChange = true
         afterOr = true
 
@@ -153,41 +153,41 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
             val newState = orScope.transferToNext()
             orScope.replaceWith(orState)
             orState = orScope
-            orScope.addEpsilonTransition(newState)
-        } else orState.addEpsilonTransition(orScope)
+            orScope.addEpsilon(newState)
+        } else orState.addEpsilon(orScope)
 
-        endState.addEpsilonTransition(orEndState)
-        orState.addEpsilonTransition(extraState)
+        endState.addEpsilon(orEndState)
+        orState.addEpsilon(extraState)
 
         return extraState to orEndState
     }
 
     //A*
     private fun kleeneStar(): StatePair<A, O> {
-        val newEndState = OutputState<A, O>(accepting = true)
+        val newEndState = State<A, O>(forceAccept = true)
 
-        endState.addEpsilonTransition(metaScope)
-        metaScope.addEpsilonTransition(newEndState)
+        endState.addEpsilon(metaScope)
+        metaScope.addEpsilon(newEndState)
 
         return metaScope to newEndState
     }
 
     //A+
     private fun kleenePlus(): StatePair<A, O> {
-        val newEndState = OutputState<A, O>(accepting = true)
+        val newEndState = State<A, O>(forceAccept = true)
 
-        endState.addEpsilonTransition(metaScope)
-        endState.addEpsilonTransition(newEndState)
+        endState.addEpsilon(metaScope)
+        endState.addEpsilon(newEndState)
 
         return metaScope to newEndState
     }
 
     //A?
     private fun optional(): StatePair<A, O> {
-        val newEndState = OutputState<A, O>(accepting = true)
+        val newEndState = State<A, O>(forceAccept = true)
 
-        metaScope.addEpsilonTransition(newEndState)
-        endState.addEpsilonTransition(newEndState)
+        metaScope.addEpsilon(newEndState)
+        endState.addEpsilon(newEndState)
 
         return metaScope to newEndState
     }

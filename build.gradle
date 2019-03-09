@@ -15,6 +15,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "maven"
+}
+
 subprojects {
     apply plugin: "java"
     apply plugin: "kotlin"
@@ -75,4 +79,30 @@ subprojects {
     compileTestKotlin {
         kotlinOptions.jvmTarget = "1.8"
     }
+
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allSource
+        classifier = "sources"
+    }
+
+    artifacts {
+        archives sourcesJar
+        archives jar
+    }
+}
+
+subprojects.each { subproject -> evaluationDependsOn(subproject.path)}
+
+task allJar(type: Jar, dependsOn: subprojects.assemble) {
+    baseName = 'luzon-all'
+    subprojects.each { subproject ->
+        from subproject.configurations.archives.allArtifacts.files.collect {
+            zipTree(it)
+        }
+    }
+}
+
+artifacts {
+    archives allJar
+//    archives sourcesJar
 }

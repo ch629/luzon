@@ -1,132 +1,166 @@
 package com.luzon.fsm
 
+import com.luzon.fsm.scanner.RegexScanner
 import com.luzon.utils.Predicate
-import com.luzon.utils.merge
-import com.luzon.utils.replaceWith
 import java.util.*
 
-data class Transition<A>(val predicate: Predicate<A>, val state: IState<A>) {
-    fun accept(character: A): IState<A>? = if (predicate(character)) state else null
-}
-
-open class FSM<A>(protected val states: MutableList<IState<A>> = mutableListOf(),
-                  updateEpsilons: Boolean = true) : IFsm<A> {
-
-    protected val originalStates = states.toMutableList()
-
-    constructor(state: IState<A>, updateEpsilons: Boolean = true) : this(mutableListOf(state), updateEpsilons)
+class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean = true) {
+    private val initialStates: List<State<T, O>>
 
     init {
-        if (updateEpsilons) updateEpsilons(true)
+        initialStates = states + if (updateEpsilons) acceptRecursiveEpsilons(states) else emptyList()
+        reset()
     }
 
-    override fun merge(fsMachine: IFsm<A>): FSM<A> {
-        val states = mutableListOf<IState<A>>()
-        states.addAll(this.states)
-        if (fsMachine is FSM<A>) states.addAll(fsMachine.states)
+    companion object {
+        fun <O : Any> fromRegex(str: String) = FSM(listOf(RegexScanner<O>(str).toFSM()))
 
-        return FSM(states)
+        fun <T, O> merge(vararg machines: FSM<T, O>): FSM<T, O> {
+            val allInitialStates = mutableListOf<State<T, O>>()
+            // I think this will be more efficient than merging each in a reduce
+//            val c = machines.fold(mutableListOf<State<T, O>>()) { acc, machine ->
+//                acc.apply { addAll(machine.initialStates) }
+//            }
+
+            machines.forEach { allInitialStates.addAll(it.initialStates) }
+
+            return FSM(allInitialStates, false)
+        }
     }
 
-    override fun copy() = FSM(originalStates, false)
+    fun merge(other: FSM<T, O>) =
+            FSM(initialStates + other.initialStates, false)
 
-    override fun reset() {
-        states.replaceWith(originalStates)
+    fun reset() {
+        states = initialStates // TODO: Check to make sure nothing changes the initial states
     }
 
-    private fun updateEpsilons(updateOriginal: Boolean = false): Boolean {
-        val epsilons = states.map { it.epsilons }.merge().toMutableList()
-
-        do {
-            val moreEpsilons = epsilons
-                    .map { it.epsilons }.merge()
-                    .filter { !epsilons.contains(it) }
-            epsilons.addAll(moreEpsilons)
-        } while (moreEpsilons.isNotEmpty())
-
-        states.addAll(epsilons)
-        if (updateOriginal) originalStates.addAll(epsilons)
-
-        return epsilons.isNotEmpty()
+    fun replaceChildOutputs(value: O?) = apply {
+        states.forEach { it.replaceChildOutput(value) }
     }
 
-    override fun accept(character: A): Boolean {
-        val newStates = states.map { it.accept(character) }.merge()
-        states.replaceWith(newStates)
+    fun accept(value: T): Boolean {
+        val newStates = acceptNormal(value)
+        newStates.addAll(acceptRecursiveEpsilons(newStates))
 
-        return updateEpsilons() || newStates.isNotEmpty()
+        states = newStates
+
+        return running
     }
 
-    override val isRunning get() = states.isNotEmpty()
-    override val isAccepting get() = states.any { it.accepting }
-    override val acceptStates get() = states.filter { it.accepting }
+    private fun acceptRecursiveEpsilons(stateList: List<State<T, O>>): List<State<T, O>> {
+        val list = mutableListOf<State<T, O>>()
+        var epsilons: List<State<T, O>> = acceptEpsilons(stateList)
 
-    val stateCount: Int get() = states.size
+        while (epsilons.isNotEmpty()) {
+            list.addAll(epsilons)
+            epsilons = acceptEpsilons(epsilons).filter { !epsilons.contains(it) }
+        }
+
+        return list
+    }
+
+    private fun acceptEpsilons(stateList: List<State<T, O>> = states) =
+            stateList.fold(mutableListOf<State<T, O>>()) { acc, states ->
+                acc.apply { addAll(states.epsilonTransitions) }
+            }
+
+    private fun acceptNormal(value: T, stateList: List<State<T, O>> = states) =
+            stateList.fold(mutableListOf<State<T, O>>()) { acc, states ->
+                acc.apply { addAll(states.accept(value)) }
+            }
+
+    fun copyOriginal() = FSM(initialStates, false)
+
+    val accepting: Boolean
+        get() = states.any { it.accepting != null || it.forceAccept }
+
+    val acceptValue: O?
+        get() = states.firstOrNull { it.accepting != null }?.accepting
+
+    val running: Boolean
+        get() = states.isNotEmpty()
+
+    val stateCount: Int
+        get() = states.size
 }
 
-open class State<A>(override var accepting: Boolean = false) : IState<A> {
-    protected val transitions = mutableListOf<Transition<A>>()
-    protected val epsilonTransitions = mutableListOf<IState<A>>()
+class State<T, O>(private val transitions: MutableList<Transition<T, O>> = mutableListOf(),
+                  val epsilonTransitions: MutableList<State<T, O>> = mutableListOf(),
+                  var accepting: O? = null, var forceAccept: Boolean = false) {
+    val leaf: Boolean
+        get() = transitions.isEmpty() && epsilonTransitions.isEmpty()
 
-    override val leaf: Boolean get() = transitions.isEmpty() && epsilonTransitions.isEmpty()
-    override val epsilons get() = epsilonTransitions
+    fun accept(value: T): List<State<T, O>> = transitions.mapNotNull { it.accept(value) }
 
-    override fun accept(character: A) = transitions.mapNotNull { it.accept(character) }
+    fun addTransition(predicate: Predicate<T>, state: State<T, O>) =
+            transitions.add(Transition(predicate, state))
 
-    fun addTransition(transition: Transition<A>) = transitions.add(transition)
+    fun addEpsilon(state: State<T, O>) =
+            epsilonTransitions.add(state)
 
-    fun addTransition(predicate: Predicate<A>, state: IState<A>) =
-            addTransition(Transition(predicate, state))
-
-    fun addEpsilonTransition(state: IState<A>) = epsilonTransitions.add(state)
-
-    override fun removeAccept() {
-        accepting = false
+    fun removeAccept() {
+        accepting = null
+        forceAccept = false
     }
 
-    override fun transferToNext(): State<A> {
-        val newState = State<A>(accepting)
-        newState.transitions.addAll(transitions)
-        newState.epsilonTransitions.addAll(epsilonTransitions)
-
+    fun transferToNext(): State<T, O> {
+        val newState = State(transitions.toMutableList(),
+                epsilonTransitions.toMutableList(), accepting, forceAccept)
         transitions.clear()
         epsilonTransitions.clear()
-        accepting = false
 
-        addEpsilonTransition(newState)
+        removeAccept()
+        addEpsilon(newState)
 
         return newState
     }
 
-    override fun replaceWith(other: IState<A>) {
-        if (other is State<A>) {
-            transitions.replaceWith(other.transitions)
-            epsilonTransitions.replaceWith(other.epsilonTransitions)
-            accepting = other.accepting
+    fun replaceWith(other: State<T, O>) {
+        transitions.clear()
+        transitions.addAll(other.transitions)
+        epsilonTransitions.clear()
+        epsilonTransitions.addAll(other.epsilonTransitions)
+        accepting = other.accepting
+        forceAccept = other.forceAccept
+    }
+
+    fun replaceChildOutput(output: O?) {
+        findAllChildren().forEach { it.replaceOutput(output) }
+    }
+
+    private fun replaceOutput(output: O?) {
+        if (accepting != null || forceAccept) {
+            accepting = output
+            forceAccept = false
         }
     }
 
-    protected fun findAllChildren(): Set<State<A>> {
-        val cachedStates = mutableSetOf<State<A>>()
-        val stateStack = Stack<State<A>>()
+    private fun findAllChildren(): Set<State<T, O>> {
+        val cachedStates = mutableSetOf<State<T, O>>()
+        val stateStack = Stack<State<T, O>>()
         cachedStates.add(this)
         stateStack.push(this)
 
         while (stateStack.isNotEmpty()) {
-            val currentState = stateStack.pop() as State<A>
+            val currentState = stateStack.pop()
             currentState.transitions.forEach { (_, state) ->
-                if (state is State<A>)
-                    if (cachedStates.add(state)) stateStack.push(state)
+                if (cachedStates.add(state))
+                    stateStack.push(state)
             }
 
             currentState.epsilonTransitions.forEach { state ->
-                if (state is State<A>)
-                    if (cachedStates.add(state)) stateStack.push(state)
+                if (cachedStates.add(state))
+                    stateStack.push(state)
             }
         }
 
         return cachedStates
     }
-
-    val leaves: List<IState<A>> get() = findAllChildren().filter { it.leaf }
 }
+
+data class Transition<T, O>(val predicate: Predicate<T>, val state: State<T, O>) {
+    fun accept(value: T) = if (predicate(value)) state else null
+}
+
+fun <A : Any, O : Any> Collection<FSM<A, O>>.toMergedFSM() = FSM.merge(*toTypedArray())

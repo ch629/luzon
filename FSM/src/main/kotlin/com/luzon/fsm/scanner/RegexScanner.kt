@@ -1,8 +1,7 @@
 package com.luzon.fsm.scanner
 
-import com.luzon.fsm.IFsm
-import com.luzon.fsm.OutputFSM
-import com.luzon.fsm.OutputState
+import com.luzon.fsm.FSM
+import com.luzon.fsm.State
 import com.luzon.utils.*
 import mu.NamedKLogging
 
@@ -50,7 +49,7 @@ class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
 
     //[ABC]
     private fun orBlock(): StatePair<Char, O> {
-        val end = OutputState<Char, O>(accepting = true)
+        val end = State<Char, O>(forceAccept = true)
         var transitionPredicate: Predicate<Char> = { false }
 
         advance() //Consume '['
@@ -85,16 +84,16 @@ class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
     }
 }
 
-private val regexCache = hashMapOf<String, OutputFSM<Char, Unit>>()
+private val regexCache = hashMapOf<String, FSM<Char, Unit>>()
 // Just a regular RegEx parser
 internal fun regex(regex: String): RegexMatcher {
-    if (!regexCache.containsKey(regex)) regexCache[regex] = IFsm.fromRegex(regex)
-    return RegexMatcher(regexCache[regex]!!.copy())
+    if (!regexCache.containsKey(regex)) regexCache[regex] = FSM.fromRegex(regex)
+    return RegexMatcher(regexCache[regex]!!.copyOriginal())
 }
 
-class RegexMatcher(private val stateMachine: IFsm<Char>) {
+class RegexMatcher(private val stateMachine: FSM<Char, Unit>) {
     fun matches(input: String): Boolean {
         input.forEach { stateMachine.accept(it) }
-        return stateMachine.isAccepting
+        return stateMachine.accepting
     }
 }
