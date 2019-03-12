@@ -6,7 +6,7 @@ import com.luzon.runtime.visitors.RuntimeVisitor
 
 open class LzClass(val name: String, val constructor: LzFunction = LzFunction(name, emptyList(), null),
                    functions: List<LzFunction> = emptyList(), val parentEnvironment: Environment = EnvironmentManager.currentEnvironment,
-                   val block: ASTNode.Block = ASTNode.Block(emptyList())) {
+                   val block: ASTNode.Block = ASTNode.Block(emptyList()), registerConstructor: Boolean = true) {
     private val functionsMap = hashMapOf<String, LzFunction>()
 
     init {
@@ -15,9 +15,10 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
         }
 
         // Register the constructor as a global function
-        Environment.global.defineFunction(LzCodeFunction(constructor.name, constructor.params, constructor.returnType) { _, args ->
-            newInstance(args) ?: nullObject
-        })
+        if (registerConstructor) Environment.global
+                .defineFunction(LzCodeFunction(constructor.name, constructor.params, constructor.returnType) { _, args ->
+                    newInstance(args) ?: nullObject
+                })
 
 //        Environment.global.defineFunction(constructor)
     }

@@ -1,6 +1,6 @@
 package com.luzon.runtime
 
-fun primitiveObject(value: Any?) = LzObject(clazz = LzClass(value.toClassName()), value = value)
+fun primitiveObject(value: Any?) = LzObject(clazz = LzClass(name = value.toClassName(), registerConstructor = false), value = value)
 
 private fun Any?.toClassName() = when (this) {
     is Int -> "Int"

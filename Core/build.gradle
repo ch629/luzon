@@ -1,8 +1,7 @@
 dependencies {
-    compile "org.kodein.di:kodein-di-generic-jvm:5.2.0"
-
     compile project(":FSM")
     compile project(":Lexer")
-//    compile project(":ParserGenerator")
     compile project(":RecursiveDescent")
+    compile project(":Runtime")
+    compile project(":ReflectionEngine")
 }
