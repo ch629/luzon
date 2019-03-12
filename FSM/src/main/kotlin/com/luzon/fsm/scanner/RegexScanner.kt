@@ -37,7 +37,7 @@ class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
     companion object : NamedKLogging("Regex-Logger") {
         private val numericalPredicate = '0' range '9'
         private val alphaNumericPredicate = numericalPredicate or ('A' range 'Z') or ('a' range 'z')
-        private val anyCharacterPredicate: Predicate<Char> = { it != '\n' }
+        private val anyCharacterPredicate: Predicate<Char> = { it != '\n' && it != '"' && it != '\'' }
     }
 
     override fun createScanner(text: List<Char>) = RegexScanner<O>(text)

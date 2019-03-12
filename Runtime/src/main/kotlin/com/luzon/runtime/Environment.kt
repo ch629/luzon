@@ -21,14 +21,19 @@ class Environment private constructor(private val parent: Environment?) {
         else -> null
     }
 
-    fun findFunction(signature: String): LzFunction? = when {
-        functions.containsKey(signature) -> functions[signature]
-        parent != null -> parent.findFunction(signature)
-        else -> null
+    fun findFunction(name: String, args: List<LzObject>): LzFunction? {
+        val signature = LzFunction.getFunctionSignature(name, args)
+        val allSignature = "$name(*)"
+        return when {
+            functions.containsKey(signature) -> functions[signature]
+            functions.containsKey(allSignature) -> functions[allSignature]
+            parent != null -> parent.findFunction(name, args)
+            else -> null
+        }
     }
 
     fun invokeFunction(name: String, args: List<LzObject>) =
-            findFunction(LzFunction.getFunctionSignature(name, args))?.invoke(this, args)
+            findFunction(name, args)?.invoke(this, args) ?: nullObject
 
     operator fun get(name: String) = findValue(name)
     operator fun set(name: String, value: LzObject) = setValue(name, value)

@@ -7,7 +7,7 @@ private fun Any?.toClassName() = when (this) {
     is Float -> "Float"
     is Double -> "Double"
     is String -> "String"
-    is Boolean -> "boolean"
+    is Boolean -> "Boolean"
     else -> "UNKNOWN"
 }
 

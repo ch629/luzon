@@ -1,3 +1,4 @@
+
 import com.luzon.fsm.FSM
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Keyword
@@ -48,6 +49,24 @@ object TokenTest : Spek({
             c shouldBe firstCount
 
         }
+    }
+
+    it("should tokenize a string successfully") {
+        val fsm = TokenMachine.getFSM()
+        val string = "\"hello\""
+
+        fsm.accept(string)
+
+        fsm.acceptValue shouldBe Literal.STRING
+    }
+
+    it("should tokenize multiple items together") {
+        val tokens = Tokenizer("val c = \"hello\"").findTokens().toList()
+
+        tokens[0].tokenEnum shouldBe Keyword.VAL
+        tokens[1].tokenEnum shouldBe Literal.IDENTIFIER
+        tokens[2].tokenEnum shouldBe Token.Symbol.EQUAL
+        tokens[3].tokenEnum shouldBe Literal.STRING
     }
 })
 

@@ -9,12 +9,13 @@ import com.luzon.runtime.*
 object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     private fun accept(node: ASTNode?) = node?.accept(this) ?: nullObject
 
-    private fun Any?.isNumerical() = this != null && weight() != -1
+    private fun Any?.isNumerical() = this != null && weight() != -1 && weight() != 3
 
     private fun Any.weight(): Int = when (this) {
         is Int -> 0
         is Float -> 1
         is Double -> 2
+        is String -> 3
         else -> -1
     }
 
@@ -32,11 +33,19 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         else -> -1.0
     }
 
+    private fun Any.asString(): String = when (this) {
+        is Int -> toString()
+        is Float -> toString()
+        is Double -> toString()
+        is String -> this
+        else -> ""
+    }
+
     private fun subtract(left: Any?, right: Any?) = if (right != null && left != null)
         when (maxOf(left, right, compareBy { it.weight() })) {
             is Int -> primitiveObject(left as Int - right as Int)
             is Float -> primitiveObject(left.asFloat() - right.asFloat())
-            is Double -> primitiveObject(right.asDouble() - right.asDouble())
+            is Double -> primitiveObject(left.asDouble() - right.asDouble())
             else -> nullObject
         } else nullObject
 
@@ -44,7 +53,8 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         when (maxOf(left, right, compareBy { it.weight() })) {
             is Int -> primitiveObject(left as Int + right as Int)
             is Float -> primitiveObject(left.asFloat() + right.asFloat())
-            is Double -> primitiveObject(right.asDouble() + right.asDouble())
+            is Double -> primitiveObject(left.asDouble() + right.asDouble())
+            is String -> primitiveObject(left.asString() + right.asString())
             else -> nullObject
         } else nullObject
 
@@ -52,7 +62,7 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         when (maxOf(left, right, compareBy { it.weight() })) {
             is Int -> primitiveObject(left as Int * right as Int)
             is Float -> primitiveObject(left.asFloat() * right.asFloat())
-            is Double -> primitiveObject(right.asDouble() * right.asDouble())
+            is Double -> primitiveObject(left.asDouble() * right.asDouble())
             else -> nullObject
         } else nullObject
 
@@ -60,20 +70,11 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         when (maxOf(left, right, compareBy { it.weight() })) {
             is Int -> primitiveObject(left as Int / right as Int)
             is Float -> primitiveObject(left.asFloat() / right.asFloat())
-            is Double -> primitiveObject(right.asDouble() / right.asDouble())
+            is Double -> primitiveObject(left.asDouble() / right.asDouble())
             else -> nullObject
         } else nullObject
 
-    override fun visit(node: Binary.Plus): LzObject = acceptBinary(node).run {
-        when { // TODO: Check nulls here?
-            left.value!!.isNumerical() && right.value!!.isNumerical() ->
-                plus(accept(node.left).value, accept(node.right).value)
-            left.value is String && right.value is String ->
-                primitiveObject(left.value + right.value)
-            else -> nullObject
-        }
-    }
-
+    override fun visit(node: Binary.Plus) = plus(accept(node.left).value, accept(node.right).value)
     override fun visit(node: Binary.Sub) = subtract(accept(node.left).value, accept(node.right).value)
     override fun visit(node: Binary.Mult) = multiply(accept(node.left).value, accept(node.right).value)
     override fun visit(node: Binary.Div) = divide(accept(node.left).value, accept(node.right).value)
@@ -82,6 +83,7 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: LiteralExpr.FloatLiteral) = primitiveObject(node.value)
     override fun visit(node: LiteralExpr.DoubleLiteral) = primitiveObject(node.value)
     override fun visit(node: LiteralExpr.BooleanLiteral) = primitiveObject(node.value)
+    override fun visit(node: LiteralExpr.StringLiteral) = primitiveObject(node.value)
 
     override fun visit(node: LiteralExpr.IdentifierLiteral) = EnvironmentManager[node.name] ?: nullObject
 
@@ -166,7 +168,7 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: LiteralExpr.FunctionCall): LzObject {
         val params = node.params.map { it.accept(ExpressionVisitor) }
 
-        return EnvironmentManager(node.name, params) ?: nullObject
+        return EnvironmentManager(node.name, params)
     }
 
     override fun visit(node: LiteralExpr.DotChainLiteral): LzObject {
