@@ -1,69 +1,8 @@
 package com.luzon.runtime.visitors
 
-import com.luzon.lexer.Tokenizer
-import com.luzon.rd.RecursiveDescent
-import com.luzon.rd.TokenRDStream
 import com.luzon.rd.ast.ASTNode
 import com.luzon.rd.expression.ASTNodeVisitor
-import com.luzon.rd.expression.accept
 import com.luzon.runtime.*
-import org.intellij.lang.annotations.Language
-
-fun main() {
-    val time = System.currentTimeMillis()
-
-    Environment.global.defineFunction(LzCodeFunction("println", listOf(ASTNode.FunctionParameter("obj", "Int")), null) { _, args ->
-        println(args[0])
-        nullObject
-    })
-
-    @Language("kotlin")
-    val code = """
-        class Test {
-            var testName: Int = add(5, 2)
-            var other: Int = 1
-
-            fun add(a: Int, b: Int): Int {
-                return a + b
-            }
-
-            fun test(): Int {
-                // testName = add(8, 3)
-
-                val t = Test()
-
-                println(t.other)
-
-                testName = t.other
-
-                return t.other
-            }
-        }
-    """.trimIndent()
-//    val tokens = Tokenizer(code).tokensAsString()
-
-    val tokenStream = Tokenizer(code).findTokens()
-
-    println("Lexed In: ${System.currentTimeMillis() - time}ms")
-
-    val tree = RecursiveDescent(TokenRDStream(tokenStream)).parse()
-
-    println("Parsed In: ${System.currentTimeMillis() - time}ms")
-
-//    val tree = RecursiveDescent(TokenRDStream(Tokenizer(code).findTokens())).parse()
-    tree?.accept(ClassVisitor)
-
-    println("Class Loaded In: ${System.currentTimeMillis() - time}ms")
-
-    val t = Environment.global.invokeFunction("Test", emptyList())
-    val returnValue = t?.get("other")
-
-    val d = Environment.global.invokeFunction("Test", emptyList())
-
-    val f = d?.invokeFunction("test", listOf())
-
-    println("Finished in ${System.currentTimeMillis() - time}ms")
-}
 
 object ClassVisitor : ASTNodeVisitor<Any> {
     override fun visit(node: ASTNode.Class) {

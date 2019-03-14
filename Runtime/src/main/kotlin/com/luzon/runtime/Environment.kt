@@ -2,7 +2,7 @@ package com.luzon.runtime
 
 class Environment private constructor(private val parent: Environment?) {
     private val values = hashMapOf<String, LzObject>()
-    private val functions = hashMapOf<String, LzFunction>()
+    private val functions = hashMapOf<String, MutableSet<LzFunction>>()
 
     companion object {
         val global = Environment(null)
@@ -22,14 +22,16 @@ class Environment private constructor(private val parent: Environment?) {
     }
 
     fun findFunction(name: String, args: List<LzObject>): LzFunction? {
-        val signature = LzFunction.getFunctionSignature(name, args)
-        val allSignature = "$name(*)"
-        return when {
-            functions.containsKey(signature) -> functions[signature]
-            functions.containsKey(allSignature) -> functions[allSignature]
-            parent != null -> parent.findFunction(name, args)
-            else -> null
+        val functions = functions[name]
+
+        if (functions != null && functions.isNotEmpty()) {
+            val function = functions.find { it.argumentsMatchParams(args) }
+
+            if (function != null)
+                return function
         }
+
+        return parent?.findFunction(name, args)
     }
 
     fun invokeFunction(name: String, args: List<LzObject>) =
@@ -46,7 +48,11 @@ class Environment private constructor(private val parent: Environment?) {
 
     // TODO: This is a fine solution for now, but it will be better to hold the classes and find the functions within them using the current environment
     fun defineFunction(function: LzFunction) {
-        functions += function.getSignatureString() to function
+        val functions = functions[function.name] ?: mutableSetOf()
+        functions.add(function)
+
+        if (functions.size == 1)
+            this.functions += function.name to functions
     }
 
     fun newEnv() = Environment(this)
@@ -69,6 +75,7 @@ class Environment private constructor(private val parent: Environment?) {
     fun copy(): Environment {
         val newEnvironment = Environment(parent)
         newEnvironment.values.putAll(values)
+        newEnvironment.functions.putAll(functions)
         return newEnvironment
     }
 }
