@@ -1,7 +1,0 @@
-dependencies {
-    compile project(":FSM")
-    compile project(":Lexer")
-    compile project(":RecursiveDescent")
-    compile project(":Runtime")
-    compile project(":ReflectionEngine")
-}

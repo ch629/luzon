@@ -1,4 +1,0 @@
-dependencies {
-    compile project(":FSM")
-    compile project(":Utils")
-}
