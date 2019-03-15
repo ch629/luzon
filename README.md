@@ -1,5 +1,6 @@
 # Luzon Language
 
+[ ![Download](https://api.bintray.com/packages/ch629/luzon/luzon/images/download.svg) ](https://bintray.com/ch629/luzon/luzon/_latestVersion)
 [![Build Status](https://travis-ci.org/ch629/luzon.svg?branch=master)](https://travis-ci.org/ch629/luzon)
 
 This is an embedded language created in Kotlin to work with Java applications.
