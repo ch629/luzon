@@ -1,11 +1,11 @@
-package com.luzon.rd
+package com.luzon.recursive_descent
 
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
-import com.luzon.rd.ast.ASTNode.Expression
-import com.luzon.rd.expression.ExpressionRDStream
-import com.luzon.rd.expression.ExpressionRecognizer
-import com.luzon.rd.expression.ExpressionToken
+import com.luzon.recursive_descent.ast.ASTNode.Expression
+import com.luzon.recursive_descent.expression.ExpressionRDStream
+import com.luzon.recursive_descent.expression.ExpressionRecognizer
+import com.luzon.recursive_descent.expression.ExpressionToken
 
 fun parseExpression(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(tokens)).parse()
 

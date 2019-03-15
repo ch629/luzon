@@ -1,3 +1,5 @@
+package lexer
+
 import com.luzon.lexer.Token.*
 import com.luzon.lexer.Tokenizer
 import org.amshove.kluent.shouldEqual

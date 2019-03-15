@@ -1,10 +1,10 @@
 package com.luzon
 
 import com.luzon.lexer.Tokenizer
-import com.luzon.rd.RecursiveDescent
-import com.luzon.rd.TokenRDStream
-import com.luzon.rd.expression.accept
-import com.luzon.reflectionEngine.ReflectionEngine
+import com.luzon.recursive_descent.RecursiveDescent
+import com.luzon.recursive_descent.TokenRDStream
+import com.luzon.recursive_descent.expression.accept
+import com.luzon.reflection_engine.ReflectionEngine
 import com.luzon.runtime.ClassReferenceTable
 import com.luzon.runtime.Environment
 import com.luzon.runtime.visitors.ClassVisitor

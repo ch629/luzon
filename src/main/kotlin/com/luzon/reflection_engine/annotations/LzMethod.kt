@@ -1,4 +1,4 @@
-package com.luzon.reflectionEngine.annotations
+package com.luzon.reflection_engine.annotations
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

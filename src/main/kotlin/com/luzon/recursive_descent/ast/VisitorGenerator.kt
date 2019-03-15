@@ -1,4 +1,4 @@
-package com.luzon.rd.ast
+package com.luzon.recursive_descent.ast
 
 import com.luzon.utils.indent
 import kotlin.reflect.KClass
@@ -12,8 +12,8 @@ object VisitorGenerator {
         val lines = findNodes()
         val visitorSb = StringBuilder()
         val acceptSb = StringBuilder()
-        visitorSb.appendln("package com.luzon.rd.expression\n")
-        visitorSb.appendln("import com.luzon.rd.ast.ASTNode\n")
+        visitorSb.appendln("package com.luzon.recursive_descent.expression\n")
+        visitorSb.appendln("import com.luzon.recursive_descent.ast.ASTNode\n")
         visitorSb.appendln("interface ASTNodeVisitor<T> {")
         acceptSb.appendln("fun <T> ASTNode.accept(visitor: ASTNodeVisitor<T>) = when (this) {")
 
@@ -29,7 +29,7 @@ object VisitorGenerator {
         visitorSb.appendln("}")
         acceptSb.appendln("}")
 
-//        val path = Paths.get("$path\\com\\luzon\\rd\\expression\\ASTNodeVisitor.kt")
+//        val path = Paths.get("$path\\com\\luzon\\recursive_descent\\expression\\ASTNodeVisitor.kt")
 //        Files.deleteIfExists(path)
 //        Files.createDirectories(path.parent)
 //        Files.createFile(path)

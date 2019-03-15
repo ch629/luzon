@@ -1,6 +1,6 @@
-package com.luzon.rd.expression
+package com.luzon.recursive_descent.expression
 
-import com.luzon.rd.ast.ASTNode
+import com.luzon.recursive_descent.ast.ASTNode
 
 interface ASTNodeVisitor<T> {
     fun visit(node: ASTNode.Class): T = throw NotImplementedError("ASTNode.Class visitor not implemented.")

@@ -1,8 +1,8 @@
 package com.luzon.runtime.visitors
 
-import com.luzon.rd.ast.ASTNode
-import com.luzon.rd.expression.ASTNodeVisitor
-import com.luzon.rd.expression.accept
+import com.luzon.recursive_descent.ast.ASTNode
+import com.luzon.recursive_descent.expression.ASTNodeVisitor
+import com.luzon.recursive_descent.expression.accept
 import com.luzon.runtime.EnvironmentManager
 import com.luzon.runtime.Return
 import com.luzon.runtime.primitiveObject

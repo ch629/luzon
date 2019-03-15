@@ -1,9 +1,9 @@
-package com.luzon.rd.expression
+package com.luzon.recursive_descent.expression
 
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
 import com.luzon.lexer.TokenStream
-import com.luzon.rd.TokenRDStream
+import com.luzon.recursive_descent.TokenRDStream
 
 internal class ExpressionRecognizer(private val rd: TokenRDStream) {
     private val exprList = ExpressionStreamList()

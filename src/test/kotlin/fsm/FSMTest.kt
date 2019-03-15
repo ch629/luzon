@@ -1,3 +1,5 @@
+package fsm
+
 import com.luzon.fsm.FSM
 import com.luzon.fsm.State
 import com.luzon.utils.equalPredicate

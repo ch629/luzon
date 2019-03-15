@@ -1,8 +1,8 @@
-package com.luzon.rd
+package com.luzon.recursive_descent
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.*
-import com.luzon.rd.ast.ASTNode
+import com.luzon.recursive_descent.ast.ASTNode
 
 // Main entry point from the lz file
 class RecursiveDescent(val rd: TokenRDStream) {

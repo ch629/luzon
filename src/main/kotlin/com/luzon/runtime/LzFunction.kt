@@ -1,7 +1,7 @@
 package com.luzon.runtime
 
-import com.luzon.rd.ast.ASTNode
-import com.luzon.rd.expression.accept
+import com.luzon.recursive_descent.ast.ASTNode
+import com.luzon.recursive_descent.expression.accept
 import com.luzon.runtime.visitors.RuntimeVisitor
 
 interface Invokable {

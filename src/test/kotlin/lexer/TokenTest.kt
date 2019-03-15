@@ -1,3 +1,4 @@
+package lexer
 
 import com.luzon.fsm.FSM
 import com.luzon.lexer.Token

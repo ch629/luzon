@@ -1,4 +1,4 @@
-package com.luzon.rd.ast
+package com.luzon.recursive_descent.ast
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal

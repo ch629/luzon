@@ -1,7 +1,7 @@
-package com.luzon.reflectionEngine
+package com.luzon.reflection_engine
 
-import com.luzon.rd.ast.ASTNode
-import com.luzon.reflectionEngine.annotations.LzMethod
+import com.luzon.recursive_descent.ast.ASTNode
+import com.luzon.reflection_engine.annotations.LzMethod
 import com.luzon.runtime.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
