@@ -7,16 +7,14 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeGreaterThan
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.given
-import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.on
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 import java.nio.file.Files
 import java.nio.file.Paths
 
 object FSMTest : Spek({
-    given("a finite state machine") {
-        on("a simple transition") {
+    describe("a finite state machine") {
+        context("a simple transition") {
             val root = State<Char, Unit>()
             root.addTransition('A'.equalPredicate(), State())
             val machine = FSM(listOf(root))
@@ -26,7 +24,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("an epsilon transition") {
+        context("an epsilon transition") {
             val root = State<Char, Unit>()
             val otherState = State<Char, Unit>()
             otherState.addTransition('A'.equalPredicate(), State())
@@ -39,7 +37,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("chained epsilon transitions") {
+        context("chained epsilon transitions") {
             val root = State<Char, Unit>()
             val state1 = State<Char, Unit>()
             val state2 = State<Char, Unit>()
@@ -61,7 +59,7 @@ object FSMTest : Spek({
             machine.accepting shouldBe true
         }
 
-//        on("a state") {
+//        context("a state") {
 //            it("finds leaf states correctly") {
 //                val root = State<Char, Unit>()
 //                for (i in 1..5) root.addEpsilon(State())
@@ -70,8 +68,8 @@ object FSMTest : Spek({
 //        }
     }
 
-    given("a regex parser") {
-        on("a character block") {
+    describe("a regex parser") {
+        context("a character block") {
             val machine = regex("ABCD")
 
             it("should accept correct values for ABCD") {
@@ -86,7 +84,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("an or block") {
+        context("an or block") {
             val machine = regex("[ABD-Za-z]")
 
             it("should accept correct values for [ABD-Za-z]") {
@@ -106,7 +104,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("parenthesis") {
+        context("parenthesis") {
             val machine = regex("(ABCD)")
 
             it("should accept correct values for (ABCD)") {
@@ -121,7 +119,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("an asterisk regex") {
+        context("an asterisk regex") {
             it("should accept multiple A's for A*") {
                 val machine = regex("A*")
 
@@ -147,7 +145,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("a plus regex") {
+        context("a plus regex") {
             val machine = regex("A+")
 
             it("should accept multiple A's for A+") {
@@ -163,7 +161,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("a question regex") {
+        context("a question regex") {
             val machine = regex("A?")
 
             it("should accept a single A for A?") {
@@ -179,7 +177,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("an or regex") {
+        context("an or regex") {
             it("should accept either A or B for A|B") {
                 val machine = regex("A|B")
 
@@ -205,7 +203,7 @@ object FSMTest : Spek({
             }
         }
 
-        on("a complex regex") {
+        context("a complex regex") {
             val machine = regex("(AB|CD)*")
 
             it("should pass with no inputs") {
@@ -230,7 +228,7 @@ object FSMTest : Spek({
         }
     }
 
-    given("a merged state machine") {
+    describe("a merged state machine") {
         val machine1 = regex("AB")
         val machine2 = regex("CD")
 
@@ -269,14 +267,14 @@ object FSMTest : Spek({
         }
     }
 
-    given("examples with a regex parser") {
+    describe("examples with a regex parser") {
         val json = Files.readAllLines(Paths.get(FSMTest::class.java.getResource("regex_examples.json").toURI())).joinToString(" ")
         val paramType = Types.newParameterizedType(List::class.java, RegexIOTest::class.java)
         val adapter = Moshi.Builder().build().adapter<List<RegexIOTest>>(paramType)
         val examples = adapter.fromJson(json)!!
 
         examples.forEach { (regex, tests) ->
-            on("the regular expression $regex") {
+            context("the regular expression $regex") {
                 val machine = regex(regex)
                 tests.forEach { (test, result) ->
                     val emptyInput = test.isEmpty()

@@ -3,14 +3,12 @@ package lexer
 import com.luzon.lexer.Token.*
 import com.luzon.lexer.Tokenizer
 import org.amshove.kluent.shouldEqual
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.given
-import org.jetbrains.spek.api.dsl.it
-import org.jetbrains.spek.api.dsl.on
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 object LexerTest : Spek({
-    given("a lexer") {
-        on("examples") {
+    describe("a lexer") {
+        context("examples") {
             examples.forEach { (code, output) ->
                 it("should match the expected output") {
                     val tokenizerString = Tokenizer(code).tokensAsString()

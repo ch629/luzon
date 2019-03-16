@@ -6,12 +6,11 @@ import com.luzon.recursive_descent.RecursiveDescent
 import com.luzon.recursive_descent.TokenRDStream
 import com.luzon.recursive_descent.ast.ASTNode
 import org.amshove.kluent.shouldEqual
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.given
-import org.jetbrains.spek.api.dsl.it
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
 object RDTest : Spek({
-    given("a recursive descent parser") {
+    describe("a recursive descent parser") {
         it("should generate a basic class tree from a token stream") {
             val generatedTree = RecursiveDescent(TokenRDStream(sequenceOf(
                     Token.Keyword.CLASS.toToken(),
@@ -51,7 +50,7 @@ object RDTest : Spek({
         }
     }
 
-    given("a precedence climber") {
+    describe("a precedence climber") {
         it("correctly order an expression") {
             fun int(value: Int) = Token.Literal.INT.toToken(value.toString())
             val plus = Token.Symbol.PLUS.toToken()
