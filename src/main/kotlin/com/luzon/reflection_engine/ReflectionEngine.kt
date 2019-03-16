@@ -15,14 +15,17 @@ object ReflectionEngine {
             if (func.returnType.classifier == LzObject::class) {
                 val annotation = func.findAnnotation<LzMethod>()
 
-                if (annotation != null) {
+                if (annotation != null && func.parameters.size == 2) {
+                    // Check if the args list is of LzObject or Any
+                    val lzObjects = func.parameters[1].type.arguments[0].type?.classifier == LzObject::class
+
                     val params = annotation.args
                             .mapIndexed { index, s -> ASTNode.FunctionParameter(index.toString(), s) }
 
                     Environment.global.defineFunction(
                             LzCodeFunction(if (annotation.name.isEmpty()) func.name else annotation.name,
-                                    params, null) { env, args ->
-                                func.call(instancedClass, env, args) as LzObject
+                                    params, null) { _, args ->
+                                func.call(instancedClass, if (lzObjects) args else args.map { it.value }) as LzObject
                             })
                 }
             }
@@ -31,8 +34,8 @@ object ReflectionEngine {
 }
 
 class TestMethods {
-    @LzMethod(args = ["Int"])
-    fun println(env: Environment, args: List<LzObject>): LzObject {
+    @LzMethod(args = ["Any"])
+    fun println(args: List<Any>): LzObject {
         println("CALLED ${args[0]}")
         return nullObject
     }
