@@ -19,6 +19,10 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         else -> -1
     }
 
+    private fun LzObject.asFloat(): Float = value?.asFloat() ?: -1f
+    private fun LzObject.asDouble(): Double = value?.asDouble() ?: -1.0
+    private fun LzObject.asString(): String = value?.asString() ?: ""
+
     private fun Any.asFloat(): Float = when (this) {
         is Int -> toFloat()
         is Float -> this
