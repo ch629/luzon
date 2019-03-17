@@ -16,18 +16,16 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
 
-    implementation "io.arrow-kt:arrow-core:$arrowVersion"
-
     implementation "ch.qos.logback:logback-classic:1.2.3"
     implementation "io.github.microutils:kotlin-logging:1.6.25"
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spekVersion"
     testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:$spekVersion"
-
-    implementation "com.squareup.okio:okio:$okioVersion"
-    testImplementation "com.squareup.moshi:moshi:1.8.0"
-
+    
     testImplementation "org.amshove.kluent:kluent:1.47"
+
+    testImplementation "com.squareup.okio:okio:$okioVersion"
+    testImplementation "com.squareup.moshi:moshi:1.8.0"
 }
 
 repositories {
@@ -50,8 +48,8 @@ compileTestKotlin {
 }
 
 bintray {
-    user = System.getenv("BINTRAY_USER")
-    key = System.getenv("BINTRAY_API_KEY")
+    user = project.hasProperty("bintrayUser") ? project.property("bintrayUser") : System.getenv("BINTRAY_USER")
+    key = project.hasProperty("bintrayApiKey") ? project.property("bintrayApiKey") : System.getenv("BINTRAY_API_KEY")
     configurations = ["archives"]
 
     pkg {

@@ -4,7 +4,6 @@ import com.luzon.lexer.Token
 import com.luzon.lexer.TokenStream
 import com.luzon.utils.Predicate
 
-// TODO: Come up with a better name
 open class RDStream<T>(tokens: Sequence<T>) {
     private val iterator = tokens.iterator()
     private var lookahead: T? = null

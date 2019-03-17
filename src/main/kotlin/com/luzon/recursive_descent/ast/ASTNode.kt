@@ -5,7 +5,7 @@ import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol.*
 
 sealed class ASTNode {
-    data class Class(val name: String, val constructor: Constructor?, val block: Block) : ASTNode() // TODO: Maybe ClassBlock?
+    data class Class(val name: String, val constructor: Constructor?, val block: Block) : ASTNode()
 
     data class Constructor(val variables: List<ConstructorVariableDeclaration>) : ASTNode() // TODO: This is the Primary Constructor
     // TODO: Not all of these should be val/var, only if they are held within the class
@@ -29,7 +29,6 @@ sealed class ASTNode {
     data class VariableDeclaration(val name: String, val type: String?, val expr: Expression, val constant: Boolean) : ASTNode()
     data class VariableAssign(val name: String, val expr: Expression) : ASTNode()
 
-    // TODO: Separate each? needs to be put inside of the expressions too
     data class OperatorVariableAssign(val name: String, val expr: Expression, val operator: Token.Symbol) : ASTNode()
 
     data class Block(val nodes: List<ASTNode>) : ASTNode()
@@ -55,11 +54,10 @@ sealed class ASTNode {
                 }?.invoke(left, right)
             }
 
-            // TODO: Keep these separate, or use an Enum to distinguish between each? i.e. Binary(operator, left, right)
             class Plus(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class Sub(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class Mult(left: Expression? = null, right: Expression? = null) : Binary(left, right)
-            class Div(left: Expression? = null, right: Expression? = null) : Binary(left, right) // TODO: Should I add an Integer division using \? or just always return a Double/Float which can then be rounded?
+            class Div(left: Expression? = null, right: Expression? = null) : Binary(left, right)
 
             class Equals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class NotEquals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
@@ -76,7 +74,7 @@ sealed class ASTNode {
             class Sub(expr: Expression? = null) : Unary(expr)
             class Not(expr: Expression? = null) : Unary(expr)
 
-            class Increment(expr: Expression? = null, val pre: Boolean) : Unary(expr) // TODO: IdentifierLiteral rather than Expression
+            class Increment(expr: Expression? = null, val pre: Boolean) : Unary(expr)
             class Decrement(expr: Expression? = null, val pre: Boolean) : Unary(expr)
         }
 

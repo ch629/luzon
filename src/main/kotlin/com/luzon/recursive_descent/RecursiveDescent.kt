@@ -9,7 +9,6 @@ class RecursiveDescent(val rd: TokenRDStream) {
     // TODO: List of ASTNodes -> Can have functions outside of classes like Kotlin?
     fun parse(): ASTNode? = classDefinition()
 
-    // TODO: Use either for error logging?
     // fun name(): Int { }
     private fun functionDefinition(): ASTNode? {
         fun parameterList(): List<ASTNode.FunctionParameter> {
@@ -40,7 +39,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
                 if (rd.matchConsume(Symbol.R_PAREN)) {
                     var type: Token? = null
                     if (rd.matchConsume(Symbol.TYPE))
-                        type = rd.accept(Literal.IDENTIFIER) // TODO: Could maybe make accept throw an Exception for the error? -> Expected IDENTIFIER found ...
+                        type = rd.accept(Literal.IDENTIFIER)
 
                     val block = functionBlock()
 

@@ -2,7 +2,9 @@ package com.luzon.reflection_engine
 
 import com.luzon.recursive_descent.ast.ASTNode
 import com.luzon.reflection_engine.annotations.LzMethod
-import com.luzon.runtime.*
+import com.luzon.runtime.Environment
+import com.luzon.runtime.LzCodeFunction
+import com.luzon.runtime.LzObject
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.findAnnotation
@@ -31,18 +33,4 @@ object ReflectionEngine {
             }
         }
     }
-}
-
-class TestMethods {
-    @LzMethod(args = ["Any"])
-    fun println(args: List<Any>): LzObject {
-        println("CALLED ${args[0]}")
-        return nullObject
-    }
-}
-
-fun main() {
-    ReflectionEngine.registerClassMethods(TestMethods::class)
-
-    Environment.global.invokeFunction("println", listOf(primitiveObject(5)))
 }

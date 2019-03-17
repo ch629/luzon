@@ -13,7 +13,6 @@ open class LzFunction(val name: String, val params: List<ASTNode.FunctionParamet
                       val block: ASTNode.Block = ASTNode.Block(emptyList())) : Invokable {
 
     override fun invoke(environment: Environment, args: List<LzObject>): LzObject {
-        // TODO: Check args match the params.
         var returnObject: LzObject? = null
 
         // Load arguments into the environment

@@ -26,7 +26,7 @@ fun KClass<*>.constructorsToFSM(): FSM<KClass<*>, KFunction<KClass<*>>> {
 }
 
 private val constructorFSMCache = hashMapOf<KClass<*>, FSM<KClass<*>, KFunction<KClass<*>>>>()
-fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: Any): T? { //TODO: Use Either here? -> Rather than nullable
+fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: Any): T? {
     if (!constructorFSMCache.containsKey(clazz)) constructorFSMCache[clazz] = clazz.constructorsToFSM()
     val fsm = constructorFSMCache[clazz]!!.copyOriginal()
 

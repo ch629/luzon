@@ -14,9 +14,7 @@ import java.nio.file.Paths
 
 object TokenTest : Spek({
     describe("a token file") {
-        var fsm = TokenMachine.getFSM()
-        // TODO: Not sure why this happens, but for the gradle build, I need to copy it again for it to work correctly.
-        fsm = fsm.copyOriginal()
+        val fsm = TokenMachine.getFSM()
 
         it("should successfully convert to an FSM") {
             fsm.running shouldBe true
@@ -41,7 +39,7 @@ object TokenTest : Spek({
 
             val firstCount = Tokenizer(testLz).findTokens().count() // 25
 
-            (0..10).forEach {
+            (0..10).forEach { _ ->
                 val stream = Tokenizer(testLz).findTokens()
                 val c = stream.count()
 

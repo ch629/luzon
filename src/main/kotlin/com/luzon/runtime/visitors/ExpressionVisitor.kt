@@ -92,7 +92,6 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
 
     // Currently just converting all numerical types to floats to compare, as this won't lose any accuracy,
     // but this will be more resource consuming.
-    // TODO: Check they are all numerical first, else error
     override fun visit(node: Binary.GreaterEquals) = primitiveObject(accept(node.left).asFloat() >= accept(node.right).asFloat())
 
     override fun visit(node: Binary.Greater) = primitiveObject(accept(node.left).asFloat() > accept(node.right).asFloat())
@@ -145,7 +144,7 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         val exprObj = accept(node.expr)
 
         if (node.expr is LiteralExpr.IdentifierLiteral) {
-            val newObject = if (exprObj.value!!.isNumerical()) { // TODO: Check null here
+            val newObject = if (exprObj.value!!.isNumerical()) {
                 when (exprObj.value) {
                     is Int -> primitiveObject(exprObj.value + if (increment) 1 else -1)
                     is Float -> primitiveObject(exprObj.value + if (increment) 1 else -1)

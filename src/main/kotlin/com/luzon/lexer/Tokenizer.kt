@@ -37,7 +37,6 @@ class Tokenizer(text: String) : StringScanner(text) {
 
 class FSMTokenizerHelper(private val scanner: StringScanner) {
     private val machine = TokenMachine.getFSM()
-    //TODO: Maybe have a save IFsm to file, then I can just read that directly in from the initial Regex, rather than scan regex every time?
 
     companion object : KLogging()
 

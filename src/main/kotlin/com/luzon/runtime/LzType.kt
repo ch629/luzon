@@ -2,6 +2,7 @@ package com.luzon.runtime
 
 import kotlin.reflect.KClass
 
+// TODO: Figure out if this is necessary, and how this would work with inheritance
 sealed class LzType<T : Any>(val type: KClass<T>, val resolved: Boolean = true) {
     companion object {
         fun resolveType(name: String) = LzType::class.sealedSubclasses.firstOrNull {
@@ -11,7 +12,6 @@ sealed class LzType<T : Any>(val type: KClass<T>, val resolved: Boolean = true) 
     }
 }
 
-// TODO: Maybe define these within Luzon
 object LzBoolean : LzType<Boolean>(Boolean::class)
 
 object LzInt : LzType<Int>(Int::class)
