@@ -181,7 +181,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
                 if (start != null && rd.matchConsume(Symbol.RANGE)) {
                     val end = rd.accept(Literal.INT)
 
-                    if (end != null) {
+                    if (end != null && rd.matchConsume(Symbol.R_PAREN)) {
                         val block = block()
 
                         if (block != null)
