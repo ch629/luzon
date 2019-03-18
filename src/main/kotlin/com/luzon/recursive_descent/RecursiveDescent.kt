@@ -149,7 +149,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
         if (rd.matchConsume(Keyword.IF) && rd.matchConsume(Symbol.L_PAREN)) {
             val expr = expression()
             if (expr != null && rd.matchConsume(Symbol.R_PAREN)) {
-                val block = block()
+                val block = functionBlock()
 
                 if (block != null) {
                     if (rd.matchConsume(Keyword.ELSE)) {
@@ -158,7 +158,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
                         if (ifStatement != null)
                             return ASTNode.IfStatement(expr, block, ASTNode.ElseStatements.ElseIfStatement(ifStatement))
 
-                        val elseBlock = block()
+                        val elseBlock = functionBlock()
                         if (elseBlock != null)
                             return ASTNode.IfStatement(expr, block, ASTNode.ElseStatements.ElseStatement(elseBlock))
                     }
@@ -182,7 +182,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
                     val end = rd.accept(Literal.INT)
 
                     if (end != null && rd.matchConsume(Symbol.R_PAREN)) {
-                        val block = block()
+                        val block = functionBlock()
 
                         if (block != null)
                             return ASTNode.ForLoop(id.data, start.data.toInt(), end.data.toInt(), block)
@@ -201,7 +201,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
             val expr = expression()
 
             if (expr != null && rd.matchConsume(Symbol.R_PAREN)) {
-                val block = block()
+                val block = functionBlock()
 
                 if (block != null)
                     return ASTNode.WhileLoop(false, expr, block)
@@ -213,7 +213,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
     // do { } while(expr)
     private fun doWhileLoop(): ASTNode? {
         if (rd.matchConsume(Keyword.DO)) {
-            val block = block()
+            val block = functionBlock()
 
             if (block != null && rd.matchConsume(Keyword.WHILE) && rd.matchConsume(Symbol.L_PAREN)) {
                 val expr = expression()
