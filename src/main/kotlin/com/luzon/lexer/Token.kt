@@ -30,7 +30,7 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         fun toToken(data: String) = Token(this, data)
         fun toToken() = toToken("")
 
-        fun toFSM() = FSM.fromRegex<TokenEnum>(regex()).replaceChildOutputs(this)
+        fun toFSM() = FSM.fromRegex(regex(), this)
     }
 
     object None : TokenEnum {

@@ -34,7 +34,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
     protected open fun unescapedCharacters(char: A): Predicate<A>? = null
     protected open fun escapedCharacters(char: A): Predicate<A>? = null
 
-    fun toFSM(): State<A, O> {
+    fun toFSM(out: O? = null): State<A, O> {
         while (isNotAtEnd()) {
             var escape = false
             var char = peek()
@@ -74,7 +74,8 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
             endState = orEndState
         }
 
-        endState.forceAccept = true
+        if (out != null) endState.accepting = out
+        else endState.forceAccept = true
 
         return root
     }

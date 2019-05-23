@@ -2,7 +2,6 @@ package com.luzon.fsm
 
 import com.luzon.fsm.scanner.RegexScanner
 import com.luzon.utils.Predicate
-import java.util.*
 
 class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean = true) {
     private val initialStates: List<State<T, O>>
@@ -13,7 +12,7 @@ class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean =
     }
 
     companion object {
-        fun <O : Any> fromRegex(str: String) = FSM(listOf(RegexScanner<O>(str).toFSM()))
+        fun <O : Any> fromRegex(str: String, out: O? = null) = FSM(listOf(RegexScanner<O>(str).toFSM(out)))
 
         fun <T, O> merge(vararg machines: FSM<T, O>): FSM<T, O> {
             val allInitialStates = mutableListOf<State<T, O>>()
@@ -33,10 +32,6 @@ class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean =
 
     fun reset() {
         states = initialStates
-    }
-
-    fun replaceChildOutputs(value: O?) = apply {
-        states.forEach { it.replaceChildOutput(value) }
     }
 
     fun accept(value: T): Boolean {
@@ -123,39 +118,6 @@ class State<T, O>(private val transitions: MutableList<Transition<T, O>> = mutab
         epsilonTransitions.addAll(other.epsilonTransitions)
         accepting = other.accepting
         forceAccept = other.forceAccept
-    }
-
-    fun replaceChildOutput(output: O?) {
-        findAllChildren().forEach { it.replaceOutput(output) }
-    }
-
-    private fun replaceOutput(output: O?) {
-        if (accepting != null || forceAccept) {
-            accepting = output
-            forceAccept = false
-        }
-    }
-
-    private fun findAllChildren(): Set<State<T, O>> {
-        val cachedStates = mutableSetOf<State<T, O>>()
-        val stateStack = Stack<State<T, O>>()
-        cachedStates.add(this)
-        stateStack.push(this)
-
-        while (stateStack.isNotEmpty()) {
-            val currentState = stateStack.pop()
-            currentState.transitions.forEach { (_, state) ->
-                if (cachedStates.add(state))
-                    stateStack.push(state)
-            }
-
-            currentState.epsilonTransitions.forEach { state ->
-                if (cachedStates.add(state))
-                    stateStack.push(state)
-            }
-        }
-
-        return cachedStates
     }
 }
 
