@@ -104,7 +104,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
-    private fun functionBlock() = generalBlock(::functionStatement)
+    private fun functionBlock() = lineOrBlock(::functionStatement)
     private fun classBlock() = generalBlock(::classStatement)
     private fun block() = generalBlock(::statement)
 
@@ -121,6 +121,16 @@ class RecursiveDescent(val rd: TokenRDStream) {
             return ASTNode.Block(lines)
         }
         return null
+    }
+
+    private fun lineOrBlock(stmt: () -> ASTNode?): ASTNode.Block? {
+        val block = generalBlock(stmt)
+        return if (block != null) block
+        else {
+            val statement = stmt()
+            if (statement != null) ASTNode.Block(listOf(statement))
+            else null
+        }
     }
 
     // statements accepted within classes
