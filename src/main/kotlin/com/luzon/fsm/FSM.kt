@@ -16,10 +16,6 @@ class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean =
 
         fun <T, O> merge(vararg machines: FSM<T, O>): FSM<T, O> {
             val allInitialStates = mutableListOf<State<T, O>>()
-            // I think this will be more efficient than merging each in a reduce
-//            val c = machines.fold(mutableListOf<State<T, O>>()) { acc, machine ->
-//                acc.apply { addAll(machine.initialStates) }
-//            }
 
             machines.forEach { allInitialStates.addAll(it.initialStates) }
 

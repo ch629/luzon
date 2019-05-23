@@ -38,7 +38,10 @@ class ExpressionStreamList {
 }
 
 sealed class ExpressionToken {
-    class ExpressionLiteral(val token: Token) : ExpressionToken()
+    data class ExpressionLiteral(val token: Token) : ExpressionToken()
+
+    data class IncrementId(val post: Boolean, val token: Token) : ExpressionToken()
+    data class DecrementId(val post: Boolean, val token: Token) : ExpressionToken()
 
     data class DotChain(val token: ExpressionToken, val next: DotChain? = null) : ExpressionToken()
 

@@ -47,14 +47,26 @@ internal class ExpressionRecognizer(private val rd: TokenRDStream) {
     }
 
     private fun getLiteral(): ExpressionToken? {
+        var incDec = rd.accept(INCREMENT, DECREMENT)
         val literal = rd.accept { it.tokenEnum is Literal }
 
         if (literal != null) {
             if (literal.tokenEnum == Literal.IDENTIFIER) {
+                if (incDec != null) {
+                    return if (incDec.tokenEnum == INCREMENT) ExpressionToken.IncrementId(false, literal)
+                    else ExpressionToken.DecrementId(false, literal)
+                }
+
                 if (rd.matches(L_PAREN)) {
                     val funCall = FunctionCallParser(literal.data, rd).parse()
 
                     if (funCall != null) return ExpressionToken.FunctionCall(funCall) // TODO: else error
+                }
+
+                incDec = rd.accept(INCREMENT, DECREMENT)
+                if (incDec != null) {
+                    return if (incDec.tokenEnum == INCREMENT) ExpressionToken.IncrementId(true, literal)
+                    else ExpressionToken.DecrementId(true, literal)
                 }
             }
 

@@ -58,6 +58,14 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
             return Expression.LiteralExpr.fromToken(literal.token) // TODO: Error if null?
         } else if (rd.matches { it is ExpressionToken.DotChain }) {
             return dotChain(rd.consume() as ExpressionToken.DotChain)
+        } else if (rd.matches { it is ExpressionToken.DecrementId }) {
+            val dec = rd.consume() as ExpressionToken.DecrementId
+
+            return Expression.Unary.Decrement(Expression.LiteralExpr.fromToken(dec.token), !dec.post)
+        } else if (rd.matches { it is ExpressionToken.IncrementId }) {
+            val inc = rd.consume() as ExpressionToken.IncrementId
+
+            return Expression.Unary.Increment(Expression.LiteralExpr.fromToken(inc.token), !inc.post)
         }
 
         return null
