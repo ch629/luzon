@@ -5,6 +5,7 @@ import mu.KLogging
 import java.nio.file.Files
 import java.nio.file.Paths
 
+// TODO: Figure out why some tokens aren't correctly recognized unless they have a space after them.
 class Tokenizer(text: String) : StringScanner(text) {
     private val tokenizerHelper = FSMTokenizerHelper(this)
 

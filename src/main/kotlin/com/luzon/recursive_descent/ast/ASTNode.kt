@@ -41,6 +41,7 @@ sealed class ASTNode {
                     SUBTRACT -> Expression.Binary::Sub
                     MULTIPLY -> Expression.Binary::Mult
                     DIVIDE -> Expression.Binary::Div
+                    MOD -> Expression.Binary::Mod
 
                     EQUAL_EQUAL -> Expression.Binary::Equals
                     NOT_EQUAL -> Expression.Binary::NotEquals
@@ -58,6 +59,7 @@ sealed class ASTNode {
             class Sub(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class Mult(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class Div(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+            class Mod(left: Expression? = null, right: Expression? = null) : Binary(left, right)
 
             class Equals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class NotEquals(left: Expression? = null, right: Expression? = null) : Binary(left, right)

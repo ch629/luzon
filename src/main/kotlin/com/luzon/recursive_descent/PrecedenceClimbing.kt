@@ -1,13 +1,10 @@
 package com.luzon.recursive_descent
 
 import com.luzon.lexer.Token.Symbol.*
-import com.luzon.lexer.TokenStream
 import com.luzon.recursive_descent.ast.ASTNode.Expression
 import com.luzon.recursive_descent.expression.ExpressionRDStream
 import com.luzon.recursive_descent.expression.ExpressionRecognizer
 import com.luzon.recursive_descent.expression.ExpressionToken
-
-fun parseExpression(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(tokens)).parse()
 
 internal class PrecedenceClimbing(rd: TokenRDStream) {
     private val rd: ExpressionRDStream = ExpressionRDStream(ExpressionRecognizer.recognize(rd)
@@ -83,9 +80,9 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
     private fun ExpressionToken.precedence(unary: Boolean = false) = when (tokenType) {
         OR -> 0
         AND -> 1
-        EQUAL_EQUAL, LESS_EQUAL, LESS, GREATER, GREATER_EQUAL, NOT_EQUAL -> 2 // TODO: Check these.
+        EQUAL_EQUAL, LESS_EQUAL, LESS, GREATER, GREATER_EQUAL, NOT_EQUAL -> 2
         PLUS, SUBTRACT -> if (unary) 4 else 3
-        MULTIPLY, DIVIDE -> 5// TODO: Mod?
+        MULTIPLY, DIVIDE, MOD -> 5
         else -> -1
     }
 

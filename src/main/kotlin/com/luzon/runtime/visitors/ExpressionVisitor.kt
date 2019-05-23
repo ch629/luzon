@@ -78,10 +78,19 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
             else -> nullObject
         } else nullObject
 
+    private fun mod(left: Any?, right: Any?) = if (right != null && left != null)
+        when (maxOf(left, right, compareBy { it.weight() })) {
+            is Int -> primitiveObject(left as Int % right as Int)
+            is Float -> primitiveObject(left.asFloat() % right.asFloat())
+            is Double -> primitiveObject(left.asDouble() % right.asDouble())
+            else -> nullObject
+        } else nullObject
+
     override fun visit(node: Binary.Plus) = plus(accept(node.left).value, accept(node.right).value)
     override fun visit(node: Binary.Sub) = subtract(accept(node.left).value, accept(node.right).value)
     override fun visit(node: Binary.Mult) = multiply(accept(node.left).value, accept(node.right).value)
     override fun visit(node: Binary.Div) = divide(accept(node.left).value, accept(node.right).value)
+    override fun visit(node: Binary.Mod) = mod(accept(node.left).value, accept(node.right).value)
 
     override fun visit(node: LiteralExpr.IntLiteral) = primitiveObject(node.value)
     override fun visit(node: LiteralExpr.FloatLiteral) = primitiveObject(node.value)

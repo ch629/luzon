@@ -9,7 +9,6 @@ internal class ExpressionRecognizer(private val rd: TokenRDStream) {
     private val exprList = ExpressionStreamList()
 
     companion object {
-        // TODO: Increment, Decrement, etc?
         val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE, MOD, LESS, LESS_EQUAL, EQUAL_EQUAL, GREATER_EQUAL, GREATER, AND, OR, NOT_EQUAL)
         val unaryOperators = listOf(SUBTRACT, NOT)
 
