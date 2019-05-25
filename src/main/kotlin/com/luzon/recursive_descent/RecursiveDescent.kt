@@ -30,26 +30,32 @@ class RecursiveDescent(val rd: TokenRDStream) {
             return params
         }
 
-        if (rd.matchConsume(Keyword.FUN)) { // TODO: Maybe add an expect, so I don't need as many levels of if statements
-            val id = rd.accept(Literal.IDENTIFIER)
+        if (rd.matchConsume(Keyword.FUN)) {
+            val id = expect(Literal.IDENTIFIER)
 
-            if (id != null && rd.matchConsume(Symbol.L_PAREN)) {
-                val paramList = parameterList()
+            expect(Symbol.L_PAREN)
 
-                if (rd.matchConsume(Symbol.R_PAREN)) {
-                    var type: Token? = null
-                    if (rd.matchConsume(Symbol.TYPE))
-                        type = rd.accept(Literal.IDENTIFIER)
+            val paramList = parameterList()
 
-                    val block = functionBlock()
+            expect(Symbol.R_PAREN)
 
-                    if (block != null)
-                        return ASTNode.FunctionDefinition(id.data, paramList, type?.data, block)
-                }
-            }
+            var type: Token? = null
+            if (rd.matchConsume(Symbol.TYPE))
+                type = expect(Literal.IDENTIFIER)
+
+            val block = functionBlock()
+
+            if (block != null)
+                return ASTNode.FunctionDefinition(id.data, paramList, type?.data, block)
         }
         return null
     }
+
+    private fun expect(vararg tokens: TokenEnum) = rd.accept(*tokens)
+            ?: throw ExpectedTokenException(rd.consume(), *tokens)
+
+    class ExpectedTokenException(received: Token?, vararg tokens: TokenEnum) : Exception("Expected: ${tokens.joinToString { it.toString() }} got: ${received
+            ?: "none"}")
 
     private fun returnStatement(): ASTNode? {
         return if (rd.matchConsume(Keyword.RETURN))
@@ -83,22 +89,20 @@ class RecursiveDescent(val rd: TokenRDStream) {
         }
 
         if (rd.matchConsume(Keyword.CLASS)) {
-            val id = rd.accept(Literal.IDENTIFIER)
+            val id = expect(Literal.IDENTIFIER)
             var constructor: ASTNode.Constructor? = null
 
-            if (id != null) {
-                if (rd.matchConsume(Symbol.L_PAREN)) {
-                    val parameters = parameterList()
+            if (rd.matchConsume(Symbol.L_PAREN)) {
+                val parameters = parameterList()
 
-                    if (rd.matchConsume(Symbol.R_PAREN))
-                        constructor = ASTNode.Constructor(parameters)
-                }
-
-                val block = classBlock()
-
-                if (block != null)
-                    return ASTNode.Class(id.data, constructor, block)
+                expect(Symbol.R_PAREN)
+                constructor = ASTNode.Constructor(parameters)
             }
+
+            val block = classBlock()
+
+            if (block != null)
+                return ASTNode.Class(id.data, constructor, block)
         }
 
         return null
@@ -156,9 +160,11 @@ class RecursiveDescent(val rd: TokenRDStream) {
 
     // if(expr) { } else if(expr) { } else { }
     private fun ifStatement(): ASTNode.IfStatement? {
-        if (rd.matchConsume(Keyword.IF) && rd.matchConsume(Symbol.L_PAREN)) {
+        if (rd.matchConsume(Keyword.IF)) {
+            expect(Symbol.L_PAREN)
             val expr = expression()
-            if (expr != null && rd.matchConsume(Symbol.R_PAREN)) {
+            if (expr != null) {
+                expect(Symbol.R_PAREN)
                 val block = functionBlock()
 
                 if (block != null) {
@@ -180,25 +186,23 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
-    // TODO: This is a really basic for loop implementation, the real one would probably have to be more complex
     // for(i in 0..5) { }
     private fun forLoop(): ASTNode? {
-        if (rd.matchConsume(Keyword.FOR) && rd.matchConsume(Symbol.L_PAREN)) {
-            val id = rd.accept(Literal.IDENTIFIER)
+        if (rd.matchConsume(Keyword.FOR)) {
+            expect(Symbol.L_PAREN)
+            val id = expect(Literal.IDENTIFIER)
 
-            if (id != null && rd.matchConsume(Keyword.IN)) {
-                val start = rd.accept(Literal.INT)
-                if (start != null && rd.matchConsume(Symbol.RANGE)) {
-                    val end = rd.accept(Literal.INT)
+            expect(Keyword.IN)
 
-                    if (end != null && rd.matchConsume(Symbol.R_PAREN)) {
-                        val block = functionBlock()
+            val start = expect(Literal.INT)
+            expect(Symbol.RANGE)
+            val end = expect(Literal.INT)
 
-                        if (block != null)
-                            return ASTNode.ForLoop(id.data, start.data.toInt(), end.data.toInt(), block)
-                    }
-                }
-            }
+            expect(Symbol.R_PAREN)
+            val block = functionBlock()
+
+            if (block != null)
+                return ASTNode.ForLoop(id.data, start.data.toInt(), end.data.toInt(), block)
         }
         return null
     }
@@ -207,10 +211,12 @@ class RecursiveDescent(val rd: TokenRDStream) {
 
     // while(expr) { }
     private fun whileLoop(): ASTNode? {
-        if (rd.matchConsume(Keyword.WHILE) && rd.matchConsume(Symbol.L_PAREN)) {
+        if (rd.matchConsume(Keyword.WHILE)) {
+            expect(Symbol.L_PAREN)
             val expr = expression()
 
-            if (expr != null && rd.matchConsume(Symbol.R_PAREN)) {
+            if (expr != null) {
+                expect(Symbol.R_PAREN)
                 val block = functionBlock()
 
                 if (block != null)
@@ -225,11 +231,15 @@ class RecursiveDescent(val rd: TokenRDStream) {
         if (rd.matchConsume(Keyword.DO)) {
             val block = functionBlock()
 
-            if (block != null && rd.matchConsume(Keyword.WHILE) && rd.matchConsume(Symbol.L_PAREN)) {
+            if (block != null) {
+                expect(Keyword.WHILE)
+                expect(Symbol.L_PAREN)
                 val expr = expression()
 
-                if (expr != null && rd.matchConsume(Symbol.R_PAREN))
+                if (expr != null) {
+                    expect(Symbol.R_PAREN)
                     return ASTNode.WhileLoop(true, expr, block)
+                }
             }
         }
 
@@ -242,20 +252,17 @@ class RecursiveDescent(val rd: TokenRDStream) {
 
         if (varVal != null) {
             val constant = varVal.tokenEnum == Keyword.VAL
-            val id = rd.accept(Literal.IDENTIFIER)
-            if (id != null) {
-                var type: Token? = null
+            val id = expect(Literal.IDENTIFIER)
+            var type: Token? = null
 
-                if (rd.matchConsume(Symbol.TYPE))
-                    type = rd.accept(Literal.IDENTIFIER)
+            if (rd.matchConsume(Symbol.TYPE))
+                type = expect(Literal.IDENTIFIER)
 
-                if (rd.matchConsume(Symbol.EQUAL)) {
-                    val expr = expression()
+            expect(Symbol.EQUAL)
+            val expr = expression()
 
-                    if (expr != null)
-                        return ASTNode.VariableDeclaration(id.data, type?.data, expr, constant)
-                }
-            }
+            if (expr != null)
+                return ASTNode.VariableDeclaration(id.data, type?.data, expr, constant)
         }
         return null
     }
@@ -263,17 +270,15 @@ class RecursiveDescent(val rd: TokenRDStream) {
     // i = 5, i += 5 etc.
     private fun variableAssign(): ASTNode? {
         if (rd.lookaheadMatches(Symbol.EQUAL, Symbol.MULTIPLY_ASSIGN, Symbol.DIVIDE_ASSIGN, Symbol.MOD_ASSIGN, Symbol.PLUS_ASSIGN, Symbol.SUBTRACT_ASSIGN)) {
-            val id = rd.accept(Literal.IDENTIFIER)
+            val id = expect(Literal.IDENTIFIER)
 
-            if (id != null) {
-                val operator = rd.consume()?.tokenEnum as Symbol
-                val expr = expression()
+            val operator = rd.consume()?.tokenEnum as Symbol
+            val expr = expression()
 
-                if (expr != null) {
-                    if (operator == Symbol.EQUAL)
-                        return ASTNode.VariableAssign(id.data, expr)
-                    return ASTNode.OperatorVariableAssign(id.data, expr, operator)
-                }
+            if (expr != null) {
+                if (operator == Symbol.EQUAL)
+                    return ASTNode.VariableAssign(id.data, expr)
+                return ASTNode.OperatorVariableAssign(id.data, expr, operator) // TODO: Check for specific operators still here
             }
         }
         return null
