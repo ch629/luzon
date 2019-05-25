@@ -5,7 +5,6 @@ import mu.KLogging
 import java.nio.file.Files
 import java.nio.file.Paths
 
-// TODO: Figure out why some tokens aren't correctly recognized unless they have a space after them.
 class Tokenizer(text: String) : StringScanner(text) {
     private val tokenizerHelper = FSMTokenizerHelper(this)
 
@@ -23,7 +22,7 @@ class Tokenizer(text: String) : StringScanner(text) {
         else {
             val token = tokenizerHelper.findNextToken()
 
-            return if (token.tokenEnum is Token.Comment) findNextToken() else token
+            if (token.tokenEnum is Token.Comment) findNextToken() else token
         }
     }
 
@@ -41,29 +40,22 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
 
     companion object : KLogging()
 
-    //TODO: Better error logging. (Line, character, log all once the tokenizer has finished) Using Either?
     fun findNextToken(): Token {
-        val errorBuffer = StringBuffer()
-        var token: Token?
+        machine.reset()
+        val char = scanner.peek()
+        val current = scanner.current
+        val token = findToken()
 
-        do {
-            machine.reset()
-            val char = scanner.peek()
-            val current = scanner.current
-            token = findToken()
+        // TODO: Throw error or return Either
+        if (token.tokenEnum == Token.None)
+            logger.error("Invalid token: $char starting at character $current")
 
-            if (token == null)
-                errorBuffer.append(char).append(" starting at character ").append(current)
-        } while (token == null && scanner.isNotAtEnd()) //Keep trying to find tokens if it finds an invalid character
-
-        if (errorBuffer.isNotEmpty()) logger.warn("Found invalid characters: $errorBuffer")
-
-        return token ?: Token.None.toToken()
+        return token
     }
 
-    private fun findToken(): Token? {
+    private fun findToken(): Token {
         var foundToken: Token.TokenEnum? = null
-        var foundCurrent = scanner.current + 1 //If there isn't one found, the next character will be checked
+        var foundCurrent = scanner.current + 1
         val tokenDataBuffer = StringBuffer()
         val startCurrent = scanner.current
 
@@ -80,7 +72,7 @@ class FSMTokenizerHelper(private val scanner: StringScanner) {
         }
 
         val diff = foundCurrent - startCurrent
-        val data = if (diff < tokenDataBuffer.length) tokenDataBuffer.substring(0, diff) else ""
+        val data = if (diff <= tokenDataBuffer.length) tokenDataBuffer.substring(0, diff) else ""
         scanner.current = foundCurrent
         return (foundToken ?: Token.None).toToken(data)
     }

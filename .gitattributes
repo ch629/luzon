@@ -16,6 +16,7 @@
 *.xml           text
 *.yml           text
 *.md            text
+*.lz            text
 
 # These files are binary and should be left untouched
 # (binary is a macro for -text -diff)
