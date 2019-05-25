@@ -30,23 +30,3 @@ object Luzon {
         ReflectionEngine.registerClassMethods(clazz)
     }
 }
-
-fun main() {
-    val code = """
-        class Test() {
-            fun test(): Int {
-                val s = "hello"
-                val c = 'a'
-                return 5
-            }
-        }
-    """.trimIndent()
-
-    val tokenizer = Tokenizer(code).tokensAsString()
-    val tree = RecursiveDescent(TokenRDStream(Tokenizer(code).findTokens())).parse()
-
-    Luzon.runCode(code)
-
-    val f = "50f".toFloat()
-    val d = "50d".toDouble()
-}
