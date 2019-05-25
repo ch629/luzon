@@ -120,5 +120,3 @@ class State<T, O>(private val transitions: MutableList<Transition<T, O>> = mutab
 data class Transition<T, O>(val predicate: Predicate<T>, val state: State<T, O>) {
     fun accept(value: T) = if (predicate(value)) state else null
 }
-
-fun <A : Any, O : Any> Collection<FSM<A, O>>.toMergedFSM() = FSM.merge(*toTypedArray())

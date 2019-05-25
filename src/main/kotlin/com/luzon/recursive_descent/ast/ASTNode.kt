@@ -88,7 +88,8 @@ sealed class ASTNode {
                     Literal.DOUBLE -> DoubleLiteral(token.data.toDouble())
                     Literal.BOOLEAN -> BooleanLiteral(token.data.toBoolean())
                     Literal.IDENTIFIER -> IdentifierLiteral(token.data)
-                    Literal.STRING -> StringLiteral(token.data.substring(1, token.data.length - 1))
+                    Literal.STRING -> StringLiteral(token.data)
+                    Literal.CHAR -> CharLiteral(token.data[0])
                     else -> null
                 }
             }
@@ -99,6 +100,7 @@ sealed class ASTNode {
             data class IdentifierLiteral(val name: String) : LiteralExpr()
             data class BooleanLiteral(val value: Boolean) : LiteralExpr()
             data class StringLiteral(val value: String) : LiteralExpr()
+            data class CharLiteral(val value: Char) : LiteralExpr()
             data class FunctionCall(val name: String, val params: List<Expression>) : LiteralExpr()
 
             data class DotChainLiteral(val value: Expression, val next: DotChainLiteral? = null) : LiteralExpr()

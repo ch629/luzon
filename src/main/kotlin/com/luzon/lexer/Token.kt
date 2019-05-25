@@ -27,7 +27,7 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
 
         fun isId(id: String) = id() == id
 
-        fun toToken(data: String) = Token(this, data)
+        fun toToken(data: String) = Token(this, if (this is Literal) fromString(data).toString() else data)
         fun toToken() = toToken("")
 
         fun toFSM() = FSM.fromRegex(regex(), this)
@@ -62,14 +62,14 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         override fun toString() = "symbol:${id()}"
     }
 
-    enum class Literal(val regex: String) : TokenEnum {
-        DOUBLE("\\d+d|\\d+\\.\\d+d?"),
-        FLOAT("\\d+f|\\d+\\.\\d+f"),
-        INT("\\d+"),
-        STRING("\".*\""),
-        CHAR("'\\?.'"),
-        BOOLEAN("true|false"),
-        IDENTIFIER("[A-Za-z_]\\w*");
+    enum class Literal(val regex: String, val fromString: (String) -> Any) : TokenEnum {
+        DOUBLE("\\d+d|\\d+\\.\\d+d?", String::toDouble),
+        FLOAT("\\d+f|\\d+\\.\\d+f", String::toFloat),
+        INT("\\d+", String::toInt),
+        STRING("\".*\"", { it.substring(1 until it.length - 1) }),
+        CHAR("'.'", { it.substring(1 until it.length - 1) }),
+        BOOLEAN("true|false", String::toBoolean),
+        IDENTIFIER("[A-Za-z_]\\w*", { it });
 
         override fun toString() = "literal:${id()}"
     }
