@@ -155,8 +155,14 @@ class RecursiveDescent(val rd: TokenRDStream) {
             if (result != null)
                 return result
         }
-        return null
+
+        throw TokenRuleException(nodes.joinToString {
+            val split = it.toString().split(":")[0].split(".").last()
+            split.substring(0 until split.length - 2)
+        })
     }
+
+    class TokenRuleException(string: String) : Exception("Expected rule of: $string but didn't receive a valid token.")
 
     // if(expr) { } else if(expr) { } else { }
     private fun ifStatement(): ASTNode.IfStatement? {
