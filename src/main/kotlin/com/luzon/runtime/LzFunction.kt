@@ -9,7 +9,7 @@ interface Invokable {
 }
 
 // TODO: This probably shouldn't use the FunctionParameter type, as I won't be able to check subtypes, and it only stores the type as a String which is not ideal
-open class LzFunction(val name: String, val params: List<ASTNode.FunctionParameter>, val returnType: LzType<*>?,
+open class LzFunction(val name: String, val params: List<ASTNode.FunctionParameter>, val returnType: String?,
                       val block: ASTNode.Block = ASTNode.Block(emptyList())) : Invokable {
 
     override fun invoke(environment: Environment, args: List<LzObject>): LzObject {
@@ -45,7 +45,7 @@ open class LzFunction(val name: String, val params: List<ASTNode.FunctionParamet
     }
 }
 
-class LzCodeFunction(name: String, params: List<ASTNode.FunctionParameter>, returnType: LzType<*>?, var function: (Environment, List<LzObject>) -> LzObject = { _, _ -> nullObject }) :
+class LzCodeFunction(name: String, params: List<ASTNode.FunctionParameter>, returnType: String?, var function: (Environment, List<LzObject>) -> LzObject = { _, _ -> nullObject }) :
         LzFunction(name, params, returnType, ASTNode.Block(emptyList())) {
     override fun invoke(environment: Environment, args: List<LzObject>): LzObject = function(environment, args)
 }

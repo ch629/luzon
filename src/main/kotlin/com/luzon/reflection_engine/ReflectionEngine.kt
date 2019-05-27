@@ -2,22 +2,22 @@ package com.luzon.reflection_engine
 
 import com.luzon.recursive_descent.ast.ASTNode
 import com.luzon.reflection_engine.annotations.LzMethod
-import com.luzon.runtime.Environment
-import com.luzon.runtime.LzCodeFunction
-import com.luzon.runtime.LzObject
+import com.luzon.runtime.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.functions
+import kotlin.reflect.jvm.javaType
 
 object ReflectionEngine {
+    @Deprecated("Replaced with a system that doesn't require lists as arguments")
     fun registerClassMethods(clazz: KClass<*>) {
         val instancedClass = clazz.objectInstance ?: clazz.createInstance()
         clazz.functions.forEach { func ->
             if (func.returnType.classifier == LzObject::class) {
-                val annotation = func.findAnnotation<LzMethod>()
+                val annotation = func.findAnnotation<LzMethod>() ?: return
 
-                if (annotation != null && func.parameters.size == 2) {
+                if (func.parameters.size == 2) {
                     // Check if the args list is of LzObject or Any
                     val lzObjects = func.parameters[1].type.arguments[0].type?.classifier == LzObject::class
 
@@ -31,6 +31,28 @@ object ReflectionEngine {
                             })
                 }
             }
+        }
+    }
+
+    fun registerNewClassMethods(clazz: KClass<*>) {
+        val instancedClass = clazz.objectInstance ?: clazz.createInstance()
+        clazz.functions.forEach { func ->
+            val annotation = func.findAnnotation<LzMethod>() ?: return
+
+            val funName = if (annotation.name.isEmpty()) func.name else annotation.name
+            val params = func.parameters.map {
+                // TODO: Temporary way to deal with this, need to use some system for typing in Luzon so I'm not using Strings throughout to refer to everything.
+                ASTNode.FunctionParameter(it.name ?: it.index.toString(), it.type.javaType.typeName.capitalize())
+            }
+
+            val retType = func.returnType.javaType.typeName.capitalize()
+
+            Environment.global.defineFunction(LzCodeFunction(funName, params.drop(1), retType) { _, args ->
+                // TODO: Need a system to convert kotlin/java objects into a Luzon one without it being a primitive.
+                val call = func.call(instancedClass, args.map { it.value })
+                if (call != null) primitiveObject(call)
+                nullObject
+            })
         }
     }
 }

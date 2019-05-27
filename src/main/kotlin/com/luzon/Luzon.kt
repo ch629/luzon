@@ -27,6 +27,6 @@ object Luzon {
     }
 
     fun registerMethods(clazz: KClass<*>) {
-        ReflectionEngine.registerClassMethods(clazz)
+        ReflectionEngine.registerNewClassMethods(clazz)
     }
 }
