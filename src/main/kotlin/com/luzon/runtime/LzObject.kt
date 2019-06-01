@@ -14,7 +14,7 @@ private fun Any?.toClassName() = when (this) {
 data class LzObject(val clazz: LzClass, val value: Any? = null, val environment: Environment = Environment.global) {
     operator fun get(name: String) = environment[name]
 
-    fun invokeFunction(name: String, args: List<LzObject>) = environment.invokeFunction(name, args)
+    fun invokeFunction(name: String, args: List<LzObject> = emptyList()) = environment.invokeFunction(name, args)
 }
 
 val nullObject = primitiveObject(null)

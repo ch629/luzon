@@ -42,14 +42,23 @@ object ReflectionEngine {
             val funName = if (annotation.name.isEmpty()) func.name else annotation.name
             val params = func.parameters.map {
                 // TODO: Temporary way to deal with this, need to use some system for typing in Luzon so I'm not using Strings throughout to refer to everything.
-                ASTNode.FunctionParameter(it.name ?: it.index.toString(), it.type.javaType.typeName.capitalize())
+                var type = it.type.javaType.typeName
+                if (type == "java.lang.Object") type = "Any"
+                ASTNode.FunctionParameter(it.name ?: it.index.toString(), type.capitalize())
             }
 
-            val retType = func.returnType.javaType.typeName.capitalize()
+            var retType: String? = func.returnType.javaType.typeName
+            retType = when (retType) {
+                "java.lang.Object" -> "Any"
+                "void" -> null
+                else -> retType!!.capitalize()
+            }
 
             Environment.global.defineFunction(LzCodeFunction(funName, params.drop(1), retType) { _, args ->
                 // TODO: Need a system to convert kotlin/java objects into a Luzon one without it being a primitive.
-                val call = func.call(instancedClass, args.map { it.value })
+                val valueArgs = args.map { it.value }.toMutableList()
+                valueArgs.add(0, instancedClass)
+                val call = func.call(*valueArgs.toTypedArray())
                 if (call != null) primitiveObject(call)
                 nullObject
             })

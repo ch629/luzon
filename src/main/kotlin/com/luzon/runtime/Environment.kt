@@ -1,7 +1,7 @@
 package com.luzon.runtime
 
 class Environment private constructor(private val parent: Environment?) {
-    private val values = hashMapOf<String, LzObject>()
+    private val variables = hashMapOf<String, LzVariable>()
     private val functions = hashMapOf<String, MutableSet<LzFunction>>()
 
     companion object {
@@ -9,15 +9,15 @@ class Environment private constructor(private val parent: Environment?) {
     }
 
     fun reset() {
-        values.clear()
+        variables.clear()
         functions.clear()
     }
 
     fun isGlobal() = parent == null
 
-    fun findValue(name: String): LzObject? = when {
-        values.containsKey(name) -> values[name]
-        parent != null -> parent.findValue(name)
+    fun findVariable(name: String): LzVariable? = when {
+        variables.containsKey(name) -> variables[name]
+        parent != null -> parent.findVariable(name)
         else -> null
     }
 
@@ -34,14 +34,14 @@ class Environment private constructor(private val parent: Environment?) {
         return parent?.findFunction(name, args)
     }
 
-    fun invokeFunction(name: String, args: List<LzObject>) =
+    fun invokeFunction(name: String, args: List<LzObject> = emptyList()) =
             findFunction(name, args)?.invoke(this, args) ?: nullObject
 
-    operator fun get(name: String) = findValue(name)
-    operator fun set(name: String, value: LzObject) = setValue(name, value)
+    operator fun get(name: String) = findVariable(name)?.value
+    operator fun set(name: String, value: LzObject) = setVariable(name, value)
 
     operator fun plusAssign(pair: Pair<String, LzObject>) {
-        defineValue(pair.first, pair.second)
+        defineVariable(pair.first, pair.second)
     }
 
     operator fun plusAssign(function: LzFunction) = defineFunction(function)
@@ -58,23 +58,19 @@ class Environment private constructor(private val parent: Environment?) {
     fun newEnv() = Environment(this)
     fun pop() = parent ?: this
 
-    fun defineValue(name: String, value: LzObject) {
-        if (values.contains(name))
+    fun defineVariable(name: String, value: LzObject) {
+        if (variables.contains(name))
             return // TODO: Error -> Already exists
-        values[name] = value
+        variables[name] = LzVariable(name, value, value.clazz, false) // TODO: Val vs Var
     }
 
-    fun setValue(name: String, value: LzObject) {
-        when {
-            values.contains(name) -> values[name] = value
-            parent != null -> parent.setValue(name, value)
-            else -> return // TODO: Value doesn't exist
-        }
+    fun setVariable(name: String, value: LzObject) {
+        findVariable(name)?.assign(value)
     }
 
     fun copy(): Environment {
         val newEnvironment = Environment(parent)
-        newEnvironment.values.putAll(values)
+        newEnvironment.variables.putAll(variables)
         newEnvironment.functions.putAll(functions)
         return newEnvironment
     }

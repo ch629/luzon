@@ -40,4 +40,10 @@ open class LzClass(val name: String, val constructor: LzFunction = LzFunction(na
             LzObject(this, null, environment)
         } else null
     }
+
+    fun isSubclassOf(other: LzClass): Boolean {
+        return true // TODO: Complete this properly.
+    }
+
+    fun isNotSubclassOf(other: LzClass) = !isSubclassOf(other)
 }
