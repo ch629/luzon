@@ -1,10 +1,16 @@
 package com.luzon.runtime.visitors
 
 import com.luzon.recursive_descent.ast.ASTNode
-import com.luzon.recursive_descent.ast.ASTNode.Expression.*
+import com.luzon.recursive_descent.ast.ASTNode.Expression.Binary
+import com.luzon.recursive_descent.ast.ASTNode.Expression.LiteralExpr
+import com.luzon.recursive_descent.ast.ASTNode.Expression.Unary
 import com.luzon.recursive_descent.expression.ASTNodeVisitor
 import com.luzon.recursive_descent.expression.accept
-import com.luzon.runtime.*
+import com.luzon.runtime.EnvironmentManager
+import com.luzon.runtime.LzObject
+import com.luzon.runtime.nullObject
+import com.luzon.runtime.primitiveObject
+import com.luzon.runtime.withEnvironment
 
 object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     private fun accept(node: ASTNode?) = node?.accept(this) ?: nullObject

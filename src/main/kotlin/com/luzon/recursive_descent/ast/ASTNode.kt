@@ -2,7 +2,19 @@ package com.luzon.recursive_descent.ast
 
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Literal
-import com.luzon.lexer.Token.Symbol.*
+import com.luzon.lexer.Token.Symbol.AND
+import com.luzon.lexer.Token.Symbol.DIVIDE
+import com.luzon.lexer.Token.Symbol.EQUAL_EQUAL
+import com.luzon.lexer.Token.Symbol.GREATER
+import com.luzon.lexer.Token.Symbol.GREATER_EQUAL
+import com.luzon.lexer.Token.Symbol.LESS
+import com.luzon.lexer.Token.Symbol.LESS_EQUAL
+import com.luzon.lexer.Token.Symbol.MOD
+import com.luzon.lexer.Token.Symbol.MULTIPLY
+import com.luzon.lexer.Token.Symbol.NOT_EQUAL
+import com.luzon.lexer.Token.Symbol.OR
+import com.luzon.lexer.Token.Symbol.PLUS
+import com.luzon.lexer.Token.Symbol.SUBTRACT
 
 sealed class ASTNode {
     data class Class(val name: String, val constructor: Constructor?, val block: Block) : ASTNode()

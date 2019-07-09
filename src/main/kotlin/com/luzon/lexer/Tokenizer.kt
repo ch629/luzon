@@ -10,7 +10,7 @@ class Tokenizer(text: String) : StringScanner(text) {
 
     companion object {
         private val skipChars = arrayOf(
-                ' ', '\t', '\n', '\r'
+            ' ', '\t', '\n', '\r'
         )
 
         fun fromFile(file: String) = Tokenizer(Files.readAllLines(Paths.get(file)).joinToString("\n"))

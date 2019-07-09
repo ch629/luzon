@@ -58,14 +58,6 @@ object FSMTest : Spek({
             machine.stateCount shouldBeGreaterThan 1
             machine.accepting shouldBe true
         }
-
-//        context("a state") {
-//            it("finds leaf states correctly") {
-//                val root = State<Char, Unit>()
-//                for (i in 1..5) root.addEpsilon(State())
-//                root.leaves.size shouldBe 5
-//            }
-//        }
     }
 
     describe("a regex parser") {

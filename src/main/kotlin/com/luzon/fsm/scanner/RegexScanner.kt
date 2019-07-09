@@ -2,7 +2,11 @@ package com.luzon.fsm.scanner
 
 import com.luzon.fsm.FSM
 import com.luzon.fsm.State
-import com.luzon.utils.*
+import com.luzon.utils.Predicate
+import com.luzon.utils.equalPredicate
+import com.luzon.utils.or
+import com.luzon.utils.range
+import com.luzon.utils.toCharList
 import mu.NamedKLogging
 
 class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
@@ -73,7 +77,6 @@ class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
                 else if (unescapedCharacter == null) transitionPredicate or char.equalPredicate()
                 else transitionPredicate or unescapedCharacter
             }
-
         } while (peek() != ']' && isNotAtEnd())
 
         advance() //Consume ']'

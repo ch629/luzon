@@ -5,6 +5,7 @@ plugins {
     id "maven-publish"
     id "java-library"
     id "com.jfrog.bintray" version "1.8.4"
+    id "com.diffplug.gradle.spotless" version "3.21.1"
 }
 
 group "com.luzon"
@@ -21,7 +22,7 @@ dependencies {
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spekVersion"
     testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:$spekVersion"
-    
+
     testImplementation "org.amshove.kluent:kluent:$kluentVersion"
 
     testImplementation "com.squareup.okio:okio:$okioVersion"
@@ -117,4 +118,29 @@ task sourcesJar(type: Jar) {
 artifacts {
     archives sourcesJar
     archives jar
+}
+
+spotless {
+    format "misc", {
+        target "**/*.gradle", "**/*.md", "**/.gitignore"
+
+        trimTrailingWhitespace()
+        indentWithSpaces(4)
+        endWithNewline()
+    }
+
+    kotlin {
+        ktlint().userData(['insert_final_newline': 'true'])
+        trimTrailingWhitespace()
+        indentWithSpaces(4)
+        endWithNewline()
+    }
+
+    java {
+        googleJavaFormat()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        indentWithSpaces(4)
+        endWithNewline()
+    }
 }

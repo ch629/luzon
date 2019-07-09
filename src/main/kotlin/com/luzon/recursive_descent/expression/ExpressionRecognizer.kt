@@ -1,7 +1,25 @@
 package com.luzon.recursive_descent.expression
 
 import com.luzon.lexer.Token.Literal
-import com.luzon.lexer.Token.Symbol.*
+import com.luzon.lexer.Token.Symbol.AND
+import com.luzon.lexer.Token.Symbol.DECREMENT
+import com.luzon.lexer.Token.Symbol.DIVIDE
+import com.luzon.lexer.Token.Symbol.DOT
+import com.luzon.lexer.Token.Symbol.EQUAL_EQUAL
+import com.luzon.lexer.Token.Symbol.GREATER
+import com.luzon.lexer.Token.Symbol.GREATER_EQUAL
+import com.luzon.lexer.Token.Symbol.INCREMENT
+import com.luzon.lexer.Token.Symbol.LESS
+import com.luzon.lexer.Token.Symbol.LESS_EQUAL
+import com.luzon.lexer.Token.Symbol.L_PAREN
+import com.luzon.lexer.Token.Symbol.MOD
+import com.luzon.lexer.Token.Symbol.MULTIPLY
+import com.luzon.lexer.Token.Symbol.NOT
+import com.luzon.lexer.Token.Symbol.NOT_EQUAL
+import com.luzon.lexer.Token.Symbol.OR
+import com.luzon.lexer.Token.Symbol.PLUS
+import com.luzon.lexer.Token.Symbol.R_PAREN
+import com.luzon.lexer.Token.Symbol.SUBTRACT
 import com.luzon.lexer.TokenStream
 import com.luzon.recursive_descent.TokenRDStream
 

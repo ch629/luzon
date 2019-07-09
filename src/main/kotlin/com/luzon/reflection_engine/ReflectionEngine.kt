@@ -2,7 +2,11 @@ package com.luzon.reflection_engine
 
 import com.luzon.recursive_descent.ast.ASTNode
 import com.luzon.reflection_engine.annotations.LzMethod
-import com.luzon.runtime.*
+import com.luzon.runtime.Environment
+import com.luzon.runtime.LzCodeFunction
+import com.luzon.runtime.LzObject
+import com.luzon.runtime.nullObject
+import com.luzon.runtime.primitiveObject
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.findAnnotation
@@ -22,13 +26,13 @@ object ReflectionEngine {
                     val lzObjects = func.parameters[1].type.arguments[0].type?.classifier == LzObject::class
 
                     val params = annotation.args
-                            .mapIndexed { index, s -> ASTNode.FunctionParameter(index.toString(), s) }
+                        .mapIndexed { index, s -> ASTNode.FunctionParameter(index.toString(), s) }
 
                     Environment.global.defineFunction(
-                            LzCodeFunction(if (annotation.name.isEmpty()) func.name else annotation.name,
-                                    params, null) { _, args ->
-                                func.call(instancedClass, if (lzObjects) args else args.map { it.value }) as LzObject
-                            })
+                        LzCodeFunction(if (annotation.name.isEmpty()) func.name else annotation.name,
+                            params, null) { _, args ->
+                            func.call(instancedClass, if (lzObjects) args else args.map { it.value }) as LzObject
+                        })
                 }
             }
         }

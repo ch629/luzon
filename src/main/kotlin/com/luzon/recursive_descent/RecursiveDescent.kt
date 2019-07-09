@@ -1,7 +1,10 @@
 package com.luzon.recursive_descent
 
 import com.luzon.lexer.Token
-import com.luzon.lexer.Token.*
+import com.luzon.lexer.Token.Keyword
+import com.luzon.lexer.Token.Literal
+import com.luzon.lexer.Token.Symbol
+import com.luzon.lexer.Token.TokenEnum
 import com.luzon.recursive_descent.ast.ASTNode
 
 // Main entry point from the lz file
@@ -17,13 +20,11 @@ class RecursiveDescent(val rd: TokenRDStream) {
             do {
                 val id = rd.accept(Literal.IDENTIFIER)
 
-                if (id != null) {
-                    if (rd.matchConsume(Symbol.TYPE)) {
-                        val type = rd.accept(Literal.IDENTIFIER)
+                if (id != null && rd.matchConsume(Symbol.TYPE)) {
+                    val type = rd.accept(Literal.IDENTIFIER)
 
-                        if (type != null)
-                            params.add(ASTNode.FunctionParameter(id.data, type.data))
-                    }
+                    if (type != null)
+                        params.add(ASTNode.FunctionParameter(id.data, type.data))
                 }
             } while (rd.matchConsume(Symbol.COMMA))
 
@@ -52,10 +53,10 @@ class RecursiveDescent(val rd: TokenRDStream) {
     }
 
     private fun expect(vararg tokens: TokenEnum) = rd.accept(*tokens)
-            ?: throw ExpectedTokenException(rd.consume(), *tokens)
+        ?: throw ExpectedTokenException(rd.consume(), *tokens)
 
     class ExpectedTokenException(received: Token?, vararg tokens: TokenEnum) : Exception("Expected: ${tokens.joinToString { it.toString() }} got: ${received
-            ?: "none"}")
+        ?: "none"}")
 
     private fun returnStatement(): ASTNode? {
         return if (rd.matchConsume(Keyword.RETURN))
@@ -74,13 +75,11 @@ class RecursiveDescent(val rd: TokenRDStream) {
                 if (valVar != null) {
                     val id = rd.accept(Literal.IDENTIFIER)
 
-                    if (id != null) {
-                        if (rd.matchConsume(Symbol.TYPE)) {
-                            val type = rd.accept(Literal.IDENTIFIER)
+                    if (id != null && rd.matchConsume(Symbol.TYPE)) {
+                        val type = rd.accept(Literal.IDENTIFIER)
 
-                            if (type != null)
-                                params.add(ASTNode.ConstructorVariableDeclaration(id.data, type.data, valVar.tokenEnum == Keyword.VAL))
-                        }
+                        if (type != null)
+                            params.add(ASTNode.ConstructorVariableDeclaration(id.data, type.data, valVar.tokenEnum == Keyword.VAL))
                     }
                 }
             } while (rd.matchConsume(Symbol.COMMA))

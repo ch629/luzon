@@ -1,6 +1,21 @@
 package com.luzon.recursive_descent
 
-import com.luzon.lexer.Token.Symbol.*
+import com.luzon.lexer.Token.Symbol.AND
+import com.luzon.lexer.Token.Symbol.DIVIDE
+import com.luzon.lexer.Token.Symbol.EQUAL_EQUAL
+import com.luzon.lexer.Token.Symbol.GREATER
+import com.luzon.lexer.Token.Symbol.GREATER_EQUAL
+import com.luzon.lexer.Token.Symbol.LESS
+import com.luzon.lexer.Token.Symbol.LESS_EQUAL
+import com.luzon.lexer.Token.Symbol.L_PAREN
+import com.luzon.lexer.Token.Symbol.MOD
+import com.luzon.lexer.Token.Symbol.MULTIPLY
+import com.luzon.lexer.Token.Symbol.NOT
+import com.luzon.lexer.Token.Symbol.NOT_EQUAL
+import com.luzon.lexer.Token.Symbol.OR
+import com.luzon.lexer.Token.Symbol.PLUS
+import com.luzon.lexer.Token.Symbol.R_PAREN
+import com.luzon.lexer.Token.Symbol.SUBTRACT
 import com.luzon.lexer.TokenStream
 import com.luzon.recursive_descent.ast.ASTNode.Expression
 import com.luzon.recursive_descent.expression.ExpressionRDStream
@@ -11,7 +26,7 @@ fun parseExpression(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(toke
 
 internal class PrecedenceClimbing(rd: TokenRDStream) {
     private val rd: ExpressionRDStream = ExpressionRDStream(ExpressionRecognizer.recognize(rd)
-            ?: emptySequence())
+        ?: emptySequence())
 
     fun parse() = exp(0)
 
@@ -74,9 +89,9 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
     private fun dotChain(first: ExpressionToken.DotChain? = null): Expression.LiteralExpr.DotChainLiteral? {
         return if (first != null)
             Expression.LiteralExpr.DotChainLiteral(
-                    if (first.token is ExpressionToken.ExpressionLiteral) Expression.LiteralExpr.fromToken(first.token.token)!!
-                    else (first.token as ExpressionToken.FunctionCall).function,
-                    dotChain(first.next))
+                if (first.token is ExpressionToken.ExpressionLiteral) Expression.LiteralExpr.fromToken(first.token.token)!!
+                else (first.token as ExpressionToken.FunctionCall).function,
+                dotChain(first.next))
         else null
     }
 

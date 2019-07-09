@@ -24,7 +24,7 @@ class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean =
     }
 
     fun merge(other: FSM<T, O>) =
-            FSM(initialStates + other.initialStates, false)
+        FSM(initialStates + other.initialStates, false)
 
     fun reset() {
         states = initialStates
@@ -52,14 +52,14 @@ class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean =
     }
 
     private fun acceptEpsilons(stateList: List<State<T, O>> = states) =
-            stateList.fold(mutableListOf<State<T, O>>()) { acc, states ->
-                acc.apply { addAll(states.epsilonTransitions) }
-            }
+        stateList.fold(mutableListOf<State<T, O>>()) { acc, states ->
+            acc.apply { addAll(states.epsilonTransitions) }
+        }
 
     private fun acceptNormal(value: T, stateList: List<State<T, O>> = states) =
-            stateList.fold(mutableListOf<State<T, O>>()) { acc, states ->
-                acc.apply { addAll(states.accept(value)) }
-            }
+        stateList.fold(mutableListOf<State<T, O>>()) { acc, states ->
+            acc.apply { addAll(states.accept(value)) }
+        }
 
     fun copyOriginal() = FSM(initialStates, false)
 
@@ -76,19 +76,22 @@ class FSM<T, O>(private var states: List<State<T, O>>, updateEpsilons: Boolean =
         get() = states.size
 }
 
-class State<T, O>(private val transitions: MutableList<Transition<T, O>> = mutableListOf(),
-                  val epsilonTransitions: MutableList<State<T, O>> = mutableListOf(),
-                  var accepting: O? = null, var forceAccept: Boolean = false) {
+class State<T, O>(
+    private val transitions: MutableList<Transition<T, O>> = mutableListOf(),
+    val epsilonTransitions: MutableList<State<T, O>> = mutableListOf(),
+    var accepting: O? = null,
+    var forceAccept: Boolean = false
+) {
     val leaf: Boolean
         get() = transitions.isEmpty() && epsilonTransitions.isEmpty()
 
     fun accept(value: T): List<State<T, O>> = transitions.mapNotNull { it.accept(value) }
 
     fun addTransition(predicate: Predicate<T>, state: State<T, O>) =
-            transitions.add(Transition(predicate, state))
+        transitions.add(Transition(predicate, state))
 
     fun addEpsilon(state: State<T, O>) =
-            epsilonTransitions.add(state)
+        epsilonTransitions.add(state)
 
     fun removeAccept() {
         accepting = null
@@ -97,7 +100,7 @@ class State<T, O>(private val transitions: MutableList<Transition<T, O>> = mutab
 
     fun transferToNext(): State<T, O> {
         val newState = State(transitions.toMutableList(),
-                epsilonTransitions.toMutableList(), accepting, forceAccept)
+            epsilonTransitions.toMutableList(), accepting, forceAccept)
         transitions.clear()
         epsilonTransitions.clear()
 

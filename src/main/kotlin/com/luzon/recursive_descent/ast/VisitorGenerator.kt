@@ -29,13 +29,6 @@ object VisitorGenerator {
         visitorSb.appendln("}")
         acceptSb.appendln("}")
 
-//        val path = Paths.get("$path\\com\\luzon\\recursive_descent\\expression\\ASTNodeVisitor.kt")
-//        Files.deleteIfExists(path)
-//        Files.createDirectories(path.parent)
-//        Files.createFile(path)
-
-//        Files.write(path, visitorSb.appendln().appendln(acceptSb).toString().toByteArray())
-
         println(visitorSb.toString())
         println(acceptSb.toString())
     }

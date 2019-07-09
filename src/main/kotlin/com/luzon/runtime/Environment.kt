@@ -35,7 +35,7 @@ class Environment private constructor(private val parent: Environment?) {
     }
 
     fun invokeFunction(name: String, args: List<LzObject> = emptyList()) =
-            findFunction(name, args)?.invoke(this, args) ?: nullObject
+        findFunction(name, args)?.invoke(this, args) ?: nullObject
 
     operator fun get(name: String) = findVariable(name)?.value
     operator fun set(name: String, value: LzObject) = setVariable(name, value)

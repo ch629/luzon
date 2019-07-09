@@ -1,6 +1,6 @@
 package com.luzon.runtime
 
-import java.util.*
+import java.util.Stack
 
 object EnvironmentManager {
     private val stack = Stack<Environment>()

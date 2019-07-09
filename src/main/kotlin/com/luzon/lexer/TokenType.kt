@@ -1,7 +1,10 @@
 package com.luzon.lexer
 
 import com.luzon.fsm.FSM
-import com.luzon.lexer.Token.*
+import com.luzon.lexer.Token.Comment
+import com.luzon.lexer.Token.Keyword
+import com.luzon.lexer.Token.Literal
+import com.luzon.lexer.Token.Symbol
 
 enum class TokenType {
     KEYWORD, SYMBOL, LITERAL, COMMENT;

@@ -89,12 +89,12 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         val escapedCharacter = escapedCharacters(char)
 
         val predicate: Predicate<A> =
-                if (!escape && unescapedCharacter != null) unescapedCharacter
-                else if (escape && escapedCharacter != null) escapedCharacter
-                else {
-                    isRange = false
-                    char.equalPredicate()
-                }
+            if (!escape && unescapedCharacter != null) unescapedCharacter
+            else if (escape && escapedCharacter != null) escapedCharacter
+            else {
+                isRange = false
+                char.equalPredicate()
+            }
 
         endState.addTransition(predicate, charEnd)
 
@@ -109,9 +109,9 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
     private fun isMeta(char: A): Boolean {
         if (isMetaPredicate == null)
             isMetaPredicate =
-                    orPredicate(orPredicate, kleeneStarPredicate,
-                            kleenePlusPredicate, optionalPredicate,
-                            startGroupPredicate, endGroupPredicate)
+                orPredicate(orPredicate, kleeneStarPredicate,
+                    kleenePlusPredicate, optionalPredicate,
+                    startGroupPredicate, endGroupPredicate)
 
         return isMetaPredicate!!(char)
     }

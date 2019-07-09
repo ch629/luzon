@@ -34,8 +34,8 @@ object TokenTest : Spek({
 
         it("should successfully tokenize the same code multiple times") {
             val testLz =
-                    Files.readAllLines(Paths.get(TokenTest::class.java.getResource("Test.lz").toURI()))
-                            .joinToString("\n")
+                Files.readAllLines(Paths.get(TokenTest::class.java.getResource("Test.lz").toURI()))
+                    .joinToString("\n")
 
             val firstCount = Tokenizer(testLz).findTokens().count() // 25
 
@@ -44,9 +44,7 @@ object TokenTest : Spek({
                 val c = stream.count()
 
                 c shouldBe firstCount
-
             }
-
         }
 
         it("should tokenize a string successfully") {
