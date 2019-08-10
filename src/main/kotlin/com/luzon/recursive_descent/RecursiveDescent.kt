@@ -1,5 +1,7 @@
 package com.luzon.recursive_descent
 
+import com.luzon.exceptions.ExpectedTokenException
+import com.luzon.exceptions.TokenRuleException
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Keyword
 import com.luzon.lexer.Token.Literal
@@ -8,7 +10,7 @@ import com.luzon.lexer.Token.TokenEnum
 import com.luzon.recursive_descent.ast.ASTNode
 
 // Main entry point from the lz file
-class RecursiveDescent(val rd: TokenRDStream) {
+class RecursiveDescent(private val rd: TokenRDStream) {
     // TODO: List of ASTNodes -> Can have functions outside of classes like Kotlin?
     fun parse(): ASTNode? = classDefinition()
 
@@ -52,11 +54,9 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
+    @Throws(ExpectedTokenException::class)
     private fun expect(vararg tokens: TokenEnum) = rd.accept(*tokens)
         ?: throw ExpectedTokenException(rd.consume(), *tokens)
-
-    class ExpectedTokenException(received: Token?, vararg tokens: TokenEnum) : Exception("Expected: ${tokens.joinToString { it.toString() }} got: ${received
-        ?: "none"}")
 
     private fun returnStatement(): ASTNode? {
         return if (rd.matchConsume(Keyword.RETURN))
@@ -148,6 +148,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
     // variables, function def, class def?
     private fun statement() = acceptAny(::variableDeclaration, ::functionDefinition, ::classDefinition, ::expression)
 
+    @Throws(TokenRuleException::class)
     private fun acceptAny(vararg nodes: () -> ASTNode?): ASTNode? {
         nodes.forEach {
             val result = it()
@@ -160,8 +161,6 @@ class RecursiveDescent(val rd: TokenRDStream) {
             split.substring(0 until split.length - 2)
         })
     }
-
-    class TokenRuleException(string: String) : Exception("Expected rule of: $string but didn't receive a valid token.")
 
     // if(expr) { } else if(expr) { } else { }
     private fun ifStatement(): ASTNode.IfStatement? {

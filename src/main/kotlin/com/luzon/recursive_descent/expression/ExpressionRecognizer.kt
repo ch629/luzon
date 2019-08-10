@@ -23,6 +23,7 @@ import com.luzon.lexer.Token.Symbol.SUBTRACT
 import com.luzon.lexer.TokenStream
 import com.luzon.recursive_descent.TokenRDStream
 
+@Suppress("SimplifyBooleanWithConstants")
 internal class ExpressionRecognizer(private val rd: TokenRDStream) {
     private val exprList = ExpressionStreamList()
 
