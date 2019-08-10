@@ -1,6 +1,6 @@
 package com.luzon.recursive_descent
 
-import com.luzon.exceptions.ExpectedTokenException
+import com.luzon.exceptions.UnexpectedTokenException
 import com.luzon.exceptions.TokenRuleException
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Keyword
@@ -54,9 +54,9 @@ class RecursiveDescent(private val rd: TokenRDStream) {
         return null
     }
 
-    @Throws(ExpectedTokenException::class)
+    @Throws(UnexpectedTokenException::class)
     private fun expect(vararg tokens: TokenEnum) = rd.accept(*tokens)
-        ?: throw ExpectedTokenException(rd.consume(), *tokens)
+        ?: throw UnexpectedTokenException(rd.consume(), *tokens)
 
     private fun returnStatement(): ASTNode? {
         return if (rd.matchConsume(Keyword.RETURN))
@@ -98,10 +98,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
                 constructor = ASTNode.Constructor(parameters)
             }
 
-            val block = classBlock()
-
-            if (block != null)
-                return ASTNode.Class(id.data, constructor, block)
+            return ASTNode.Class(id.data, constructor, classBlock() ?: ASTNode.Block(listOf()))
         }
 
         return null
@@ -185,6 +182,8 @@ class RecursiveDescent(private val rd: TokenRDStream) {
 
                     return ASTNode.IfStatement(expr, block, null)
                 }
+
+                throw TokenRuleException("if statement block")
             }
         }
         return null
@@ -207,6 +206,8 @@ class RecursiveDescent(private val rd: TokenRDStream) {
 
             if (block != null)
                 return ASTNode.ForLoop(id.data, start.data.toInt(), end.data.toInt(), block)
+
+            throw TokenRuleException("for loop block")
         }
         return null
     }
@@ -225,6 +226,8 @@ class RecursiveDescent(private val rd: TokenRDStream) {
 
                 if (block != null)
                     return ASTNode.WhileLoop(false, expr, block)
+
+                throw TokenRuleException("while loop block")
             }
         }
         return null
@@ -244,6 +247,8 @@ class RecursiveDescent(private val rd: TokenRDStream) {
                     expect(Symbol.R_PAREN)
                     return ASTNode.WhileLoop(true, expr, block)
                 }
+
+                throw TokenRuleException("expression")
             }
         }
 
@@ -267,6 +272,8 @@ class RecursiveDescent(private val rd: TokenRDStream) {
 
             if (expr != null)
                 return ASTNode.VariableDeclaration(id.data, type?.data, expr, constant)
+
+            throw TokenRuleException("expression")
         }
         return null
     }
@@ -284,6 +291,8 @@ class RecursiveDescent(private val rd: TokenRDStream) {
                     return ASTNode.VariableAssign(id.data, expr)
                 return ASTNode.OperatorVariableAssign(id.data, expr, operator) // TODO: Check for specific operators still here
             }
+
+            throw TokenRuleException("expression")
         }
         return null
     }

@@ -31,7 +31,7 @@ object ClassVisitor : ASTNodeVisitor<Any> {
         LzFunction(node.name, node.parameters, null, node.block)
 
     // TODO: Secondary Constructors
-    private fun processClassFunctions(node: ASTNode.Block) = node.nodes.filter { it is ASTNode.FunctionDefinition }.map {
-        visit(it as ASTNode.FunctionDefinition)
+    private fun processClassFunctions(node: ASTNode.Block) = node.nodes.filterIsInstance<ASTNode.FunctionDefinition>().map {
+        visit(it)
     }
 }
