@@ -1,8 +1,8 @@
 # Luzon Language
 
-![Bintray][bintray-url]
-![Travis (.org)][travis-url]
-![GitHub][license-url]
+[![Bintray][bintray-svg-url]][bintray-url]
+[![Travis (.org)][travis-svg-url]][travis-url]
+[![GitHub][license-svg-url]][license-url]
 
 ## About Luzon
 This is an embedded language created in Kotlin to work with JVM applications.
@@ -81,6 +81,9 @@ Distributed under the Apache License. See `LICENSE` for more information.
 * [Crafting Interpreters](https://craftinginterpreters.com/)
 * Compilers: Principles, Techniques, and Tools - Alfred V. Aho et al
 
-[bintray-url]: https://img.shields.io/bintray/v/ch629/luzon/luzon?style=for-the-badge
-[travis-url]: https://img.shields.io/travis/ch629/luzon?style=for-the-badge
-[license-url]: https://img.shields.io/github/license/ch629/luzon?style=for-the-badge
+[bintray-url]: https://bintray.com/ch629/luzon/luzon/_latestVersion
+[bintray-svg-url]: https://img.shields.io/bintray/v/ch629/luzon/luzon?style=for-the-badge
+[travis-url]: https://travis-ci.org/ch629/luzon
+[travis-svg-url]: https://img.shields.io/travis/ch629/luzon?style=for-the-badge
+[license-url]: https://opensource.org/licenses/Apache-2.0
+[license-svg-url]: https://img.shields.io/github/license/ch629/luzon?style=for-the-badge
