@@ -3,6 +3,7 @@
 [![Bintray][bintray-svg-url]][bintray-url]
 [![Travis (.org)][travis-svg-url]][travis-url]
 [![GitHub][license-svg-url]][license-url]
+[![Codecov][codecov-svg-url]][codecov-url]
 
 ## About Luzon
 This is an embedded language created in Kotlin to work with JVM applications.
@@ -84,3 +85,6 @@ Distributed under the Apache License. See `LICENSE` for more information.
 [travis-svg-url]: https://img.shields.io/travis/ch629/luzon?style=for-the-badge
 [license-url]: https://opensource.org/licenses/Apache-2.0
 [license-svg-url]: https://img.shields.io/github/license/ch629/luzon?style=for-the-badge
+[codecov-url]: https://codecov.io/gh/ch629/luzon/
+[codecov-svg-url]: https://img.shields.io/codecov/c/github/ch629/luzon?style=for-the-badge
+[codecov-sunburst-svg-url]: https://codecov.io/gh/ch629/luzon/branch/master/graphs/sunburst.svg
