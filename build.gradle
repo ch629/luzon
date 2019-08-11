@@ -6,6 +6,7 @@ plugins {
     id "java-library"
     id "com.jfrog.bintray" version "1.8.4"
     id "com.diffplug.gradle.spotless" version "3.21.1"
+    id "jacoco"
 }
 
 group "com.luzon"
@@ -38,6 +39,12 @@ test {
     useJUnitPlatform {
         includeEngines "spek2"
     }
+
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+    }
+
+    finalizedBy jacocoTestReport
 }
 
 compileKotlin {
@@ -118,6 +125,20 @@ task sourcesJar(type: Jar) {
 artifacts {
     archives sourcesJar
     archives jar
+}
+
+jacoco {
+    toolVersion = "0.8.4"
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("$buildDir/jacoco/html")
+    }
 }
 
 spotless {
