@@ -1,5 +1,6 @@
 package com.luzon.recursive_descent
 
+import com.luzon.exceptions.InvalidPrecedenceTypeException
 import com.luzon.lexer.Token.Symbol.AND
 import com.luzon.lexer.Token.Symbol.DIVIDE
 import com.luzon.lexer.Token.Symbol.EQUAL_EQUAL
@@ -8,7 +9,7 @@ import com.luzon.lexer.Token.Symbol.GREATER_EQUAL
 import com.luzon.lexer.Token.Symbol.LESS
 import com.luzon.lexer.Token.Symbol.LESS_EQUAL
 import com.luzon.lexer.Token.Symbol.L_PAREN
-import com.luzon.lexer.Token.Symbol.MOD
+import com.luzon.lexer.Token.Symbol.MODULUS
 import com.luzon.lexer.Token.Symbol.MULTIPLY
 import com.luzon.lexer.Token.Symbol.NOT
 import com.luzon.lexer.Token.Symbol.NOT_EQUAL
@@ -57,7 +58,7 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
             val expr = exp(q)
 
             return when (unary.tokenType) {
-                SUBTRACT -> Expression.Unary::Sub
+                SUBTRACT -> Expression.Unary::Minus
                 NOT -> Expression.Unary::Not
                 else -> null
             }?.invoke(expr)
@@ -100,8 +101,8 @@ internal class PrecedenceClimbing(rd: TokenRDStream) {
         AND -> 1
         EQUAL_EQUAL, LESS_EQUAL, LESS, GREATER, GREATER_EQUAL, NOT_EQUAL -> 2
         PLUS, SUBTRACT -> if (unary) 4 else 3
-        MULTIPLY, DIVIDE, MOD -> 5
-        else -> -1
+        MULTIPLY, DIVIDE, MODULUS -> 5
+        else -> throw InvalidPrecedenceTypeException(tokenType)
     }
 
     // TODO: Only power is left associative -> Which I don't implement? -> If needed, just add when(tokenType)

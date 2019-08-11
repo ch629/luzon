@@ -1,5 +1,7 @@
 package com.luzon.recursive_descent
 
+import com.luzon.exceptions.UnexpectedTokenException
+import com.luzon.exceptions.TokenRuleException
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Keyword
 import com.luzon.lexer.Token.Literal
@@ -8,7 +10,7 @@ import com.luzon.lexer.Token.TokenEnum
 import com.luzon.recursive_descent.ast.ASTNode
 
 // Main entry point from the lz file
-class RecursiveDescent(val rd: TokenRDStream) {
+class RecursiveDescent(private val rd: TokenRDStream) {
     // TODO: List of ASTNodes -> Can have functions outside of classes like Kotlin?
     fun parse(): ASTNode? = classDefinition()
 
@@ -52,11 +54,9 @@ class RecursiveDescent(val rd: TokenRDStream) {
         return null
     }
 
+    @Throws(UnexpectedTokenException::class)
     private fun expect(vararg tokens: TokenEnum) = rd.accept(*tokens)
-        ?: throw ExpectedTokenException(rd.consume(), *tokens)
-
-    class ExpectedTokenException(received: Token?, vararg tokens: TokenEnum) : Exception("Expected: ${tokens.joinToString { it.toString() }} got: ${received
-        ?: "none"}")
+        ?: throw UnexpectedTokenException(rd.consume(), *tokens)
 
     private fun returnStatement(): ASTNode? {
         return if (rd.matchConsume(Keyword.RETURN))
@@ -98,10 +98,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
                 constructor = ASTNode.Constructor(parameters)
             }
 
-            val block = classBlock()
-
-            if (block != null)
-                return ASTNode.Class(id.data, constructor, block)
+            return ASTNode.Class(id.data, constructor, classBlock() ?: ASTNode.Block(listOf()))
         }
 
         return null
@@ -148,6 +145,7 @@ class RecursiveDescent(val rd: TokenRDStream) {
     // variables, function def, class def?
     private fun statement() = acceptAny(::variableDeclaration, ::functionDefinition, ::classDefinition, ::expression)
 
+    @Throws(TokenRuleException::class)
     private fun acceptAny(vararg nodes: () -> ASTNode?): ASTNode? {
         nodes.forEach {
             val result = it()
@@ -160,8 +158,6 @@ class RecursiveDescent(val rd: TokenRDStream) {
             split.substring(0 until split.length - 2)
         })
     }
-
-    class TokenRuleException(string: String) : Exception("Expected rule of: $string but didn't receive a valid token.")
 
     // if(expr) { } else if(expr) { } else { }
     private fun ifStatement(): ASTNode.IfStatement? {
@@ -186,6 +182,8 @@ class RecursiveDescent(val rd: TokenRDStream) {
 
                     return ASTNode.IfStatement(expr, block, null)
                 }
+
+                throw TokenRuleException("if statement block")
             }
         }
         return null
@@ -208,6 +206,8 @@ class RecursiveDescent(val rd: TokenRDStream) {
 
             if (block != null)
                 return ASTNode.ForLoop(id.data, start.data.toInt(), end.data.toInt(), block)
+
+            throw TokenRuleException("for loop block")
         }
         return null
     }
@@ -226,6 +226,8 @@ class RecursiveDescent(val rd: TokenRDStream) {
 
                 if (block != null)
                     return ASTNode.WhileLoop(false, expr, block)
+
+                throw TokenRuleException("while loop block")
             }
         }
         return null
@@ -245,6 +247,8 @@ class RecursiveDescent(val rd: TokenRDStream) {
                     expect(Symbol.R_PAREN)
                     return ASTNode.WhileLoop(true, expr, block)
                 }
+
+                throw TokenRuleException("expression")
             }
         }
 
@@ -268,6 +272,8 @@ class RecursiveDescent(val rd: TokenRDStream) {
 
             if (expr != null)
                 return ASTNode.VariableDeclaration(id.data, type?.data, expr, constant)
+
+            throw TokenRuleException("expression")
         }
         return null
     }
@@ -285,6 +291,8 @@ class RecursiveDescent(val rd: TokenRDStream) {
                     return ASTNode.VariableAssign(id.data, expr)
                 return ASTNode.OperatorVariableAssign(id.data, expr, operator) // TODO: Check for specific operators still here
             }
+
+            throw TokenRuleException("expression")
         }
         return null
     }

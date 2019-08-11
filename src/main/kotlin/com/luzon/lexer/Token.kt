@@ -2,6 +2,7 @@ package com.luzon.lexer
 
 import com.luzon.fsm.FSM
 import com.luzon.fsm.scanner.StringScanner
+import com.luzon.utils.cutEnds
 
 typealias TokenStream = Sequence<Token>
 
@@ -33,14 +34,11 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         fun toFSM() = FSM.fromRegex(regex(), this)
     }
 
-    object None : TokenEnum {
-        override fun toString() = "none"
-    }
-
     enum class Keyword(val capitalize: Boolean = false) : TokenEnum {
         FOR, WHILE, IF, ELSE, WHEN, BREAK,
         VAR, VAL, FUN, CLASS, ABSTRACT, ENUM,
-        DO, IS, AS, IN, PRIVATE, RETURN;
+        DO, IS, AS, IN, PRIVATE, RETURN, IMPORT,
+        PACKAGE, OBJECT;
 
         override fun toString() = "keyword:${id()}"
     }
@@ -51,7 +49,7 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         GREATER_EQUAL(">="), LESS_EQUAL("<="),
         AND("&&"), OR("||"), PLUS("+"),
         SUBTRACT("-"), MULTIPLY("*"), DIVIDE("/"),
-        MOD("%"), PLUS_ASSIGN("+="), SUBTRACT_ASSIGN("-="),
+        MODULUS("%"), PLUS_ASSIGN("+="), SUBTRACT_ASSIGN("-="),
         MULTIPLY_ASSIGN("*="), DIVIDE_ASSIGN("/="),
         MOD_ASSIGN("%="), TYPE(":"), INCREMENT("++"),
         DECREMENT("--"), L_PAREN("("), R_PAREN(")"),
@@ -66,8 +64,8 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         DOUBLE("\\d+d|\\d+\\.\\d+d?", String::toDouble),
         FLOAT("\\d+f|\\d+\\.\\d+f", String::toFloat),
         INT("\\d+", String::toInt),
-        STRING("\".*\"", { it.substring(1 until it.length - 1) }),
-        CHAR("'.'", { it.substring(1 until it.length - 1) }),
+        STRING("\".*\"", String::cutEnds),
+        CHAR("'.'", String::cutEnds),
         BOOLEAN("true|false", String::toBoolean),
         IDENTIFIER("[A-Za-z_]\\w*", { it });
 
@@ -84,28 +82,19 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
     companion object {
         private fun String.replaceMetaCharacters() = replaceMetacharacters(this)
 
-        private fun replaceMetacharacters(regex: String): String {
-            var newRegex = regex
-
-            "\\*+?[]().".forEach {
-                newRegex = newRegex.replace("$it", "\\$it")
-            }
-
-            return newRegex
+        private fun replaceMetacharacters(regex: String) = regex.replace(Regex("[\\\\*+?\\[\\]().]")) { result ->
+            "\\${result.value}"
         }
 
-        private fun Enum<*>.generateID(): String {
-            val sb = StringBuffer()
+        private fun Enum<*>.generateID() = StringBuilder().apply {
             val scanner = StringScanner(name.toLowerCase())
 
             while (!scanner.isAtEnd()) {
                 var c = scanner.advance()
                 if (c == '_') c = scanner.advance().toUpperCase()
 
-                sb.append(c)
+                append(c)
             }
-
-            return sb.toString()
-        }
+        }.toString()
     }
 }

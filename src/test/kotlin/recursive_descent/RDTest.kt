@@ -65,7 +65,7 @@ object RDTest : Spek({
 
             val expectedTree = ASTNode.Expression.Binary.Plus(
                 ASTNode.Expression.LiteralExpr.IntLiteral(1),
-                ASTNode.Expression.Binary.Mult(
+                ASTNode.Expression.Binary.Multiply(
                     ASTNode.Expression.LiteralExpr.IntLiteral(2),
                     ASTNode.Expression.LiteralExpr.IntLiteral(3)
                 )

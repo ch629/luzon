@@ -4,11 +4,11 @@ import com.luzon.utils.indent
 import kotlin.reflect.KClass
 
 fun main() {
-    VisitorGenerator.generate("")
+    VisitorGenerator.generate()
 }
 
 object VisitorGenerator {
-    fun generate(path: String) {
+    fun generate() {
         val lines = findNodes()
         val visitorSb = StringBuilder()
         val acceptSb = StringBuilder()
