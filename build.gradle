@@ -96,11 +96,16 @@ def pomConfig = {
     }
 }
 
+task sourceJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = "sources"
+}
+
 publishing {
     publications {
         MyPublication(MavenPublication) {
             from components.java
-            artifact sourcesJar
+            artifact sourceJar
 //            artifact javadocJar
             groupId "com.luzon"
             artifactId "luzon"
@@ -117,13 +122,8 @@ publishing {
     }
 }
 
-task sourcesJar(type: Jar) {
-    from sourceSets.main.allSource
-    classifier = "sources"
-}
-
 artifacts {
-    archives sourcesJar
+    archives sourceJar
     archives jar
 }
 
