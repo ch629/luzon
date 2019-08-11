@@ -135,9 +135,9 @@ jacocoTestReport {
     dependsOn test
 
     reports {
-        xml.enabled false
         csv.enabled false
-        html.destination file("$buildDir/jacoco/html")
+        xml.enabled true
+        html.enabled true
     }
 }
 
