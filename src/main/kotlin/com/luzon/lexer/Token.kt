@@ -49,7 +49,7 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         GREATER_EQUAL(">="), LESS_EQUAL("<="),
         AND("&&"), OR("||"), PLUS("+"),
         SUBTRACT("-"), MULTIPLY("*"), DIVIDE("/"),
-        MOD("%"), PLUS_ASSIGN("+="), SUBTRACT_ASSIGN("-="),
+        MODULUS("%"), PLUS_ASSIGN("+="), SUBTRACT_ASSIGN("-="),
         MULTIPLY_ASSIGN("*="), DIVIDE_ASSIGN("/="),
         MOD_ASSIGN("%="), TYPE(":"), INCREMENT("++"),
         DECREMENT("--"), L_PAREN("("), R_PAREN(")"),

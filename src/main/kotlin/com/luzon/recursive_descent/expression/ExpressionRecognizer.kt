@@ -12,7 +12,7 @@ import com.luzon.lexer.Token.Symbol.INCREMENT
 import com.luzon.lexer.Token.Symbol.LESS
 import com.luzon.lexer.Token.Symbol.LESS_EQUAL
 import com.luzon.lexer.Token.Symbol.L_PAREN
-import com.luzon.lexer.Token.Symbol.MOD
+import com.luzon.lexer.Token.Symbol.MODULUS
 import com.luzon.lexer.Token.Symbol.MULTIPLY
 import com.luzon.lexer.Token.Symbol.NOT
 import com.luzon.lexer.Token.Symbol.NOT_EQUAL
@@ -28,7 +28,7 @@ internal class ExpressionRecognizer(private val rd: TokenRDStream) {
     private val exprList = ExpressionStreamList()
 
     companion object {
-        val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE, MOD, LESS, LESS_EQUAL, EQUAL_EQUAL, GREATER_EQUAL, GREATER, AND, OR, NOT_EQUAL)
+        val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE, MODULUS, LESS, LESS_EQUAL, EQUAL_EQUAL, GREATER_EQUAL, GREATER, AND, OR, NOT_EQUAL)
         val unaryOperators = listOf(SUBTRACT, NOT)
 
         fun recognize(rd: TokenRDStream) = ExpressionRecognizer(rd).recognize()

@@ -1,5 +1,7 @@
 package com.luzon.runtime.visitors
 
+import com.luzon.exceptions.InvalidTypeCastException
+import com.luzon.exceptions.InvalidWeightTypeException
 import com.luzon.recursive_descent.ast.ASTNode
 import com.luzon.recursive_descent.ast.ASTNode.Expression.Binary
 import com.luzon.recursive_descent.ast.ASTNode.Expression.LiteralExpr
@@ -17,38 +19,42 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
 
     private fun Any?.isNumerical() = this != null && weight() != -1 && weight() != 3
 
+    @Throws(InvalidWeightTypeException::class)
     private fun Any.weight(): Int = when (this) {
         is Int -> 0
         is Float -> 1
         is Double -> 2
         is String -> 3
-        else -> -1
+        else -> throw InvalidWeightTypeException(this)
     }
 
     private fun LzObject.asFloat(): Float = value?.asFloat() ?: -1f
     private fun LzObject.asDouble(): Double = value?.asDouble() ?: -1.0
     private fun LzObject.asString(): String = value?.asString() ?: ""
 
+    @Throws(InvalidTypeCastException::class)
     private fun Any.asFloat(): Float = when (this) {
         is Int -> toFloat()
         is Float -> this
         is Double -> toFloat()
-        else -> -1f
+        else -> throw InvalidTypeCastException(this, Float::class)
     }
 
+    @Throws(InvalidTypeCastException::class)
     private fun Any.asDouble(): Double = when (this) {
         is Int -> toDouble()
         is Float -> toDouble()
         is Double -> this
-        else -> -1.0
+        else -> throw InvalidTypeCastException(this, Double::class)
     }
 
+    @Throws(InvalidTypeCastException::class)
     private fun Any.asString(): String = when (this) {
         is Int -> toString()
         is Float -> toString()
         is Double -> toString()
         is String -> this
-        else -> ""
+        else -> throw InvalidTypeCastException(this, String::class)
     }
 
     private fun subtract(left: Any?, right: Any?) = if (right != null && left != null)
@@ -93,10 +99,10 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         } else nullObject
 
     override fun visit(node: Binary.Plus) = plus(accept(node.left).value, accept(node.right).value)
-    override fun visit(node: Binary.Sub) = subtract(accept(node.left).value, accept(node.right).value)
-    override fun visit(node: Binary.Mult) = multiply(accept(node.left).value, accept(node.right).value)
-    override fun visit(node: Binary.Div) = divide(accept(node.left).value, accept(node.right).value)
-    override fun visit(node: Binary.Mod) = mod(accept(node.left).value, accept(node.right).value)
+    override fun visit(node: Binary.Subtract) = subtract(accept(node.left).value, accept(node.right).value)
+    override fun visit(node: Binary.Multiply) = multiply(accept(node.left).value, accept(node.right).value)
+    override fun visit(node: Binary.Divide) = divide(accept(node.left).value, accept(node.right).value)
+    override fun visit(node: Binary.Modulus) = mod(accept(node.left).value, accept(node.right).value)
 
     override fun visit(node: LiteralExpr.IntLiteral) = primitiveObject(node.value)
     override fun visit(node: LiteralExpr.FloatLiteral) = primitiveObject(node.value)
@@ -133,7 +139,7 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         return nullObject
     }
 
-    override fun visit(node: Unary.Sub) = accept(node.expr).run {
+    override fun visit(node: Unary.Minus) = accept(node.expr).run {
         when (value) {
             is Int -> primitiveObject(-value)
             is Float -> primitiveObject(-value)
@@ -183,11 +189,8 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
     override fun visit(node: Unary.Increment) = unaryModifier(node)
     override fun visit(node: Unary.Decrement) = unaryModifier(node)
 
-    override fun visit(node: LiteralExpr.FunctionCall): LzObject {
-        val params = node.params.map { it.accept(ExpressionVisitor) }
-
-        return EnvironmentManager(node.name, params)
-    }
+    override fun visit(node: LiteralExpr.FunctionCall) =
+        EnvironmentManager(node.name, node.params.map { it.accept(ExpressionVisitor) })
 
     override fun visit(node: LiteralExpr.DotChainLiteral): LzObject {
         var last: LzObject = node.value.accept(ExpressionVisitor)

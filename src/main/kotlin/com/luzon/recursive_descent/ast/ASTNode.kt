@@ -9,7 +9,7 @@ import com.luzon.lexer.Token.Symbol.GREATER
 import com.luzon.lexer.Token.Symbol.GREATER_EQUAL
 import com.luzon.lexer.Token.Symbol.LESS
 import com.luzon.lexer.Token.Symbol.LESS_EQUAL
-import com.luzon.lexer.Token.Symbol.MOD
+import com.luzon.lexer.Token.Symbol.MODULUS
 import com.luzon.lexer.Token.Symbol.MULTIPLY
 import com.luzon.lexer.Token.Symbol.NOT_EQUAL
 import com.luzon.lexer.Token.Symbol.OR
@@ -50,10 +50,10 @@ sealed class ASTNode {
             companion object {
                 fun fromOperator(symbol: Token.TokenEnum?, left: Expression?, right: Expression?) = when (symbol) {
                     PLUS -> Expression.Binary::Plus
-                    SUBTRACT -> Expression.Binary::Sub
-                    MULTIPLY -> Expression.Binary::Mult
-                    DIVIDE -> Expression.Binary::Div
-                    MOD -> Expression.Binary::Mod
+                    SUBTRACT -> Expression.Binary::Subtract
+                    MULTIPLY -> Expression.Binary::Multiply
+                    DIVIDE -> Expression.Binary::Divide
+                    MODULUS -> Expression.Binary::Modulus
 
                     EQUAL_EQUAL -> Expression.Binary::Equals
                     NOT_EQUAL -> Expression.Binary::NotEquals
@@ -68,10 +68,10 @@ sealed class ASTNode {
             }
 
             class Plus(left: Expression? = null, right: Expression? = null) : Binary(left, right)
-            class Sub(left: Expression? = null, right: Expression? = null) : Binary(left, right)
-            class Mult(left: Expression? = null, right: Expression? = null) : Binary(left, right)
-            class Div(left: Expression? = null, right: Expression? = null) : Binary(left, right)
-            class Mod(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+            class Subtract(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+            class Multiply(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+            class Divide(left: Expression? = null, right: Expression? = null) : Binary(left, right)
+            class Modulus(left: Expression? = null, right: Expression? = null) : Binary(left, right)
 
             class Equals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
             class NotEquals(left: Expression? = null, right: Expression? = null) : Binary(left, right)
@@ -85,7 +85,7 @@ sealed class ASTNode {
         }
 
         sealed class Unary(var expr: Expression?) : Expression() {
-            class Sub(expr: Expression? = null) : Unary(expr)
+            class Minus(expr: Expression? = null) : Unary(expr)
             class Not(expr: Expression? = null) : Unary(expr)
 
             class Increment(expr: Expression? = null, val pre: Boolean) : Unary(expr)
