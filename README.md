@@ -23,9 +23,6 @@ More information about the project can be found [here](https://folio.brighton.ac
 ### Prerequisites
 The only prerequisite is the Java JDK and a project to use the library in.
 
-### Using the Library
-
-
 ### Using Luzon
 #### Installation
 This project doesn't do anything by itself so must be added into a project to run it.
