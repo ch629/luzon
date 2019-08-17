@@ -1,5 +1,6 @@
 package com.luzon
 
+import com.luzon.lexer.TokenMachine
 import com.luzon.lexer.Tokenizer
 import com.luzon.recursive_descent.RecursiveDescent
 import com.luzon.recursive_descent.TokenRDStream
@@ -28,5 +29,13 @@ object Luzon {
 
     fun registerMethods(clazz: KClass<*>) {
         ReflectionEngine.registerNewClassMethods(clazz)
+    }
+
+    /**
+     * Clears memory used by the lexer, stored within the Token matching FSM, this will be regenerated
+     * which will take some time on the next lexer usage.
+     */
+    fun clearLexerMemory() {
+        TokenMachine.clearFSM()
     }
 }
