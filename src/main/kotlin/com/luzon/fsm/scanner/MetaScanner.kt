@@ -134,7 +134,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         }
     }
 
-    //(ABC)
+    // (ABC)
     private fun group(): StatePair<A, O> {
         val scanner = createScanner(advanceUntil(endGroupPredicate))
         val states = scanner.toFSM()
@@ -144,13 +144,13 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         return states to scanner.endState
     }
 
-    //A|B|C
+    // A|B|C
     private fun or(): StatePair<A, O> {
         val extraState = State<A, O>()
         scopeChange = true
         afterOr = true
 
-        if (!hasOr()) { //First or in regex
+        if (!hasOr()) { // First or in regex
             val newState = orScope.transferToNext()
             orScope.replaceWith(orState)
             orState = orScope
@@ -163,7 +163,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         return extraState to orEndState
     }
 
-    //A*
+    // A*
     private fun kleeneStar(): StatePair<A, O> {
         val newEndState = State<A, O>(forceAccept = true)
 
@@ -173,7 +173,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         return metaScope to newEndState
     }
 
-    //A+
+    // A+
     private fun kleenePlus(): StatePair<A, O> {
         val newEndState = State<A, O>(forceAccept = true)
 
@@ -183,7 +183,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         return metaScope to newEndState
     }
 
-    //A?
+    // A?
     private fun optional(): StatePair<A, O> {
         val newEndState = State<A, O>(forceAccept = true)
 

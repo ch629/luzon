@@ -51,12 +51,12 @@ class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
         else -> null
     }
 
-    //[ABC]
+    // [ABC]
     private fun orBlock(): StatePair<Char, O> {
         val end = State<Char, O>(forceAccept = true)
         var transitionPredicate: Predicate<Char> = { false }
 
-        advance() //Consume '['
+        advance() // Consume '['
 
         do {
             var char = advance()
@@ -66,10 +66,10 @@ class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
                 char = advance()
             }
 
-            transitionPredicate = if (!escape && peek() == '-') { //Is Range
-                advance() //Consume '-'
+            transitionPredicate = if (!escape && peek() == '-') { // Is Range
+                advance() // Consume '-'
                 transitionPredicate or (char range advance())
-            } else { //Normal Character
+            } else { // Normal Character
                 val unescapedCharacter = unescapedCharacters(char)
                 val escapedCharacter = escapedCharacters(char)
 
@@ -79,7 +79,7 @@ class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
             }
         } while (peek() != ']' && isNotAtEnd())
 
-        advance() //Consume ']'
+        advance() // Consume ']'
 
         endState.addTransition(transitionPredicate, end)
         metaScope = endState
