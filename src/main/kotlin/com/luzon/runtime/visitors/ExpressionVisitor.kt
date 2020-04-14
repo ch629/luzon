@@ -2,10 +2,10 @@ package com.luzon.runtime.visitors
 
 import com.luzon.exceptions.InvalidTypeCastException
 import com.luzon.exceptions.InvalidWeightTypeException
-import com.luzon.recursive_descent.ast.ASTNode
-import com.luzon.recursive_descent.ast.ASTNode.Expression.Binary
-import com.luzon.recursive_descent.ast.ASTNode.Expression.LiteralExpr
-import com.luzon.recursive_descent.ast.ASTNode.Expression.Unary
+import com.luzon.recursive_descent.ast.SyntaxTreeNode
+import com.luzon.recursive_descent.ast.SyntaxTreeNode.Expression.Binary
+import com.luzon.recursive_descent.ast.SyntaxTreeNode.Expression.LiteralExpr
+import com.luzon.recursive_descent.ast.SyntaxTreeNode.Expression.Unary
 import com.luzon.recursive_descent.expression.ASTNodeVisitor
 import com.luzon.recursive_descent.expression.accept
 import com.luzon.runtime.EnvironmentManager
@@ -15,7 +15,7 @@ import com.luzon.runtime.primitiveObject
 import com.luzon.runtime.withEnvironment
 
 object ExpressionVisitor : ASTNodeVisitor<LzObject> {
-    private fun accept(node: ASTNode?) = node?.accept(this) ?: nullObject
+    private fun accept(node: SyntaxTreeNode?) = node?.accept(this) ?: nullObject
 
     private fun Any?.isNumerical() = this != null && weight() != -1 && weight() != 3
 
@@ -153,7 +153,7 @@ object ExpressionVisitor : ASTNodeVisitor<LzObject> {
         else nullObject
     }
 
-    override fun visit(node: ASTNode.OperatorVariableAssign): LzObject {
+    override fun visit(node: SyntaxTreeNode.OperatorVariableAssign): LzObject {
         val (name, expr, op) = node
         val binaryExpr = Binary.fromOperator(op, LiteralExpr.IdentifierLiteral(name), expr)
         val obj = accept(binaryExpr)

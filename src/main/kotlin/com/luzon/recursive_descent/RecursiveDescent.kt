@@ -7,17 +7,17 @@ import com.luzon.lexer.Token.Keyword
 import com.luzon.lexer.Token.Literal
 import com.luzon.lexer.Token.Symbol
 import com.luzon.lexer.Token.TokenEnum
-import com.luzon.recursive_descent.ast.ASTNode
+import com.luzon.recursive_descent.ast.SyntaxTreeNode
 
 // Main entry point from the lz file
-class RecursiveDescent(private val rd: TokenRDStream) {
-    // TODO: List of ASTNodes -> Can have functions outside of classes like Kotlin?
-    fun parse(): ASTNode? = classDefinition()
+class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
+    // TODO: List of SyntaxTreeNode -> Can have functions outside of classes like Kotlin?
+    fun parse(): SyntaxTreeNode? = classDefinition()
 
     // fun name(): Int { }
-    private fun functionDefinition(): ASTNode? {
-        fun parameterList(): List<ASTNode.FunctionParameter> {
-            val params = mutableListOf<ASTNode.FunctionParameter>()
+    private fun functionDefinition(): SyntaxTreeNode? {
+        fun parameterList(): List<SyntaxTreeNode.FunctionParameter> {
+            val params = mutableListOf<SyntaxTreeNode.FunctionParameter>()
 
             do {
                 val id = rd.accept(Literal.IDENTIFIER)
@@ -26,7 +26,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
                     val type = rd.accept(Literal.IDENTIFIER)
 
                     if (type != null)
-                        params.add(ASTNode.FunctionParameter(id.data, type.data))
+                        params.add(SyntaxTreeNode.FunctionParameter(id.data, type.data))
                 }
             } while (rd.matchConsume(Symbol.COMMA))
 
@@ -49,7 +49,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
             val block = functionBlock()
 
             if (block != null)
-                return ASTNode.FunctionDefinition(id.data, paramList, type?.data, block)
+                return SyntaxTreeNode.FunctionDefinition(id.data, paramList, type?.data, block)
         }
         return null
     }
@@ -58,16 +58,16 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     private fun expect(vararg tokens: TokenEnum) = rd.accept(*tokens)
         ?: throw UnexpectedTokenException(rd.consume(), *tokens)
 
-    private fun returnStatement(): ASTNode? {
+    private fun returnStatement(): SyntaxTreeNode? {
         return if (rd.matchConsume(Keyword.RETURN))
-            ASTNode.Return(expression())
+            SyntaxTreeNode.Return(expression())
         else null
     }
 
     // class <name>(<params>): <type> { }
-    private fun classDefinition(): ASTNode? {
-        fun parameterList(): List<ASTNode.ConstructorVariableDeclaration> {
-            val params = mutableListOf<ASTNode.ConstructorVariableDeclaration>()
+    private fun classDefinition(): SyntaxTreeNode? {
+        fun parameterList(): List<SyntaxTreeNode.ConstructorVariableDeclaration> {
+            val params = mutableListOf<SyntaxTreeNode.ConstructorVariableDeclaration>()
 
             do {
                 val valVar = rd.accept(Keyword.VAL, Keyword.VAR)
@@ -79,7 +79,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
                         val type = rd.accept(Literal.IDENTIFIER)
 
                         if (type != null)
-                            params.add(ASTNode.ConstructorVariableDeclaration(id.data, type.data, valVar.tokenEnum == Keyword.VAL))
+                            params.add(SyntaxTreeNode.ConstructorVariableDeclaration(id.data, type.data, valVar.tokenEnum == Keyword.VAL))
                     }
                 }
             } while (rd.matchConsume(Symbol.COMMA))
@@ -89,16 +89,16 @@ class RecursiveDescent(private val rd: TokenRDStream) {
 
         if (rd.matchConsume(Keyword.CLASS)) {
             val id = expect(Literal.IDENTIFIER)
-            var constructor: ASTNode.Constructor? = null
+            var constructor: SyntaxTreeNode.Constructor? = null
 
             if (rd.matchConsume(Symbol.L_PAREN)) {
                 val parameters = parameterList()
 
                 expect(Symbol.R_PAREN)
-                constructor = ASTNode.Constructor(parameters)
+                constructor = SyntaxTreeNode.Constructor(parameters)
             }
 
-            return ASTNode.Class(id.data, constructor, classBlock() ?: ASTNode.Block(listOf()))
+            return SyntaxTreeNode.Class(id.data, constructor, classBlock() ?: SyntaxTreeNode.Block(listOf()))
         }
 
         return null
@@ -108,9 +108,9 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     private fun classBlock() = generalBlock(::classStatement)
     private fun block() = generalBlock(::statement)
 
-    private fun generalBlock(stmt: () -> ASTNode?): ASTNode.Block? {
+    private fun generalBlock(stmt: () -> SyntaxTreeNode?): SyntaxTreeNode.Block? {
         if (rd.matchConsume(Symbol.L_BRACE)) {
-            val lines = mutableListOf<ASTNode>()
+            val lines = mutableListOf<SyntaxTreeNode>()
 
             while (!rd.matchConsume(Symbol.R_BRACE)) {
                 val statement = stmt() ?: return null
@@ -118,17 +118,17 @@ class RecursiveDescent(private val rd: TokenRDStream) {
                 lines.add(statement)
             }
 
-            return ASTNode.Block(lines)
+            return SyntaxTreeNode.Block(lines)
         }
         return null
     }
 
-    private fun lineOrBlock(stmt: () -> ASTNode?): ASTNode.Block? {
+    private fun lineOrBlock(stmt: () -> SyntaxTreeNode?): SyntaxTreeNode.Block? {
         val block = generalBlock(stmt)
         return if (block != null) block
         else {
             val statement = stmt()
-            if (statement != null) ASTNode.Block(listOf(statement))
+            if (statement != null) SyntaxTreeNode.Block(listOf(statement))
             else null
         }
     }
@@ -146,7 +146,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     private fun statement() = acceptAny(::variableDeclaration, ::functionDefinition, ::classDefinition, ::expression)
 
     @Throws(TokenRuleException::class)
-    private fun acceptAny(vararg nodes: () -> ASTNode?): ASTNode? {
+    private fun acceptAny(vararg nodes: () -> SyntaxTreeNode?): SyntaxTreeNode? {
         nodes.forEach {
             val result = it()
             if (result != null)
@@ -160,7 +160,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     }
 
     // if(expr) { } else if(expr) { } else { }
-    private fun ifStatement(): ASTNode.IfStatement? {
+    private fun ifStatement(): SyntaxTreeNode.IfStatement? {
         if (rd.matchConsume(Keyword.IF)) {
             expect(Symbol.L_PAREN)
             val expr = expression()
@@ -173,14 +173,14 @@ class RecursiveDescent(private val rd: TokenRDStream) {
                         val ifStatement = ifStatement()
 
                         if (ifStatement != null)
-                            return ASTNode.IfStatement(expr, block, ASTNode.ElseStatements.ElseIfStatement(ifStatement))
+                            return SyntaxTreeNode.IfStatement(expr, block, SyntaxTreeNode.ElseStatements.ElseIfStatement(ifStatement))
 
                         val elseBlock = functionBlock()
                         if (elseBlock != null)
-                            return ASTNode.IfStatement(expr, block, ASTNode.ElseStatements.ElseStatement(elseBlock))
+                            return SyntaxTreeNode.IfStatement(expr, block, SyntaxTreeNode.ElseStatements.ElseStatement(elseBlock))
                     }
 
-                    return ASTNode.IfStatement(expr, block, null)
+                    return SyntaxTreeNode.IfStatement(expr, block, null)
                 }
 
                 throw TokenRuleException("if statement block")
@@ -190,7 +190,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     }
 
     // for(i in 0..5) { }
-    private fun forLoop(): ASTNode? {
+    private fun forLoop(): SyntaxTreeNode? {
         if (rd.matchConsume(Keyword.FOR)) {
             expect(Symbol.L_PAREN)
             val id = expect(Literal.IDENTIFIER)
@@ -205,7 +205,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
             val block = functionBlock()
 
             if (block != null)
-                return ASTNode.ForLoop(id.data, start.data.toInt(), end.data.toInt(), block)
+                return SyntaxTreeNode.ForLoop(id.data, start.data.toInt(), end.data.toInt(), block)
 
             throw TokenRuleException("for loop block")
         }
@@ -215,7 +215,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     private fun expression() = PrecedenceClimbing(rd).parse()
 
     // while(expr) { }
-    private fun whileLoop(): ASTNode? {
+    private fun whileLoop(): SyntaxTreeNode? {
         if (rd.matchConsume(Keyword.WHILE)) {
             expect(Symbol.L_PAREN)
             val expr = expression()
@@ -225,7 +225,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
                 val block = functionBlock()
 
                 if (block != null)
-                    return ASTNode.WhileLoop(false, expr, block)
+                    return SyntaxTreeNode.WhileLoop(false, expr, block)
 
                 throw TokenRuleException("while loop block")
             }
@@ -234,7 +234,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     }
 
     // do { } while(expr)
-    private fun doWhileLoop(): ASTNode? {
+    private fun doWhileLoop(): SyntaxTreeNode? {
         if (rd.matchConsume(Keyword.DO)) {
             val block = functionBlock()
 
@@ -245,7 +245,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
 
                 if (expr != null) {
                     expect(Symbol.R_PAREN)
-                    return ASTNode.WhileLoop(true, expr, block)
+                    return SyntaxTreeNode.WhileLoop(true, expr, block)
                 }
 
                 throw TokenRuleException("expression")
@@ -256,7 +256,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     }
 
     // val i: Int = 0
-    private fun variableDeclaration(): ASTNode? {
+    private fun variableDeclaration(): SyntaxTreeNode? {
         val varVal = rd.accept(Keyword.VAR, Keyword.VAL)
 
         if (varVal != null) {
@@ -271,7 +271,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
             val expr = expression()
 
             if (expr != null)
-                return ASTNode.VariableDeclaration(id.data, type?.data, expr, constant)
+                return SyntaxTreeNode.VariableDeclaration(id.data, type?.data, expr, constant)
 
             throw TokenRuleException("expression")
         }
@@ -279,7 +279,7 @@ class RecursiveDescent(private val rd: TokenRDStream) {
     }
 
     // i = 5, i += 5 etc.
-    private fun variableAssign(): ASTNode? {
+    private fun variableAssign(): SyntaxTreeNode? {
         if (rd.lookaheadMatches(Symbol.EQUAL, Symbol.MULTIPLY_ASSIGN, Symbol.DIVIDE_ASSIGN, Symbol.MOD_ASSIGN, Symbol.PLUS_ASSIGN, Symbol.SUBTRACT_ASSIGN)) {
             val id = expect(Literal.IDENTIFIER)
 
@@ -288,8 +288,8 @@ class RecursiveDescent(private val rd: TokenRDStream) {
 
             if (expr != null) {
                 if (operator == Symbol.EQUAL)
-                    return ASTNode.VariableAssign(id.data, expr)
-                return ASTNode.OperatorVariableAssign(id.data, expr, operator) // TODO: Check for specific operators still here
+                    return SyntaxTreeNode.VariableAssign(id.data, expr)
+                return SyntaxTreeNode.OperatorVariableAssign(id.data, expr, operator) // TODO: Check for specific operators still here
             }
 
             throw TokenRuleException("expression")

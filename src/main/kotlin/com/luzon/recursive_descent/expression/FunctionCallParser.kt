@@ -3,10 +3,10 @@ package com.luzon.recursive_descent.expression
 import com.luzon.lexer.Token
 import com.luzon.recursive_descent.PrecedenceClimbing
 import com.luzon.recursive_descent.RecursiveParser
-import com.luzon.recursive_descent.TokenRDStream
-import com.luzon.recursive_descent.ast.ASTNode.Expression
+import com.luzon.recursive_descent.TokenRecursiveDescentStream
+import com.luzon.recursive_descent.ast.SyntaxTreeNode.Expression
 
-internal class FunctionCallParser(private var name: String, rd: TokenRDStream) : RecursiveParser<Expression.LiteralExpr.FunctionCall>(rd) {
+internal class FunctionCallParser(private var name: String, rd: TokenRecursiveDescentStream) : RecursiveParser<Expression.LiteralExpr.FunctionCall>(rd) {
     private val params = mutableListOf<Expression>()
 
     override fun parse() = if (openParen()) Expression.LiteralExpr.FunctionCall(name, params.toList()) else null

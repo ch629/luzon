@@ -16,36 +16,37 @@ import com.luzon.lexer.Token.Symbol.OR
 import com.luzon.lexer.Token.Symbol.PLUS
 import com.luzon.lexer.Token.Symbol.SUBTRACT
 
-sealed class ASTNode {
-    data class Class(val name: String, val constructor: Constructor?, val block: Block) : ASTNode()
+sealed class SyntaxTreeNode {
+    data class Class(val name: String, val constructor: Constructor?, val block: Block) : SyntaxTreeNode()
 
-    data class Constructor(val variables: List<ConstructorVariableDeclaration>) : ASTNode() // TODO: This is the Primary Constructor
+    data class Constructor(val variables: List<ConstructorVariableDeclaration>) : SyntaxTreeNode() // TODO: This is the Primary Constructor
+
     // TODO: Not all of these should be val/var, only if they are held within the class
-    data class ConstructorVariableDeclaration(val name: String, val type: String, val constant: Boolean) : ASTNode()
+    data class ConstructorVariableDeclaration(val name: String, val type: String, val constant: Boolean) : SyntaxTreeNode()
 
-    data class FunctionDefinition(val name: String, val parameters: List<FunctionParameter>, val returnType: String?, val block: Block) : ASTNode()
-    data class FunctionParameter(val name: String, val type: String) : ASTNode()
+    data class FunctionDefinition(val name: String, val parameters: List<FunctionParameter>, val returnType: String?, val block: Block) : SyntaxTreeNode()
+    data class FunctionParameter(val name: String, val type: String) : SyntaxTreeNode()
 
-    data class ForLoop(val id: String, val start: Int, val end: Int, val block: Block) : ASTNode() // TODO: Basic for loop for now.
-    data class WhileLoop(val doWhile: Boolean, val expr: Expression, val block: Block) : ASTNode()
+    data class ForLoop(val id: String, val start: Int, val end: Int, val block: Block) : SyntaxTreeNode() // TODO: Basic for loop for now.
+    data class WhileLoop(val doWhile: Boolean, val expr: Expression, val block: Block) : SyntaxTreeNode()
 
-    data class IfStatement(val expr: Expression, val block: Block, val elseStatement: ElseStatements?) : ASTNode()
+    data class IfStatement(val expr: Expression, val block: Block, val elseStatement: ElseStatements?) : SyntaxTreeNode()
 
-    data class Return(val data: Expression?) : ASTNode()
+    data class Return(val data: Expression?) : SyntaxTreeNode()
 
-    sealed class ElseStatements : ASTNode() {
+    sealed class ElseStatements : SyntaxTreeNode() {
         data class ElseIfStatement(val ifStatement: IfStatement) : ElseStatements()
         data class ElseStatement(val block: Block) : ElseStatements()
     }
 
-    data class VariableDeclaration(val name: String, val type: String?, val expr: Expression, val constant: Boolean) : ASTNode()
-    data class VariableAssign(val name: String, val expr: Expression) : ASTNode()
+    data class VariableDeclaration(val name: String, val type: String?, val expr: Expression, val constant: Boolean) : SyntaxTreeNode()
+    data class VariableAssign(val name: String, val expr: Expression) : SyntaxTreeNode()
 
-    data class OperatorVariableAssign(val name: String, val expr: Expression, val operator: Token.Symbol) : ASTNode()
+    data class OperatorVariableAssign(val name: String, val expr: Expression, val operator: Token.Symbol) : SyntaxTreeNode()
 
-    data class Block(val nodes: List<ASTNode>) : ASTNode()
+    data class Block(val nodes: List<SyntaxTreeNode>) : SyntaxTreeNode()
 
-    sealed class Expression : ASTNode() {
+    sealed class Expression : SyntaxTreeNode() {
         sealed class Binary(var left: Expression?, var right: Expression?) : Expression() { // TODO: Mod, is?
             companion object {
                 fun fromOperator(symbol: Token.TokenEnum?, left: Expression?, right: Expression?) = when (symbol) {

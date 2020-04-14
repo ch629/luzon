@@ -1,6 +1,6 @@
 package com.luzon.fsm.scanner
 
-import com.luzon.fsm.FSM
+import com.luzon.fsm.FiniteStateMachine
 import com.luzon.fsm.State
 import com.luzon.utils.Predicate
 import com.luzon.utils.equalPredicate
@@ -87,14 +87,14 @@ class RegexScanner<O>(regex: List<Char>) : MetaScanner<Char, O>(regex, '\n') {
     }
 }
 
-private val regexCache = hashMapOf<String, FSM<Char, Unit>>()
+private val regexCache = hashMapOf<String, FiniteStateMachine<Char, Unit>>()
 // Just a regular RegEx parser
 internal fun regex(regex: String): RegexMatcher {
-    if (!regexCache.containsKey(regex)) regexCache[regex] = FSM.fromRegex(regex)
+    if (!regexCache.containsKey(regex)) regexCache[regex] = FiniteStateMachine.fromRegex(regex)
     return RegexMatcher(regexCache[regex]!!.copyOriginal())
 }
 
-class RegexMatcher(private val stateMachine: FSM<Char, Unit>) {
+class RegexMatcher(private val stateMachine: FiniteStateMachine<Char, Unit>) {
     fun matches(input: String): Boolean {
         input.forEach { stateMachine.accept(it) }
         return stateMachine.accepting

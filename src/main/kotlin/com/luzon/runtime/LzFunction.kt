@@ -1,6 +1,6 @@
 package com.luzon.runtime
 
-import com.luzon.recursive_descent.ast.ASTNode
+import com.luzon.recursive_descent.ast.SyntaxTreeNode
 import com.luzon.recursive_descent.expression.accept
 import com.luzon.runtime.visitors.RuntimeVisitor
 
@@ -11,9 +11,9 @@ interface Invokable {
 // TODO: This probably shouldn't use the FunctionParameter type, as I won't be able to check subtypes, and it only stores the type as a String which is not ideal
 open class LzFunction(
     val name: String,
-    val params: List<ASTNode.FunctionParameter>,
+    val params: List<SyntaxTreeNode.FunctionParameter>,
     val returnType: String?,
-    val block: ASTNode.Block = ASTNode.Block(emptyList())
+    val block: SyntaxTreeNode.Block = SyntaxTreeNode.Block(emptyList())
 ) : Invokable {
 
     override fun invoke(environment: Environment, args: List<LzObject>): LzObject {
@@ -49,7 +49,7 @@ open class LzFunction(
     }
 }
 
-class LzCodeFunction(name: String, params: List<ASTNode.FunctionParameter>, returnType: String?, var function: (Environment, List<LzObject>) -> LzObject = { _, _ -> nullObject }) :
-    LzFunction(name, params, returnType, ASTNode.Block(emptyList())) {
+class LzCodeFunction(name: String, params: List<SyntaxTreeNode.FunctionParameter>, returnType: String?, var function: (Environment, List<LzObject>) -> LzObject = { _, _ -> nullObject }) :
+    LzFunction(name, params, returnType, SyntaxTreeNode.Block(emptyList())) {
     override fun invoke(environment: Environment, args: List<LzObject>): LzObject = function(environment, args)
 }

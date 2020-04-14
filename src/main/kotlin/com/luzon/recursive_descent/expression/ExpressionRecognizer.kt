@@ -21,18 +21,18 @@ import com.luzon.lexer.Token.Symbol.PLUS
 import com.luzon.lexer.Token.Symbol.R_PAREN
 import com.luzon.lexer.Token.Symbol.SUBTRACT
 import com.luzon.lexer.TokenStream
-import com.luzon.recursive_descent.TokenRDStream
+import com.luzon.recursive_descent.TokenRecursiveDescentStream
 
 @Suppress("SimplifyBooleanWithConstants")
-internal class ExpressionRecognizer(private val rd: TokenRDStream) {
+internal class ExpressionRecognizer(private val rd: TokenRecursiveDescentStream) {
     private val exprList = ExpressionStreamList()
 
     companion object {
         val binaryOperators = listOf(PLUS, SUBTRACT, MULTIPLY, DIVIDE, MODULUS, LESS, LESS_EQUAL, EQUAL_EQUAL, GREATER_EQUAL, GREATER, AND, OR, NOT_EQUAL)
         val unaryOperators = listOf(SUBTRACT, NOT)
 
-        fun recognize(rd: TokenRDStream) = ExpressionRecognizer(rd).recognize()
-        fun recognize(tokens: TokenStream) = ExpressionRecognizer(TokenRDStream(tokens)).recognize()
+        fun recognize(rd: TokenRecursiveDescentStream) = ExpressionRecognizer(rd).recognize()
+        fun recognize(tokens: TokenStream) = ExpressionRecognizer(TokenRecursiveDescentStream(tokens)).recognize()
     }
 
     fun recognize() = if (expression()) exprList.toStream() else null

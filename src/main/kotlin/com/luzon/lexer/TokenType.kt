@@ -1,6 +1,6 @@
 package com.luzon.lexer
 
-import com.luzon.fsm.FSM
+import com.luzon.fsm.FiniteStateMachine
 import com.luzon.lexer.Token.Comment
 import com.luzon.lexer.Token.Keyword
 import com.luzon.lexer.Token.Literal
@@ -17,4 +17,4 @@ enum class TokenType {
     }
 }
 
-private fun <A : Any, O : Any> Collection<FSM<A, O>>.toMergedFSM() = FSM.merge(*toTypedArray())
+private fun <A : Any, O : Any> Collection<FiniteStateMachine<A, O>>.toMergedFSM() = FiniteStateMachine.merge(*toTypedArray())

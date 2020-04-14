@@ -13,9 +13,9 @@ object VisitorGenerator {
         val visitorSb = StringBuilder()
         val acceptSb = StringBuilder()
         visitorSb.appendln("package com.luzon.recursive_descent.expression\n")
-        visitorSb.appendln("import com.luzon.recursive_descent.ast.ASTNode\n")
+        visitorSb.appendln("import com.luzon.recursive_descent.ast.SyntaxTreeNode\n")
         visitorSb.appendln("interface ASTNodeVisitor<T> {")
-        acceptSb.appendln("fun <T> ASTNode.accept(visitor: ASTNodeVisitor<T>) = when (this) {")
+        acceptSb.appendln("fun <T> SyntaxTreeNode.accept(visitor: ASTNodeVisitor<T>) = when (this) {")
 
         lines.forEach {
             val line = it.trim()
@@ -24,7 +24,7 @@ object VisitorGenerator {
             acceptSb.indent().appendln("is $line -> visitor.visit(this)")
         }
 
-        acceptSb.indent().appendln("else -> throw NotImplementedError(\"Hit else when accepting an ASTNode.\")")
+        acceptSb.indent().appendln("else -> throw NotImplementedError(\"Hit else when accepting a SyntaxTreeNode.\")")
 
         visitorSb.appendln("}")
         acceptSb.appendln("}")
@@ -33,7 +33,7 @@ object VisitorGenerator {
         println(acceptSb.toString())
     }
 
-    private fun findNodes(clazz: KClass<*> = ASTNode::class, prefix: String = "ASTNode"): List<String> = mutableListOf<String>().apply {
+    private fun findNodes(clazz: KClass<*> = SyntaxTreeNode::class, prefix: String = "SyntaxTreeNode"): List<String> = mutableListOf<String>().apply {
         clazz.sealedSubclasses.forEach {
             if (it.isSealed) addAll(findNodes(it, "$prefix.${it.simpleName!!}"))
             else add("$prefix.${it.simpleName!!}")

@@ -1,6 +1,6 @@
 package lexer
 
-import com.luzon.fsm.FSM
+import com.luzon.fsm.FiniteStateMachine
 import com.luzon.lexer.Token
 import com.luzon.lexer.Token.Keyword
 import com.luzon.lexer.Token.Literal
@@ -67,7 +67,7 @@ object TokenTest : Spek({
     }
 })
 
-private fun FSM<Char, Token.TokenEnum>.accept(input: String) {
+private fun FiniteStateMachine<Char, Token.TokenEnum>.accept(input: String) {
     input.forEach {
         accept(it)
     }

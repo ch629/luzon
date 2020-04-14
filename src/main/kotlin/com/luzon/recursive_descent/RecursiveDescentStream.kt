@@ -4,7 +4,7 @@ import com.luzon.lexer.Token
 import com.luzon.lexer.TokenStream
 import com.luzon.utils.Predicate
 
-open class RDStream<T>(tokens: Sequence<T>) {
+open class RecursiveDescentStream<T>(tokens: Sequence<T>) {
     private val iterator = tokens.iterator()
     private var lookahead: T? = null
     private var token: T? = null
@@ -20,14 +20,12 @@ open class RDStream<T>(tokens: Sequence<T>) {
         token = lookahead
         lookahead = if (iterator.hasNext()) iterator.next() else null
 
-//        token = if (iterator.hasNext()) iterator.next() else null
         return token != null
     }
 
     fun lookaheadMatches(pred: Predicate<T>) = lookahead != null && pred(lookahead!!)
 
     fun matches(pred: Predicate<T>) = token != null && pred(token!!)
-    fun matches(pred: Predicate<T>, block: (T) -> Boolean) = if (matches(pred) && token != null) block(token!!) else false
 
     fun matchConsume(pred: Predicate<T>) = accept(pred) != null
 
@@ -49,16 +47,14 @@ open class RDStream<T>(tokens: Sequence<T>) {
     fun isDone() = iterator.hasNext()
 }
 
-class TokenRDStream(tokens: TokenStream) : RDStream<Token>(tokens) {
+class TokenRecursiveDescentStream(tokens: TokenStream) : RecursiveDescentStream<Token>(tokens) {
     fun accept(tokenEnum: Token.TokenEnum, block: (Token) -> Boolean) = accept({ it.tokenEnum == tokenEnum }, block)
     fun accept(vararg tokenEnum: Token.TokenEnum) = accept { token -> tokenEnum.any { token.tokenEnum == it } }
 
     fun matches(tokenEnum: Token.TokenEnum) = matches { it.tokenEnum == tokenEnum }
-    fun matches(tokenEnum: Token.TokenEnum, block: (Token) -> Boolean) = matches({ it.tokenEnum == tokenEnum }, block)
     fun matchConsume(tokenEnum: Token.TokenEnum) = matchConsume { it.tokenEnum == tokenEnum }
 
     fun accept(tokenEnum: Token.TokenEnum) = accept { it.tokenEnum == tokenEnum }
 
-    fun lookaheadMatches(tokenEnum: Token.TokenEnum) = lookaheadMatches { it.tokenEnum == tokenEnum }
     fun lookaheadMatches(vararg tokenEnums: Token.TokenEnum) = lookaheadMatches { token -> tokenEnums.any { token.tokenEnum == it } }
 }

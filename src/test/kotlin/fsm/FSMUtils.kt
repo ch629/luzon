@@ -1,8 +1,8 @@
 package fsm
 
-import com.luzon.fsm.FSM
+import com.luzon.fsm.FiniteStateMachine
 
-fun FSM<Char, Int>.accept(input: String) {
+fun FiniteStateMachine<Char, Int>.accept(input: String) {
     input.forEach {
         accept(it)
     }

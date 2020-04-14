@@ -3,7 +3,7 @@ package com.luzon
 import com.luzon.lexer.TokenMachine
 import com.luzon.lexer.Tokenizer
 import com.luzon.recursive_descent.RecursiveDescent
-import com.luzon.recursive_descent.TokenRDStream
+import com.luzon.recursive_descent.TokenRecursiveDescentStream
 import com.luzon.recursive_descent.expression.accept
 import com.luzon.reflection_engine.ReflectionEngine
 import com.luzon.runtime.ClassReferenceTable
@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 
 object Luzon {
     fun runCode(code: String) {
-        RecursiveDescent(TokenRDStream(Tokenizer(code).findTokens())).parse()?.accept(ClassVisitor)
+        RecursiveDescent(TokenRecursiveDescentStream(Tokenizer(code).findTokens())).parse()?.accept(ClassVisitor)
     }
 
     fun runFile(path: String) {

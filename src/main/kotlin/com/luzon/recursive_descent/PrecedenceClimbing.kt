@@ -18,15 +18,15 @@ import com.luzon.lexer.Token.Symbol.PLUS
 import com.luzon.lexer.Token.Symbol.R_PAREN
 import com.luzon.lexer.Token.Symbol.SUBTRACT
 import com.luzon.lexer.TokenStream
-import com.luzon.recursive_descent.ast.ASTNode.Expression
-import com.luzon.recursive_descent.expression.ExpressionRDStream
+import com.luzon.recursive_descent.ast.SyntaxTreeNode.Expression
 import com.luzon.recursive_descent.expression.ExpressionRecognizer
+import com.luzon.recursive_descent.expression.ExpressionRecursiveDescentStream
 import com.luzon.recursive_descent.expression.ExpressionToken
 
-fun parseExpression(tokens: TokenStream) = PrecedenceClimbing(TokenRDStream(tokens)).parse()
+fun parseExpression(tokens: TokenStream) = PrecedenceClimbing(TokenRecursiveDescentStream(tokens)).parse()
 
-internal class PrecedenceClimbing(rd: TokenRDStream) {
-    private val rd: ExpressionRDStream = ExpressionRDStream(ExpressionRecognizer.recognize(rd)
+internal class PrecedenceClimbing(rd: TokenRecursiveDescentStream) {
+    private val rd: ExpressionRecursiveDescentStream = ExpressionRecursiveDescentStream(ExpressionRecognizer.recognize(rd)
         ?: emptySequence())
 
     fun parse() = exp(0)

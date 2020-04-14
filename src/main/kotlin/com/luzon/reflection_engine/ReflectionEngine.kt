@@ -1,6 +1,6 @@
 package com.luzon.reflection_engine
 
-import com.luzon.recursive_descent.ast.ASTNode
+import com.luzon.recursive_descent.ast.SyntaxTreeNode
 import com.luzon.reflection_engine.annotations.LzMethod
 import com.luzon.runtime.Environment
 import com.luzon.runtime.LzCodeFunction
@@ -26,7 +26,7 @@ object ReflectionEngine {
                     val lzObjects = func.parameters[1].type.arguments[0].type?.classifier == LzObject::class
 
                     val params = annotation.args
-                        .mapIndexed { index, s -> ASTNode.FunctionParameter(index.toString(), s) }
+                        .mapIndexed { index, s -> SyntaxTreeNode.FunctionParameter(index.toString(), s) }
 
                     Environment.global.defineFunction(
                         LzCodeFunction(if (annotation.name.isEmpty()) func.name else annotation.name,
@@ -48,7 +48,7 @@ object ReflectionEngine {
                 // TODO: Temporary way to deal with this, need to use some system for typing in Luzon so I'm not using Strings throughout to refer to everything.
                 var type = it.type.javaType.typeName
                 if (type == "java.lang.Object") type = "Any"
-                ASTNode.FunctionParameter(it.name ?: it.index.toString(), type.capitalize())
+                SyntaxTreeNode.FunctionParameter(it.name ?: it.index.toString(), type.capitalize())
             }
 
             var retType: String? = func.returnType.javaType.typeName

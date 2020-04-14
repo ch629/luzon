@@ -1,6 +1,6 @@
 package fsm
 
-import com.luzon.fsm.FSM
+import com.luzon.fsm.FiniteStateMachine
 import com.luzon.fsm.State
 import com.luzon.utils.equalPredicate
 import com.squareup.moshi.Moshi
@@ -17,7 +17,7 @@ object FSMTest : Spek({
         context("a simple transition") {
             val root = State<Char, Unit>()
             root.addTransition('A'.equalPredicate(), State())
-            val machine = FSM(listOf(root))
+            val machine = FiniteStateMachine(listOf(root))
             it("should accept to the next state successfully") {
                 machine.accept('A')
                 machine.running shouldBe true
@@ -29,7 +29,7 @@ object FSMTest : Spek({
             val otherState = State<Char, Unit>()
             otherState.addTransition('A'.equalPredicate(), State())
             root.addEpsilon(otherState)
-            val machine = FSM(listOf(root))
+            val machine = FiniteStateMachine(listOf(root))
 
             it("should end with 1 state") {
                 machine.accept('A')
@@ -50,7 +50,7 @@ object FSMTest : Spek({
             state3.addEpsilon(state4)
             state2.addEpsilon(state4)
 
-            val machine = FSM(listOf(root))
+            val machine = FiniteStateMachine(listOf(root))
             machine.stateCount shouldBeGreaterThan 1
             machine.accepting shouldBe true
 
@@ -235,7 +235,7 @@ object FSMTest : Spek({
 
         it("should work with more merged machines") {
             val machine3 = regex("EF")
-            val merged = FSM.merge(machine1, machine2, machine3)
+            val merged = FiniteStateMachine.merge(machine1, machine2, machine3)
 
             merged.accept("AB")
             merged.accepting shouldBe true
@@ -275,4 +275,4 @@ object FSMTest : Spek({
     }
 })
 
-private fun regex(regex: String): FSM<Char, Int> = FSM.fromRegex(regex)
+private fun regex(regex: String): FiniteStateMachine<Char, Int> = FiniteStateMachine.fromRegex(regex)

@@ -1,12 +1,12 @@
 package com.luzon.utils
 
-import com.luzon.fsm.FSM
+import com.luzon.fsm.FiniteStateMachine
 import com.luzon.fsm.State
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.isSubclassOf
 
-fun KClass<*>.constructorsToFSM(): FSM<KClass<*>, KFunction<KClass<*>>> {
+fun KClass<*>.constructorsToFSM(): FiniteStateMachine<KClass<*>, KFunction<KClass<*>>> {
     val root = State<KClass<*>, KFunction<KClass<*>>>()
     var pointer = root
 
@@ -22,10 +22,10 @@ fun KClass<*>.constructorsToFSM(): FSM<KClass<*>, KFunction<KClass<*>>> {
         pointer = root
     }
 
-    return FSM(listOf(root))
+    return FiniteStateMachine(listOf(root))
 }
 
-private val constructorFSMCache = hashMapOf<KClass<*>, FSM<KClass<*>, KFunction<KClass<*>>>>()
+private val constructorFSMCache = hashMapOf<KClass<*>, FiniteStateMachine<KClass<*>, KFunction<KClass<*>>>>()
 fun <T : Any> tryConstructorArguments(clazz: KClass<T>, vararg args: Any): T? {
     if (!constructorFSMCache.containsKey(clazz)) constructorFSMCache[clazz] = clazz.constructorsToFSM()
     val fsm = constructorFSMCache[clazz]!!.copyOriginal()

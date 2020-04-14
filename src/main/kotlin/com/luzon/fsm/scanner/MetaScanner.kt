@@ -50,14 +50,7 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
                 char = peek()
             }
 
-            val startEnd = if (!escape) {
-                val customCharacters = customCharacters(char)
-                when {
-                    customCharacters != null -> customCharacters
-                    isMeta(char) -> metaCharacter()
-                    else -> char()
-                }
-            } else char(escape)
+            val startEnd = handleCustomCharacter(escape, char)
 
             endState = startEnd.end
             endState.removeAccept()
@@ -78,6 +71,17 @@ abstract class MetaScanner<A : Any, O>(text: List<A>, endValue: A) : Scanner<A>(
         else endState.forceAccept = true
 
         return root
+    }
+
+    private fun handleCustomCharacter(escape: Boolean, char: A): StatePair<A, O> {
+        return if (!escape) {
+            val customCharacters = customCharacters(char)
+            when {
+                customCharacters != null -> customCharacters
+                isMeta(char) -> metaCharacter()
+                else -> char()
+            }
+        } else char(escape)
     }
 
     private fun char(escape: Boolean = false): StatePair<A, O> {

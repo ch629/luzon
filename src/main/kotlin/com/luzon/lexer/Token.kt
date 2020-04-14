@@ -1,6 +1,6 @@
 package com.luzon.lexer
 
-import com.luzon.fsm.FSM
+import com.luzon.fsm.FiniteStateMachine
 import com.luzon.fsm.scanner.StringScanner
 import com.luzon.utils.cutEnds
 
@@ -31,7 +31,7 @@ open class Token(val tokenEnum: TokenEnum, val data: String) {
         fun toToken(data: String) = Token(this, if (this is Literal) fromString(data).toString() else data)
         fun toToken() = toToken("")
 
-        fun toFSM() = FSM.fromRegex(regex(), this)
+        fun toFSM() = FiniteStateMachine.fromRegex(regex(), this)
     }
 
     enum class Keyword(val capitalize: Boolean = false) : TokenEnum {
