@@ -14,6 +14,7 @@ class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
     // TODO: List of SyntaxTreeNode -> Can have functions outside of classes like Kotlin?
     fun parse(): SyntaxTreeNode? = classDefinition()
 
+    // kotlin:S125
     // fun name(): Int { }
     private fun functionDefinition(): SyntaxTreeNode? {
         fun parameterList(): List<SyntaxTreeNode.FunctionParameter> {
@@ -64,6 +65,7 @@ class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
         else null
     }
 
+    // kotlin:S125
     // class <name>(<params>): <type> { }
     private fun classDefinition(): SyntaxTreeNode? {
         fun parameterList(): List<SyntaxTreeNode.ConstructorVariableDeclaration> {
@@ -159,6 +161,7 @@ class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
         })
     }
 
+    // kotlin:S125
     // if(expr) { } else if(expr) { } else { }
     private fun ifStatement(): SyntaxTreeNode.IfStatement? {
         if (rd.matchConsume(Keyword.IF)) {
@@ -189,6 +192,7 @@ class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
         return null
     }
 
+    // kotlin:S125
     // for(i in 0..5) { }
     private fun forLoop(): SyntaxTreeNode? {
         if (rd.matchConsume(Keyword.FOR)) {
@@ -214,6 +218,7 @@ class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
 
     private fun expression() = PrecedenceClimbing(rd).parse()
 
+    // kotlin:S125
     // while(expr) { }
     private fun whileLoop(): SyntaxTreeNode? {
         if (rd.matchConsume(Keyword.WHILE)) {
@@ -233,6 +238,7 @@ class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
         return null
     }
 
+    // kotlin:S125
     // do { } while(expr)
     private fun doWhileLoop(): SyntaxTreeNode? {
         if (rd.matchConsume(Keyword.DO)) {
@@ -255,6 +261,7 @@ class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
         return null
     }
 
+    // kotlin:S125
     // val i: Int = 0
     private fun variableDeclaration(): SyntaxTreeNode? {
         val varVal = rd.accept(Keyword.VAR, Keyword.VAL)
@@ -278,6 +285,7 @@ class RecursiveDescent(private val rd: TokenRecursiveDescentStream) {
         return null
     }
 
+    // kotlin:S125
     // i = 5, i += 5 etc.
     private fun variableAssign(): SyntaxTreeNode? {
         if (rd.lookaheadMatches(Symbol.EQUAL, Symbol.MULTIPLY_ASSIGN, Symbol.DIVIDE_ASSIGN, Symbol.MOD_ASSIGN, Symbol.PLUS_ASSIGN, Symbol.SUBTRACT_ASSIGN)) {

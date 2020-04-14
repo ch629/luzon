@@ -37,7 +37,7 @@ open class RecursiveDescentStream<T>(tokens: Sequence<T>) {
 
     fun accept(pred: Predicate<T>, block: (T) -> Boolean): Boolean {
         val tkn = accept(pred)
-        return if (tkn != null) block(tkn) else false
+        return tkn != null && block(tkn)
     }
 
     fun consume() = accept { true }

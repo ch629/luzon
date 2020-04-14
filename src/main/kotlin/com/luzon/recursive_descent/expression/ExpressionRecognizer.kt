@@ -45,7 +45,8 @@ internal class ExpressionRecognizer(private val rd: TokenRecursiveDescentStream)
 
             if (expression() && rd.matchConsume(R_PAREN)) {
                 exprList += R_PAREN
-                return binaryOperator() || true
+                binaryOperator()
+                return true
             }
         }
 
@@ -58,7 +59,8 @@ internal class ExpressionRecognizer(private val rd: TokenRecursiveDescentStream)
         if (literal != null) {
             exprList += dotChain(literal) ?: literal
 
-            return binaryOperator() || true
+            binaryOperator()
+            return true
         }
 
         return false
